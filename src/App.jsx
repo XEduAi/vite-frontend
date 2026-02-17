@@ -5,6 +5,7 @@ import StudentManager from './pages/admin/StudentManager';
 import MediaManager from './pages/admin/MediaManager';
 import ClassManager from './pages/admin/ClassManager';
 import MyLearning from './pages/student/MyLearning';
+import ClassDetail from './pages/student/ClassDetail';
 
 const AdminRoute = ({ children }) => {
   const token = localStorage.getItem('token');
@@ -32,8 +33,11 @@ function App() {
         <Route path="/admin/upload" element={<AdminRoute><MediaManager /></AdminRoute>} />
 
         {/* Student */}
-        <Route path="/my-learning" element={<StudentRoute><MyLearning /></StudentRoute>} />
+        <Route path="/student/dashboard" element={<StudentRoute><MyLearning /></StudentRoute>} />
+        <Route path="/student/class/:id" element={<StudentRoute><ClassDetail /></StudentRoute>} />
 
+        {/* Legacy redirect */}
+        <Route path="/my-learning" element={<Navigate to="/student/dashboard" replace />} />
         <Route path="/" element={<Navigate to="/login" />} />
       </Routes>
     </BrowserRouter>

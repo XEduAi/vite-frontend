@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import axiosClient from '../../api/axiosClient';
 import AdminLayout from '../../components/AdminLayout';
 
@@ -6,15 +6,15 @@ const MediaManager = () => {
   const [file, setFile] = useState(null);
   const [medias, setMedias] = useState([]);
   const [message, setMessage] = useState('');
-  const [messageType, setMessageType] = useState('success'); // 'success' | 'error'
+  const [messageType, setMessageType] = useState('success');
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [dragOver, setDragOver] = useState(false);
+  const fileInputRef = useRef();
+  const formRef = useRef();
 
-  // Fetch danh sách media khi mount
-  useEffect(() => {
-    fetchMedias();
-  }, []);
+  useEffect(() => { fetchMedias(); }, []);
 
   const fetchMedias = async () => {
     try {
@@ -36,18 +36,12 @@ const MediaManager = () => {
 
   const handleUpload = async (e) => {
     e.preventDefault();
-    if (!file) {
-      showMessage('Vui lòng chọn file để upload', 'error');
-      return;
-    }
-
+    if (!file) { showMessage('Vui lòng chọn file để upload', 'error'); return; }
     const formData = new FormData();
     formData.append('file', file);
-
     try {
       setUploading(true);
       setUploadProgress(0);
-
       const res = await axiosClient.post('/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
         onUploadProgress: (progressEvent) => {
@@ -55,12 +49,9 @@ const MediaManager = () => {
           setUploadProgress(percent);
         },
       });
-
-      // Thêm file mới vào đầu danh sách
       setMedias([res.data.media, ...medias]);
       setFile(null);
-      // Reset file input
-      e.target.reset();
+      if (formRef.current) formRef.current.reset();
       showMessage('Upload thành công!');
     } catch (error) {
       console.error(error);
@@ -73,7 +64,6 @@ const MediaManager = () => {
 
   const handleDelete = async (id) => {
     if (!window.confirm('Bạn có chắc muốn xóa file này?')) return;
-
     try {
       await axiosClient.delete(`/media/${id}`);
       setMedias(medias.filter((m) => m._id !== id));
@@ -84,123 +74,212 @@ const MediaManager = () => {
     }
   };
 
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setDragOver(false);
+    const dropped = e.dataTransfer.files[0];
+    if (dropped) setFile(dropped);
+  };
+
   const getTypeBadge = (type) => {
-    const colors = {
-      image: 'bg-green-100 text-green-800',
-      video: 'bg-purple-100 text-purple-800',
-      document: 'bg-yellow-100 text-yellow-800',
+    const styles = {
+      image: { background: '#d1fae5', color: '#065f46' },
+      video: { background: '#ede9fe', color: '#5b21b6' },
+      document: { background: '#fef3c7', color: '#92400e' },
     };
     return (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium ${colors[type] || 'bg-gray-100 text-gray-800'}`}>
+      <span className="px-2 py-0.5 rounded-full text-xs font-medium" style={styles[type] || { background: '#f3f4f6', color: '#374151' }}>
         {type}
       </span>
     );
   };
 
+  const getTypeIcon = (type) => {
+    switch (type) {
+      case 'video': return '📺';
+      case 'image': return '🖼️';
+      default: return '📄';
+    }
+  };
+
   return (
     <AdminLayout>
-      <h1 className="text-2xl font-bold mb-6">Quản lý Media (R2 Storage)</h1>
+      {/* Header */}
+      <div className="mb-6">
+        <h1 className="font-display text-2xl font-semibold" style={{ color: '#1c1917' }}>Quản lý Tài nguyên</h1>
+        <p className="text-sm mt-0.5" style={{ color: '#78716c' }}>{medias.length} file trong kho lưu trữ</p>
+      </div>
 
-      {/* Form Upload */}
-      <div className="bg-white p-6 rounded shadow mb-8">
-        <h2 className="text-lg font-semibold mb-4">Upload File Mới</h2>
-        <form onSubmit={handleUpload} className="flex gap-4 items-center flex-wrap">
-          <input
-            type="file"
-            onChange={(e) => setFile(e.target.files[0])}
-            disabled={uploading}
-            className="block w-full max-w-md text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-50"
-          />
+      {/* Toast */}
+      {message && (
+        <div
+          className="flex items-center gap-2.5 p-3.5 rounded-xl mb-5 text-sm border fade-in"
+          style={
+            messageType === 'error'
+              ? { background: '#fef2f2', borderColor: '#fecaca', color: '#b91c1c' }
+              : { background: '#f0fdf4', borderColor: '#bbf7d0', color: '#166534' }
+          }
+        >
+          {messageType === 'error' ? '⚠' : '✓'} {message}
+        </div>
+      )}
+
+      {/* Upload area */}
+      <div
+        className="bg-white rounded-2xl border p-6 mb-6"
+        style={{ borderColor: '#e5ddd0', boxShadow: '0 1px 3px rgba(160,100,20,0.07)' }}
+      >
+        <h2 className="font-semibold text-sm mb-4" style={{ color: '#1c1917' }}>Upload File Mới</h2>
+        <form ref={formRef} onSubmit={handleUpload}>
+          {/* Drop zone */}
+          <div
+            className="border-2 border-dashed rounded-xl p-8 text-center mb-4 cursor-pointer transition-all"
+            style={{
+              borderColor: dragOver ? '#e8850a' : (file ? '#e8850a' : '#e5ddd0'),
+              background: dragOver ? 'rgba(232,133,10,0.04)' : (file ? 'rgba(232,133,10,0.03)' : '#faf7f2'),
+            }}
+            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={handleDrop}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <div className="text-3xl mb-2">{file ? '📎' : '☁️'}</div>
+            {file ? (
+              <>
+                <p className="text-sm font-medium" style={{ color: '#e8850a' }}>{file.name}</p>
+                <p className="text-xs mt-1" style={{ color: '#a8a29e' }}>
+                  {(file.size / 1024 / 1024).toFixed(2)} MB · Nhấn để đổi file
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-sm font-medium" style={{ color: '#78716c' }}>Kéo thả file vào đây</p>
+                <p className="text-xs mt-1" style={{ color: '#a8a29e' }}>hoặc nhấn để chọn file</p>
+              </>
+            )}
+            <input
+              ref={fileInputRef}
+              type="file"
+              onChange={(e) => setFile(e.target.files[0])}
+              disabled={uploading}
+              className="hidden"
+            />
+          </div>
+
+          {/* Progress bar */}
+          {uploading && (
+            <div className="mb-4">
+              <div className="flex items-center justify-between text-xs mb-1" style={{ color: '#78716c' }}>
+                <span>Đang upload...</span>
+                <span>{uploadProgress}%</span>
+              </div>
+              <div className="h-1.5 rounded-full overflow-hidden" style={{ background: '#f0ebe4' }}>
+                <div
+                  className="h-full rounded-full transition-all duration-300"
+                  style={{ width: `${uploadProgress}%`, background: '#e8850a' }}
+                />
+              </div>
+            </div>
+          )}
+
           <button
             type="submit"
             disabled={uploading || !file}
-            className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium text-white transition-all disabled:opacity-50"
+            style={{ background: '#e8850a' }}
+            onMouseEnter={(e) => { if (!uploading && file) e.currentTarget.style.background = '#d4740a'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = '#e8850a'; }}
           >
             {uploading ? (
               <>
-                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
                 Đang upload...
               </>
-            ) : (
-              'Upload'
-            )}
+            ) : 'Upload File'}
           </button>
         </form>
-
-        {/* Progress bar */}
-        {uploading && (
-          <div className="mt-3 w-full max-w-md">
-            <div className="bg-gray-200 rounded-full h-2.5">
-              <div
-                className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
-                style={{ width: `${uploadProgress}%` }}
-              />
-            </div>
-            <p className="text-xs text-gray-500 mt-1">{uploadProgress}%</p>
-          </div>
-        )}
-
-        {message && (
-          <p className={`mt-2 text-sm font-medium ${messageType === 'error' ? 'text-red-600' : 'text-green-600'}`}>
-            {message}
-          </p>
-        )}
       </div>
 
-      {/* Danh sách media */}
-      <div className="bg-white p-6 rounded shadow">
-        <h2 className="text-lg font-semibold mb-4">Danh sách Media</h2>
+      {/* Media list */}
+      <div
+        className="bg-white rounded-2xl border overflow-hidden"
+        style={{ borderColor: '#e5ddd0', boxShadow: '0 1px 3px rgba(160,100,20,0.06)' }}
+      >
+        <div className="px-5 py-3.5 border-b" style={{ borderColor: '#f0ebe4', background: '#faf7f2' }}>
+          <h2 className="text-xs font-semibold" style={{ color: '#a8a29e' }}>DANH SÁCH FILE</h2>
+        </div>
 
         {loading ? (
-          <p className="text-center text-gray-500 py-4">Đang tải...</p>
+          <div className="py-12 text-center text-sm" style={{ color: '#a8a29e' }}>Đang tải...</div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full text-left text-sm">
-              <thead className="bg-gray-100 uppercase text-xs">
-                <tr>
-                  <th className="px-4 py-2">Tên file</th>
-                  <th className="px-4 py-2">Loại</th>
-                  <th className="px-4 py-2">Media ID</th>
-                  <th className="px-4 py-2">Ngày upload</th>
-                  <th className="px-4 py-2">Hành động</th>
+            <table className="min-w-full text-sm">
+              <thead>
+                <tr style={{ background: '#faf7f2', borderBottom: '1px solid #f0ebe4' }}>
+                  {['Tên file', 'Loại', 'Media ID', 'Ngày upload', 'Hành động'].map(h => (
+                    <th key={h} className="px-5 py-3 text-left text-xs font-semibold" style={{ color: '#a8a29e' }}>
+                      {h.toUpperCase()}
+                    </th>
+                  ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody>
                 {medias.map((media) => (
-                  <tr key={media._id} className="hover:bg-gray-50">
-                    <td className="px-4 py-2">{media.title}</td>
-                    <td className="px-4 py-2">{getTypeBadge(media.type)}</td>
-                    <td className="px-4 py-2 font-mono text-xs bg-gray-50 select-all text-blue-600">
-                      {media._id}
+                  <tr
+                    key={media._id}
+                    className="border-b transition-colors"
+                    style={{ borderColor: '#f8f4f0' }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = '#fdf8f5'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                  >
+                    <td className="px-5 py-3.5">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">{getTypeIcon(media.type)}</span>
+                        <span className="font-medium text-sm" style={{ color: '#1c1917' }}>{media.title}</span>
+                      </div>
                     </td>
-                    <td className="px-4 py-2 text-gray-500">
+                    <td className="px-5 py-3.5">{getTypeBadge(media.type)}</td>
+                    <td className="px-5 py-3.5">
+                      <code
+                        className="text-xs px-2 py-1 rounded-lg select-all"
+                        style={{ background: '#f0ebe4', color: '#78716c', fontFamily: 'monospace' }}
+                      >
+                        {media._id}
+                      </code>
+                    </td>
+                    <td className="px-5 py-3.5 text-sm" style={{ color: '#a8a29e' }}>
                       {media.createdAt ? new Date(media.createdAt).toLocaleDateString('vi-VN') : '—'}
                     </td>
-                    <td className="px-4 py-2 flex gap-2">
-                      <a
-                        href={media.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-blue-500 hover:underline"
-                      >
-                        Xem
-                      </a>
-                      <button
-                        onClick={() => handleDelete(media._id)}
-                        className="text-red-500 hover:underline"
-                      >
-                        Xóa
-                      </button>
+                    <td className="px-5 py-3.5">
+                      <div className="flex items-center gap-2">
+                        <a
+                          href={media.url} target="_blank" rel="noreferrer"
+                          className="px-2.5 py-1 rounded-lg text-xs font-medium transition-all"
+                          style={{ color: '#14213d', background: 'rgba(20,33,61,0.07)' }}
+                        >
+                          Xem ↗
+                        </a>
+                        <button
+                          onClick={() => handleDelete(media._id)}
+                          className="px-2.5 py-1 rounded-lg text-xs font-medium transition-all"
+                          style={{ color: '#991b1b', background: 'rgba(220,38,38,0.07)' }}
+                          onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(220,38,38,0.14)'}
+                          onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(220,38,38,0.07)'}
+                        >
+                          Xóa
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
                 {medias.length === 0 && (
                   <tr>
-                    <td colSpan="5" className="px-4 py-4 text-center text-gray-500">
-                      Chưa có file nào được upload
+                    <td colSpan="5" className="px-5 py-12 text-center">
+                      <div className="text-3xl mb-2">☁️</div>
+                      <p className="text-sm" style={{ color: '#a8a29e' }}>Chưa có file nào được upload</p>
                     </td>
                   </tr>
                 )}
