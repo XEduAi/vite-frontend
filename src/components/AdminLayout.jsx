@@ -28,6 +28,11 @@ const AdminLayout = ({ children }) => {
            {/* Sau này sẽ thêm menu Upload Media ở đây */}
           <Link to="/admin/upload" className="block px-4 py-2 text-gray-700 rounded hover:bg-blue-50 hover:text-blue-600 transition">
             ☁️ Quản lý Media (R2)
+          </Link><Link to="/admin/classes" className="block px-4 py-2 ...">
+            🏫 Quản lý Lớp học
+          </Link>
+          <Link to="/admin/upload" className="block px-4 py-2 ...">
+            ☁️ Quản lý Media
           </Link>
         </nav>
 
