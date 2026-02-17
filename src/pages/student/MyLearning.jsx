@@ -9,8 +9,8 @@ const MyLearning = () => {
   useEffect(() => {
     const fetchClasses = async () => {
       try {
-        const res = await axiosClient.get('/my-classes'); // API lấy lớp của user đang login
-        setClasses(res.data);
+        const res = await axiosClient.get('/my-classes');
+        setClasses(res.data.classes || []);
       } catch (error) {
         console.error("Lỗi tải lớp học:", error);
       }
