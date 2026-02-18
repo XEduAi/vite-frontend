@@ -40,11 +40,25 @@ const IconX = () => (
   </svg>
 );
 
+const IconQuiz = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+    <path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
+  </svg>
+);
+const IconDatabase = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+    <ellipse cx="12" cy="5" rx="9" ry="3" /><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" />
+    <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
+  </svg>
+);
+
 const menuItems = [
   { path: '/admin/dashboard', label: 'Tổng quan', icon: <IconGrid /> },
   { path: '/admin/students', label: 'Học viên', icon: <IconUsers /> },
   { path: '/admin/classes', label: 'Lớp học', icon: <IconBook /> },
   { path: '/admin/upload', label: 'Tài nguyên', icon: <IconPhoto /> },
+  { path: '/admin/questions', label: 'Ngân hàng CH', icon: <IconDatabase /> },
+  { path: '/admin/quizzes', label: 'Quiz', icon: <IconQuiz /> },
 ];
 
 const AdminLayout = ({ children }) => {
