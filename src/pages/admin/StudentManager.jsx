@@ -2,10 +2,6 @@ import { useState, useEffect } from 'react';
 import axiosClient from '../../api/axiosClient';
 import AdminLayout from '../../components/AdminLayout';
 
-// ── Shared input style ──
-const inputCls = 'w-full px-3.5 py-2.5 rounded-xl border text-sm transition-all';
-const inputStyle = { borderColor: '#e5ddd0', background: '#ffffff', color: '#1c1917' };
-
 const StudentManager = () => {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -138,23 +134,21 @@ const StudentManager = () => {
     }
   };
 
-  const selectCls = 'px-3.5 py-2.5 rounded-xl border text-sm transition-all bg-white';
-  const selectStyle = { borderColor: '#e5ddd0', color: '#1c1917' };
-
   return (
     <AdminLayout>
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6 fade-in">
         <div>
-          <h1 className="font-display text-2xl font-semibold" style={{ color: '#1c1917' }}>Quản lý Học viên</h1>
-          <p className="text-sm mt-0.5" style={{ color: '#78716c' }}>{students.length} học viên trong hệ thống</p>
+          <h1 className="font-display text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+            Quản lý Học viên
+          </h1>
+          <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
+            {students.length} học viên trong hệ thống
+          </p>
         </div>
         <button
           onClick={() => { resetForm(); setShowForm(!showForm); }}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-white transition-all"
-          style={{ background: '#e8850a' }}
-          onMouseEnter={(e) => e.currentTarget.style.background = '#d4740a'}
-          onMouseLeave={(e) => e.currentTarget.style.background = '#e8850a'}
+          className={showForm && !editingStudent ? 'btn-secondary flex items-center gap-2' : 'btn-primary flex items-center gap-2'}
         >
           {showForm && !editingStudent ? '✕ Đóng' : '+ Thêm học viên'}
         </button>
@@ -162,92 +156,75 @@ const StudentManager = () => {
 
       {/* Toast message */}
       {message.content && (
-        <div
-          className="flex items-center gap-2.5 p-3.5 rounded-xl mb-5 text-sm border fade-in"
-          style={
-            message.type === 'error'
-              ? { background: '#fef2f2', borderColor: '#fecaca', color: '#b91c1c' }
-              : { background: '#f0fdf4', borderColor: '#bbf7d0', color: '#166534' }
-          }
-        >
+        <div className={`toast mb-5 ${message.type === 'error' ? 'toast-error' : 'toast-success'}`}>
           {message.type === 'error' ? '⚠' : '✓'} {message.content}
         </div>
       )}
 
       {/* Create / Edit Form */}
       {showForm && (
-        <div
-          className="bg-white rounded-2xl border p-6 mb-6 fade-in"
-          style={{ borderColor: '#e5ddd0', boxShadow: '0 2px 8px rgba(160,100,20,0.07)' }}
-        >
-          <h2 className="font-semibold text-sm mb-5 pb-3 border-b" style={{ color: '#1c1917', borderColor: '#f0ebe4' }}>
+        <div className="card p-6 mb-6 fade-in-up">
+          <h2
+            className="font-display font-semibold text-sm mb-5 pb-3 border-b"
+            style={{ color: 'var(--text-primary)', borderColor: 'var(--border-light)' }}
+          >
             {editingStudent ? `Chỉnh sửa: ${editingStudent.fullName}` : 'Tạo học viên mới'}
           </h2>
-          <form onSubmit={editingStudent ? handleUpdate : handleCreate} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <form onSubmit={editingStudent ? handleUpdate : handleCreate} className="grid grid-cols-1 sm:grid-cols-2 gap-4 stagger-children">
             {!editingStudent && (
               <>
                 <div>
-                  <label className="block text-xs font-medium mb-1.5" style={{ color: '#78716c' }}>Tên đăng nhập *</label>
+                  <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Tên đăng nhập *</label>
                   <input type="text" value={formData.username}
                     onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                    className={inputCls} style={inputStyle} required />
+                    className="input" required />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium mb-1.5" style={{ color: '#78716c' }}>Mật khẩu *</label>
+                  <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Mật khẩu *</label>
                   <input type="text" value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    className={inputCls} style={inputStyle} required />
+                    className="input" required />
                 </div>
               </>
             )}
             <div>
-              <label className="block text-xs font-medium mb-1.5" style={{ color: '#78716c' }}>Họ và tên *</label>
+              <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Họ và tên *</label>
               <input type="text" value={formData.fullName}
                 onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                className={inputCls} style={inputStyle} required />
+                className="input" required />
             </div>
             <div>
-              <label className="block text-xs font-medium mb-1.5" style={{ color: '#78716c' }}>Số điện thoại</label>
+              <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Số điện thoại</label>
               <input type="text" value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                className={inputCls} style={inputStyle} />
+                className="input" />
             </div>
             <div>
-              <label className="block text-xs font-medium mb-1.5" style={{ color: '#78716c' }}>Khối lớp</label>
+              <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Khối lớp</label>
               <select value={formData.grade}
                 onChange={(e) => setFormData({ ...formData, grade: e.target.value })}
-                className={`${selectCls} w-full`} style={selectStyle}>
+                className="input">
                 <option value="">-- Chọn --</option>
                 {[6, 7, 8, 9, 10, 11, 12].map(g => <option key={g} value={g}>Lớp {g}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium mb-1.5" style={{ color: '#78716c' }}>Tên phụ huynh</label>
+              <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Tên phụ huynh</label>
               <input type="text" value={formData.parentName}
                 onChange={(e) => setFormData({ ...formData, parentName: e.target.value })}
-                className={inputCls} style={inputStyle} />
+                className="input" />
             </div>
             <div>
-              <label className="block text-xs font-medium mb-1.5" style={{ color: '#78716c' }}>SĐT phụ huynh</label>
+              <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>SĐT phụ huynh</label>
               <input type="text" value={formData.parentPhone}
                 onChange={(e) => setFormData({ ...formData, parentPhone: e.target.value })}
-                className={inputCls} style={inputStyle} />
+                className="input" />
             </div>
             <div className="sm:col-span-2 flex gap-2 pt-1">
-              <button
-                type="submit"
-                className="px-5 py-2.5 rounded-xl text-sm font-medium text-white transition-all"
-                style={{ background: '#e8850a' }}
-                onMouseEnter={(e) => e.currentTarget.style.background = '#d4740a'}
-                onMouseLeave={(e) => e.currentTarget.style.background = '#e8850a'}
-              >
+              <button type="submit" className="btn-primary">
                 {editingStudent ? 'Lưu thay đổi' : 'Tạo học viên'}
               </button>
-              <button
-                type="button" onClick={resetForm}
-                className="px-5 py-2.5 rounded-xl border text-sm font-medium transition-all"
-                style={{ borderColor: '#e5ddd0', color: '#78716c', background: '#faf7f2' }}
-              >
+              <button type="button" onClick={resetForm} className="btn-secondary">
                 Hủy
               </button>
             </div>
@@ -256,61 +233,59 @@ const StudentManager = () => {
       )}
 
       {/* Filters */}
-      <div
-        className="bg-white rounded-2xl border p-4 mb-4"
-        style={{ borderColor: '#e5ddd0', boxShadow: '0 1px 3px rgba(160,100,20,0.06)' }}
-      >
+      <div className="card p-4 mb-4 fade-in">
         <form onSubmit={handleSearch} className="flex flex-wrap gap-2.5 items-end">
           <div className="flex-1 min-w-36">
-            <label className="block text-xs mb-1.5" style={{ color: '#a8a29e' }}>Tìm kiếm</label>
+            <label className="block text-xs mb-1.5" style={{ color: 'var(--text-muted)' }}>Tìm kiếm</label>
             <input type="text" placeholder="Tên hoặc username..." value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border text-sm"
-              style={{ borderColor: '#e5ddd0', background: '#faf7f2' }} />
+              className="input" />
           </div>
           <div>
-            <label className="block text-xs mb-1.5" style={{ color: '#a8a29e' }}>Khối lớp</label>
+            <label className="block text-xs mb-1.5" style={{ color: 'var(--text-muted)' }}>Khối lớp</label>
             <select value={filterGrade} onChange={(e) => setFilterGrade(e.target.value)}
-              className={`${selectCls} w-32`} style={selectStyle}>
+              className="input w-32">
               <option value="">Tất cả</option>
               {[6, 7, 8, 9, 10, 11, 12].map(g => <option key={g} value={g}>Lớp {g}</option>)}
             </select>
           </div>
           <div>
-            <label className="block text-xs mb-1.5" style={{ color: '#a8a29e' }}>Trạng thái</label>
+            <label className="block text-xs mb-1.5" style={{ color: 'var(--text-muted)' }}>Trạng thái</label>
             <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}
-              className={`${selectCls} w-36`} style={selectStyle}>
+              className="input w-36">
               <option value="">Tất cả</option>
               <option value="active">Đang học</option>
               <option value="suspended">Đã khóa</option>
             </select>
           </div>
-          <button
-            type="submit"
-            className="px-4 py-2 rounded-xl text-sm font-medium transition-all"
-            style={{ background: '#14213d', color: '#ffffff' }}
-            onMouseEnter={(e) => e.currentTarget.style.background = '#1e3557'}
-            onMouseLeave={(e) => e.currentTarget.style.background = '#14213d'}
-          >
+          <button type="submit" className="btn-primary">
             Tìm
           </button>
         </form>
       </div>
 
       {/* Student Table */}
-      <div
-        className="bg-white rounded-2xl border overflow-hidden"
-        style={{ borderColor: '#e5ddd0', boxShadow: '0 1px 3px rgba(160,100,20,0.06)' }}
-      >
+      <div className="card overflow-hidden fade-in-up">
         {loading ? (
-          <div className="py-12 text-center text-sm" style={{ color: '#a8a29e' }}>Đang tải...</div>
+          <div className="p-6 space-y-3">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="flex items-center gap-4">
+                <div className="skeleton w-8 h-8 rounded-full flex-shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <div className="skeleton h-4 w-1/3" />
+                  <div className="skeleton h-3 w-1/5" />
+                </div>
+                <div className="skeleton h-6 w-16 rounded-full" />
+              </div>
+            ))}
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead>
-                <tr style={{ background: '#faf7f2', borderBottom: '1px solid #f0ebe4' }}>
+                <tr style={{ background: 'var(--cream)', borderBottom: '1px solid var(--border-light)' }}>
                   {['Học viên', 'Username', 'Lớp', 'Điện thoại', 'Trạng thái', 'Ngày tạo', 'Thao tác'].map(h => (
-                    <th key={h} className="px-5 py-3 text-left text-xs font-semibold" style={{ color: '#a8a29e' }}>
+                    <th key={h} className="px-5 py-3 text-left text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>
                       {h.toUpperCase()}
                     </th>
                   ))}
@@ -320,81 +295,60 @@ const StudentManager = () => {
                 {students.map((s) => (
                   <tr
                     key={s._id}
-                    className="border-b transition-colors"
-                    style={{ borderColor: '#f8f4f0' }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = '#fdf8f5'}
-                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                    className="table-row border-b"
+                    style={{ borderColor: 'var(--border-light)' }}
                   >
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-3">
                         <div
                           className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0"
-                          style={{ background: 'rgba(232,133,10,0.1)', color: '#e8850a' }}
+                          style={{ background: 'var(--amber-soft)', color: 'var(--amber-warm)' }}
                         >
                           {s.fullName?.charAt(0)?.toUpperCase()}
                         </div>
-                        <span className="font-medium" style={{ color: '#1c1917' }}>{s.fullName}</span>
+                        <span className="font-medium" style={{ color: 'var(--text-primary)' }}>{s.fullName}</span>
                       </div>
                     </td>
-                    <td className="px-5 py-3.5 font-mono text-xs" style={{ color: '#a8a29e' }}>{s.username}</td>
-                    <td className="px-5 py-3.5 text-sm" style={{ color: '#78716c' }}>
+                    <td className="px-5 py-3.5 font-mono text-xs" style={{ color: 'var(--text-muted)' }}>{s.username}</td>
+                    <td className="px-5 py-3.5 text-sm">
                       {s.grade ? (
-                        <span className="px-2 py-0.5 rounded-lg text-xs font-medium" style={{ background: '#fef3c7', color: '#92400e' }}>
-                          Lớp {s.grade}
-                        </span>
-                      ) : '—'}
+                        <span className="badge badge-amber">Lớp {s.grade}</span>
+                      ) : (
+                        <span style={{ color: 'var(--text-muted)' }}>--</span>
+                      )}
                     </td>
-                    <td className="px-5 py-3.5 text-sm" style={{ color: '#78716c' }}>{s.phone || '—'}</td>
+                    <td className="px-5 py-3.5 text-sm" style={{ color: 'var(--text-secondary)' }}>{s.phone || '--'}</td>
                     <td className="px-5 py-3.5">
-                      <span
-                        className="px-2.5 py-1 rounded-full text-xs font-medium"
-                        style={
-                          s.status === 'active'
-                            ? { background: '#d1fae5', color: '#065f46' }
-                            : { background: '#fee2e2', color: '#991b1b' }
-                        }
-                      >
+                      <span className={`badge ${s.status === 'active' ? 'badge-green' : 'badge-red'}`}>
                         {s.status === 'active' ? 'Đang học' : 'Đã khóa'}
                       </span>
                     </td>
-                    <td className="px-5 py-3.5 text-sm" style={{ color: '#a8a29e' }}>
+                    <td className="px-5 py-3.5 text-sm" style={{ color: 'var(--text-muted)' }}>
                       {new Date(s.createdAt).toLocaleDateString('vi-VN')}
                     </td>
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-1">
                         <button
                           onClick={() => handleEdit(s)}
-                          className="px-2.5 py-1 rounded-lg text-xs font-medium transition-all"
-                          style={{ color: '#14213d', background: 'rgba(20,33,61,0.07)' }}
-                          onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(20,33,61,0.14)'}
-                          onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(20,33,61,0.07)'}
+                          className="badge badge-blue cursor-pointer hover:opacity-80 transition-opacity"
                         >
                           Sửa
                         </button>
                         <button
                           onClick={() => handleToggleStatus(s)}
-                          className="px-2.5 py-1 rounded-lg text-xs font-medium transition-all"
-                          style={
-                            s.status === 'active'
-                              ? { color: '#92400e', background: 'rgba(251,191,36,0.12)' }
-                              : { color: '#065f46', background: 'rgba(5,150,105,0.1)' }
-                          }
+                          className={`badge cursor-pointer hover:opacity-80 transition-opacity ${s.status === 'active' ? 'badge-amber' : 'badge-green'}`}
                         >
                           {s.status === 'active' ? 'Khóa' : 'Mở'}
                         </button>
                         <button
                           onClick={() => { setResetModal(s); setNewPassword(''); }}
-                          className="px-2.5 py-1 rounded-lg text-xs font-medium transition-all"
-                          style={{ color: '#5b21b6', background: 'rgba(91,33,182,0.08)' }}
+                          className="badge badge-purple cursor-pointer hover:opacity-80 transition-opacity"
                         >
                           MK
                         </button>
                         <button
                           onClick={() => handleDelete(s._id)}
-                          className="px-2.5 py-1 rounded-lg text-xs font-medium transition-all"
-                          style={{ color: '#991b1b', background: 'rgba(220,38,38,0.07)' }}
-                          onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(220,38,38,0.14)'}
-                          onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(220,38,38,0.07)'}
+                          className="badge badge-red cursor-pointer hover:opacity-80 transition-opacity"
                         >
                           Xóa
                         </button>
@@ -404,7 +358,7 @@ const StudentManager = () => {
                 ))}
                 {students.length === 0 && (
                   <tr>
-                    <td colSpan="7" className="px-5 py-12 text-center text-sm" style={{ color: '#a8a29e' }}>
+                    <td colSpan="7" className="px-5 py-12 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
                       Chưa có học viên nào
                     </td>
                   </tr>
@@ -417,36 +371,33 @@ const StudentManager = () => {
 
       {/* Reset Password Modal */}
       {resetModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.5)' }}>
+        <div
+          className="modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4"
+          onClick={() => setResetModal(null)}
+        >
           <div
-            className="bg-white rounded-2xl p-6 w-full max-w-sm fade-in"
-            style={{ boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}
+            className="modal-content card p-6 w-full max-w-sm"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="font-semibold text-base mb-1" style={{ color: '#1c1917' }}>Đặt lại mật khẩu</h3>
-            <p className="text-sm mb-4" style={{ color: '#78716c' }}>Cho: <strong>{resetModal.fullName}</strong></p>
+            <h3 className="font-display font-semibold text-base mb-1" style={{ color: 'var(--text-primary)' }}>
+              Đặt lại mật khẩu
+            </h3>
+            <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
+              Cho: <strong>{resetModal.fullName}</strong>
+            </p>
             <input
               type="text"
               placeholder="Mật khẩu mới"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl border text-sm mb-4"
-              style={{ borderColor: '#e5ddd0' }}
+              className="input mb-4"
               autoFocus
             />
             <div className="flex gap-2 justify-end">
-              <button
-                onClick={() => setResetModal(null)}
-                className="px-4 py-2 rounded-xl border text-sm font-medium"
-                style={{ borderColor: '#e5ddd0', color: '#78716c' }}
-              >
+              <button onClick={() => setResetModal(null)} className="btn-secondary">
                 Hủy
               </button>
-              <button
-                onClick={handleResetPassword}
-                className="px-4 py-2 rounded-xl text-sm font-medium text-white"
-                style={{ background: '#e8850a' }}
-              >
+              <button onClick={handleResetPassword} className="btn-primary">
                 Xác nhận
               </button>
             </div>

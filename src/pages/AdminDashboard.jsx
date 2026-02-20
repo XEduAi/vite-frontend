@@ -61,24 +61,29 @@ const AdminDashboard = () => {
       value: stats.students,
       link: '/admin/students',
       icon: <IconUsers />,
-      color: '#14213d',
-      lightColor: 'rgba(20,33,61,0.06)',
+      gradient: 'linear-gradient(135deg, #0a1628 0%, #1e3a5f 100%)',
+      iconBg: 'rgba(245,158,11,0.15)',
+      iconColor: '#f59e0b',
     },
     {
       label: 'Lớp học',
       value: stats.classes,
       link: '/admin/classes',
       icon: <IconBook />,
-      color: '#e8850a',
-      lightColor: 'rgba(232,133,10,0.08)',
+      gradient: 'linear-gradient(135deg, #f59e0b 0%, #ea580c 100%)',
+      iconBg: 'rgba(255,255,255,0.2)',
+      iconColor: '#ffffff',
+      isLight: true,
     },
     {
       label: 'Tài nguyên',
       value: stats.medias,
       link: '/admin/upload',
       icon: <IconPhoto />,
-      color: '#059669',
-      lightColor: 'rgba(5,150,105,0.07)',
+      gradient: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+      iconBg: 'rgba(255,255,255,0.2)',
+      iconColor: '#ffffff',
+      isLight: true,
     },
   ];
 
@@ -86,96 +91,93 @@ const AdminDashboard = () => {
     <AdminLayout>
       {/* Page header */}
       <div className="mb-8">
-        <h1 className="font-display text-2xl font-semibold" style={{ color: '#1c1917' }}>Tổng quan</h1>
-        <p className="text-sm mt-1" style={{ color: '#78716c' }}>Xem thống kê và hoạt động gần đây</p>
+        <h1 className="font-display text-2xl md:text-3xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>Tổng quan</h1>
+        <p className="text-sm mt-1.5" style={{ color: 'var(--text-secondary)' }}>Xem thống kê và hoạt động gần đây</p>
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8 stagger-children">
         {cards.map((card) => (
           <Link
             key={card.label}
             to={card.link}
-            className="stat-card group relative bg-white rounded-2xl p-5 border flex items-center justify-between overflow-hidden"
-            style={{ borderColor: '#e5ddd0', boxShadow: '0 1px 3px rgba(160,100,20,0.07)' }}
+            className="stat-card group relative rounded-2xl p-6 flex items-center justify-between overflow-hidden"
+            style={{ background: card.gradient, boxShadow: 'var(--shadow-lg)' }}
           >
-            <div>
-              <p className="text-sm font-medium" style={{ color: '#78716c' }}>{card.label}</p>
-              <p className="font-display text-3xl font-semibold mt-1" style={{ color: '#1c1917' }}>
-                {loading ? '—' : card.value}
+            {/* Decorative elements */}
+            <div className="absolute -right-8 -bottom-8 w-24 h-24 rounded-full" style={{ background: 'rgba(255,255,255,0.06)' }} />
+            <div className="absolute -right-2 -top-2 w-16 h-16 rounded-full" style={{ background: 'rgba(255,255,255,0.04)' }} />
+
+            <div className="relative z-10">
+              <p className="text-sm font-medium" style={{ color: card.isLight ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.6)' }}>{card.label}</p>
+              <p className="font-display text-3xl font-bold mt-1 text-white">
+                {loading ? (
+                  <span className="inline-block w-12 h-8 skeleton rounded-lg" style={{ background: 'rgba(255,255,255,0.15)' }} />
+                ) : card.value}
               </p>
-              <div
-                className="flex items-center gap-1 text-xs font-medium mt-2 group-hover:gap-2 transition-all"
-                style={{ color: card.color }}
-              >
+              <div className="flex items-center gap-1 text-xs font-semibold mt-3 group-hover:gap-2 transition-all" style={{ color: card.isLight ? 'rgba(255,255,255,0.85)' : '#f59e0b' }}>
                 Xem chi tiết <IconArrow />
               </div>
             </div>
             <div
-              className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ background: card.lightColor, color: card.color }}
+              className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 relative z-10"
+              style={{ background: card.iconBg, color: card.iconColor }}
             >
               {card.icon}
             </div>
-            {/* Subtle background accent */}
-            <div
-              className="absolute -right-6 -bottom-6 w-20 h-20 rounded-full pointer-events-none"
-              style={{ background: card.lightColor }}
-            />
           </Link>
         ))}
       </div>
 
       {/* Recent students */}
-      <div
-        className="bg-white rounded-2xl border overflow-hidden"
-        style={{ borderColor: '#e5ddd0', boxShadow: '0 1px 3px rgba(160,100,20,0.07)' }}
-      >
-        <div
-          className="flex items-center justify-between px-6 py-4 border-b"
-          style={{ borderColor: '#f0ebe4' }}
-        >
-          <h2 className="font-semibold text-sm" style={{ color: '#1c1917' }}>Học viên gần đây</h2>
-          <Link
-            to="/admin/students"
-            className="flex items-center gap-1 text-xs font-medium transition-colors"
-            style={{ color: '#e8850a' }}
-          >
+      <div className="card overflow-hidden fade-in" style={{ animationDelay: '0.2s' }}>
+        <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: 'var(--border-light)' }}>
+          <h2 className="font-display font-bold text-sm" style={{ color: 'var(--text-primary)' }}>Học viên gần đây</h2>
+          <Link to="/admin/students" className="flex items-center gap-1 text-xs font-semibold transition-colors" style={{ color: 'var(--amber-warm)' }}>
             Xem tất cả <IconArrow />
           </Link>
         </div>
 
-        <div className="divide-y" style={{ borderColor: '#f8f4f0' }}>
+        <div className="divide-y" style={{ borderColor: 'var(--border-light)' }}>
           {loading ? (
-            <div className="py-10 text-center text-sm" style={{ color: '#a8a29e' }}>Đang tải...</div>
+            <div className="p-6 space-y-4">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="flex items-center gap-3">
+                  <div className="skeleton w-9 h-9 rounded-full" />
+                  <div className="flex-1 space-y-2">
+                    <div className="skeleton h-3 w-1/3" />
+                    <div className="skeleton h-2.5 w-1/4" />
+                  </div>
+                </div>
+              ))}
+            </div>
           ) : recentStudents.length === 0 ? (
-            <div className="py-10 text-center text-sm" style={{ color: '#a8a29e' }}>Chưa có học viên</div>
+            <div className="py-12 text-center">
+              <div className="w-12 h-12 mx-auto rounded-xl flex items-center justify-center mb-3" style={{ background: '#f1f5f9' }}>
+                <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5" style={{ color: 'var(--text-muted)' }}>
+                  <path d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Chưa có học viên</p>
+            </div>
           ) : (
             recentStudents.map((s) => (
-              <div key={s._id} className="flex items-center justify-between px-6 py-3.5">
+              <div key={s._id} className="flex items-center justify-between px-6 py-3.5 table-row">
                 <div className="flex items-center gap-3">
-                  {/* Avatar */}
                   <div
-                    className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0"
-                    style={{ background: 'rgba(232,133,10,0.12)', color: '#e8850a' }}
+                    className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+                    style={{ background: 'var(--amber-soft)', color: 'var(--amber-warm)' }}
                   >
                     {s.fullName?.charAt(0)?.toUpperCase()}
                   </div>
                   <div>
-                    <p className="text-sm font-medium" style={{ color: '#1c1917' }}>{s.fullName}</p>
-                    <p className="text-xs" style={{ color: '#a8a29e' }}>
+                    <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{s.fullName}</p>
+                    <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
                       @{s.username}{s.grade ? ` · Lớp ${s.grade}` : ''}
                     </p>
                   </div>
                 </div>
-                <span
-                  className="text-xs font-medium px-2.5 py-1 rounded-full"
-                  style={
-                    s.status === 'active'
-                      ? { background: '#d1fae5', color: '#065f46' }
-                      : { background: '#fee2e2', color: '#991b1b' }
-                  }
-                >
+                <span className={`badge ${s.status === 'active' ? 'badge-green' : 'badge-red'}`}>
                   {s.status === 'active' ? 'Đang học' : 'Đã khóa'}
                 </span>
               </div>

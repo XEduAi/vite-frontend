@@ -37,25 +37,22 @@ const StudentLayout = ({ children }) => {
   ];
 
   return (
-    <div className="min-h-screen" style={{ background: '#f8f5f0' }}>
+    <div className="min-h-screen" style={{ background: 'var(--cream)' }}>
 
       {/* ===== DESKTOP HEADER ===== */}
-      <header
-        className="hidden md:block sticky top-0 z-30 border-b"
-        style={{ background: '#ffffff', borderColor: '#e5ddd0', boxShadow: '0 1px 0 rgba(160,100,20,0.06)' }}
-      >
+      <header className="hidden md:block sticky top-0 z-30 glass" style={{ borderBottom: '1px solid var(--border)' }}>
         <div className="max-w-6xl mx-auto px-6">
           <div className="flex items-center justify-between h-16">
             {/* Brand */}
-            <Link to="/student/dashboard" className="flex items-center gap-2">
-              <span
-                className="font-display font-semibold text-xl"
-                style={{ color: '#14213d' }}
-              >
-                LMS
-              </span>
-              <span className="text-sm font-medium px-2 py-0.5 rounded-full" style={{ background: '#fef3c7', color: '#92400e' }}>
-                Học viên
+            <Link to="/student/dashboard" className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'var(--grad-amber)' }}>
+                <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4 text-white">
+                  <path d="M12 14l9-5-9-5-9 5 9 5z" fill="currentColor" />
+                  <path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" fill="currentColor" opacity="0.6" />
+                </svg>
+              </div>
+              <span className="font-display font-bold text-lg" style={{ color: 'var(--navy)' }}>
+                EduVN
               </span>
             </Link>
 
@@ -67,10 +64,10 @@ const StudentLayout = ({ children }) => {
                   <Link
                     key={item.path}
                     to={item.path}
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all"
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all"
                     style={{
-                      color: isActive ? '#e8850a' : '#78716c',
-                      background: isActive ? 'rgba(232,133,10,0.08)' : 'transparent',
+                      color: isActive ? 'var(--amber-warm)' : 'var(--text-secondary)',
+                      background: isActive ? 'var(--amber-soft)' : 'transparent',
                     }}
                   >
                     {item.icon}
@@ -82,20 +79,27 @@ const StudentLayout = ({ children }) => {
 
             {/* User + Logout */}
             <div className="flex items-center gap-4">
-              <div className="text-right">
-                <div className="text-xs" style={{ color: '#a8a29e' }}>Xin chào,</div>
-                <div className="text-sm font-semibold" style={{ color: '#1c1917' }}>{fullName}</div>
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
+                  style={{ background: 'var(--amber-soft)', color: 'var(--amber-warm)' }}
+                >
+                  {fullName.charAt(0).toUpperCase()}
+                </div>
+                <div className="text-right">
+                  <div className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{fullName}</div>
+                  <div className="text-[11px]" style={{ color: 'var(--text-muted)' }}>Học viên</div>
+                </div>
               </div>
-              <div className="w-px h-8" style={{ background: '#e5ddd0' }} />
+              <div className="w-px h-8" style={{ background: 'var(--border)' }} />
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-1.5 text-sm font-medium transition-colors"
-                style={{ color: '#a8a29e' }}
-                onMouseEnter={(e) => e.currentTarget.style.color = '#dc2626'}
-                onMouseLeave={(e) => e.currentTarget.style.color = '#a8a29e'}
+                className="flex items-center gap-1.5 text-sm font-medium transition-all px-3 py-2 rounded-lg"
+                style={{ color: 'var(--text-muted)' }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = '#ef4444'; e.currentTarget.style.background = 'rgba(239,68,68,0.06)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'transparent'; }}
               >
                 <IconLogout />
-                Đăng xuất
               </button>
             </div>
           </div>
@@ -103,27 +107,39 @@ const StudentLayout = ({ children }) => {
       </header>
 
       {/* ===== MOBILE HEADER ===== */}
-      <header
-        className="md:hidden sticky top-0 z-30 border-b"
-        style={{ background: '#ffffff', borderColor: '#e5ddd0' }}
-      >
+      <header className="md:hidden sticky top-0 z-30 glass" style={{ borderBottom: '1px solid var(--border)' }}>
         <div className="flex items-center justify-between px-4 h-14">
-          <Link to="/student/dashboard">
-            <span className="font-display font-semibold text-lg" style={{ color: '#14213d' }}>LMS</span>
+          <Link to="/student/dashboard" className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: 'var(--grad-amber)' }}>
+              <svg viewBox="0 0 24 24" fill="none" className="w-3.5 h-3.5 text-white">
+                <path d="M12 14l9-5-9-5-9 5 9 5z" fill="currentColor" />
+              </svg>
+            </div>
+            <span className="font-display font-bold text-base" style={{ color: 'var(--navy)' }}>EduVN</span>
           </Link>
-          <div className="text-sm font-medium" style={{ color: '#78716c' }}>{fullName}</div>
+          <div className="flex items-center gap-2">
+            <div
+              className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold"
+              style={{ background: 'var(--amber-soft)', color: 'var(--amber-warm)' }}
+            >
+              {fullName.charAt(0).toUpperCase()}
+            </div>
+            <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>{fullName.split(' ').pop()}</span>
+          </div>
         </div>
       </header>
 
       {/* ===== MAIN CONTENT ===== */}
       <main className="max-w-6xl mx-auto px-4 md:px-6 py-6 pb-24 md:pb-8">
-        {children}
+        <div className="fade-in">
+          {children}
+        </div>
       </main>
 
       {/* ===== MOBILE BOTTOM NAV ===== */}
       <nav
-        className="md:hidden fixed bottom-0 left-0 right-0 z-30 border-t"
-        style={{ background: '#ffffff', borderColor: '#e5ddd0', boxShadow: '0 -2px 12px rgba(160,100,20,0.08)' }}
+        className="md:hidden fixed bottom-0 left-0 right-0 z-30 glass"
+        style={{ borderTop: '1px solid var(--border)' }}
       >
         <div className="flex items-center justify-around h-16 px-4">
           {menuItems.map((item) => {
@@ -133,20 +149,27 @@ const StudentLayout = ({ children }) => {
                 key={item.path}
                 to={item.path}
                 className="flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all"
-                style={{ color: isActive ? '#e8850a' : '#a8a29e' }}
+                style={{ color: isActive ? 'var(--amber-warm)' : 'var(--text-muted)' }}
               >
-                {item.icon}
-                <span className="text-xs font-medium">{item.label}</span>
+                <span
+                  className="flex items-center justify-center w-10 h-7 rounded-lg transition-colors"
+                  style={{ background: isActive ? 'var(--amber-soft)' : 'transparent' }}
+                >
+                  {item.icon}
+                </span>
+                <span className="text-[10px] font-semibold">{item.label}</span>
               </Link>
             );
           })}
           <button
             onClick={handleLogout}
             className="flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all"
-            style={{ color: '#a8a29e' }}
+            style={{ color: 'var(--text-muted)' }}
           >
-            <IconLogout />
-            <span className="text-xs font-medium">Đăng xuất</span>
+            <span className="flex items-center justify-center w-10 h-7 rounded-lg">
+              <IconLogout />
+            </span>
+            <span className="text-[10px] font-semibold">Thoát</span>
           </button>
         </div>
       </nav>
