@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const axiosClient = axios.create({
-  baseURL: 'http://localhost:3000/api', // Đường dẫn đến Backend Fastify
+  baseURL: import.meta.env.VITE_API_BASE_URL, // Đường dẫn đến Backend Fastify
   headers: {
     'Content-Type': 'application/json',
   },
