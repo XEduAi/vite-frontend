@@ -202,25 +202,30 @@ body {
 }
 
 /* ── Input System ── */
-.input {
-  width: 100%;
-  padding: 10px 16px;
-  border-radius: var(--radius-md);
-  border: 1.5px solid var(--border);
-  font-size: 14px;
-  background: var(--white);
-  color: var(--text-primary);
-  transition: all 0.25s var(--ease-out);
-}
+@layer components {
+  .input {
+    width: 100%;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    padding-left: 16px;
+    padding-right: 16px;
+    border-radius: var(--radius-md);
+    border: 1.5px solid var(--border);
+    font-size: 14px;
+    background: var(--white);
+    color: var(--text-primary);
+    transition: all 0.25s var(--ease-out);
+  }
 
-.input:focus {
-  outline: none;
-  border-color: var(--amber);
-  box-shadow: 0 0 0 4px var(--amber-soft);
-}
+  .input:focus {
+    outline: none;
+    border-color: var(--amber);
+    box-shadow: 0 0 0 4px var(--amber-soft);
+  }
 
-.input::placeholder {
-  color: var(--text-muted);
+  .input::placeholder {
+    color: var(--text-muted);
+  }
 }
 
 input:focus, select:focus, textarea:focus {
