@@ -60,6 +60,92 @@
   --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Dark Mode */
+[data-theme="dark"] {
+  /* Core palette - Dark */
+  --navy: #0a1628;
+  --navy-light: #1a2d52;
+  --navy-mid: #243b63;
+  --cream: #0f172a;
+  --cream-warm: #1e293b;
+  --white: #1e293b;
+  --border: #334155;
+  --border-light: #1e293b;
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --success-light: #064e3b;
+  --danger-light: #450a0a;
+  --info-light: #1e3a5f;
+  --purple-light: #2e1065;
+
+  /* Gradients */
+  --grad-amber: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%);
+  --grad-navy: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
+  --grad-warm: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  --grad-glow: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #ea580c 100%);
+  --grad-glass: linear-gradient(135deg, rgba(30,41,59,0.9) 0%, rgba(15,23,42,0.7) 100%);
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 4px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3), 0 2px 12px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.3), 0 4px 16px rgba(0, 0, 0, 0.2);
+  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.3);
+  --shadow-amber: 0 4px 14px rgba(245, 158, 11, 0.2), 0 2px 6px rgba(245, 158, 11, 0.1);
+  --shadow-glow: 0 0 20px rgba(245, 158, 11, 0.1), 0 0 40px rgba(245, 158, 11, 0.05);
+}
+
+[data-theme="dark"] body {
+  background-color: var(--cream);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .card {
+  background-color: var(--white);
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .input {
+  background-color: var(--cream-warm);
+  border-color: var(--border);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .input::placeholder {
+  color: var(--text-muted);
+}
+
+[data-theme="dark"] .glass {
+  background-color: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(12px);
+}
+
+[data-theme="dark"] .badge {
+  opacity: 0.9;
+}
+
+[data-theme="dark"] .toast-success {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: var(--success);
+  color: #34d399;
+}
+
+[data-theme="dark"] .toast-error {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: var(--danger);
+  color: #f87171;
+}
+
+[data-theme="dark"] .badge-amber { background: rgba(245, 158, 11, 0.18); color: #fbbf24; }
+[data-theme="dark"] .badge-green { background: rgba(16, 185, 129, 0.18); color: #34d399; }
+[data-theme="dark"] .badge-red { background: rgba(239, 68, 68, 0.18); color: #f87171; }
+[data-theme="dark"] .badge-blue { background: rgba(59, 130, 246, 0.18); color: #60a5fa; }
+[data-theme="dark"] .badge-purple { background: rgba(139, 92, 246, 0.18); color: #a78bfa; }
+[data-theme="dark"] .badge-gray { background: rgba(148, 163, 184, 0.15); color: #94a3b8; }
+[data-theme="dark"] .badge-teal { background: rgba(20, 184, 166, 0.18); color: #2dd4bf; }
+
+.badge-teal { background: #ccfbf1; color: #0f766e; }
+
 * {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

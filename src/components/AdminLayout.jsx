@@ -39,6 +39,17 @@ const IconX = () => (
     <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
   </svg>
 );
+const SunIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-5 h-5">
+    <circle cx="12" cy="12" r="5" />
+    <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+  </svg>
+);
+const MoonIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-5 h-5">
+    <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+  </svg>
+);
 const IconQuiz = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px]">
     <path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
@@ -50,6 +61,16 @@ const IconDatabase = () => (
     <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
   </svg>
 );
+const IconTuition = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px]">
+    <path d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
+);
+const IconMegaphone = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px]">
+    <path d="M3 11l18-5v12L3 13v-2z" /><path d="M11.6 16.8a3 3 0 11-5.8-1.6" />
+  </svg>
+);
 
 const menuItems = [
   { path: '/admin/dashboard', label: 'Tổng quan', icon: <IconGrid /> },
@@ -58,12 +79,22 @@ const menuItems = [
   { path: '/admin/upload', label: 'Tài nguyên', icon: <IconPhoto /> },
   { path: '/admin/questions', label: 'Ngân hàng CH', icon: <IconDatabase /> },
   { path: '/admin/quizzes', label: 'Quiz', icon: <IconQuiz /> },
+  { path: '/admin/tuition', label: 'Học phí', icon: <IconTuition /> },
+  { path: '/admin/announcements', label: 'Thông báo', icon: <IconMegaphone /> },
 ];
 
 const AdminLayout = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
+
+  const toggleTheme = () => {
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -133,9 +164,8 @@ const AdminLayout = ({ children }) => {
                 key={item.path}
                 to={item.path}
                 onClick={closeSidebar}
-                className={`sidebar-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium ${
-                  isActive ? 'sidebar-active' : ''
-                }`}
+                className={`sidebar-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium ${isActive ? 'sidebar-active' : ''
+                  }`}
                 style={{
                   color: isActive ? 'var(--amber-glow)' : 'rgba(255,255,255,0.55)',
                   paddingLeft: isActive ? '9px' : '12px',
@@ -155,6 +185,26 @@ const AdminLayout = ({ children }) => {
             );
           })}
         </nav>
+
+        {/* Theme Toggle */}
+        <div className="px-3 py-2">
+          <button
+            onClick={toggleTheme}
+            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-[13px] font-medium"
+            style={{ color: 'rgba(255,255,255,0.6)' }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'transparent';
+            }}
+          >
+            <span className="flex items-center justify-center w-8 h-8 rounded-lg" style={{ background: 'rgba(255,255,255,0.04)' }}>
+              {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
+            </span>
+            <span>{theme === 'dark' ? 'Chế độ sáng' : 'Chế độ tối'}</span>
+          </button>
+        </div>
 
         {/* Logout */}
         <div className="px-3 py-4 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>

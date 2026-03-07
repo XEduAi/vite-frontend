@@ -11,6 +11,21 @@ import ClassDetail from './pages/student/ClassDetail';
 import QuizList from './pages/student/QuizList';
 import DoQuiz from './pages/student/DoQuiz';
 import QuizResult from './pages/student/QuizResult';
+import TuitionManager from './pages/admin/TuitionManager';
+import AnnouncementManager from './pages/admin/AnnouncementManager';
+import MyTuition from './pages/student/MyTuition';
+import MyPerformance from './pages/student/MyPerformance';
+import Profile from './pages/student/Profile';
+import { useEffect } from 'react';
+
+// Initialize theme on app load
+const initTheme = () => {
+  const saved = localStorage.getItem('theme');
+  if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
+};
+initTheme();
 
 const AdminRoute = ({ children }) => {
   const token = localStorage.getItem('token');
@@ -38,6 +53,8 @@ function App() {
         <Route path="/admin/upload" element={<AdminRoute><MediaManager /></AdminRoute>} />
         <Route path="/admin/questions" element={<AdminRoute><QuestionPool /></AdminRoute>} />
         <Route path="/admin/quizzes" element={<AdminRoute><QuizManager /></AdminRoute>} />
+        <Route path="/admin/tuition" element={<AdminRoute><TuitionManager /></AdminRoute>} />
+        <Route path="/admin/announcements" element={<AdminRoute><AnnouncementManager /></AdminRoute>} />
 
         {/* Student */}
         <Route path="/student/dashboard" element={<StudentRoute><MyLearning /></StudentRoute>} />
@@ -45,6 +62,9 @@ function App() {
         <Route path="/student/quizzes" element={<StudentRoute><QuizList /></StudentRoute>} />
         <Route path="/student/quiz/:attemptId" element={<StudentRoute><DoQuiz /></StudentRoute>} />
         <Route path="/student/quiz-result/:attemptId" element={<StudentRoute><QuizResult /></StudentRoute>} />
+        <Route path="/student/tuition" element={<StudentRoute><MyTuition /></StudentRoute>} />
+        <Route path="/student/performance" element={<StudentRoute><MyPerformance /></StudentRoute>} />
+        <Route path="/student/profile" element={<StudentRoute><Profile /></StudentRoute>} />
 
         {/* Legacy redirect */}
         <Route path="/my-learning" element={<Navigate to="/student/dashboard" replace />} />

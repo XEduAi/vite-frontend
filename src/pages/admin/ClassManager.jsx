@@ -4,10 +4,8 @@ import AdminLayout from '../../components/AdminLayout';
 
 const DAYS = ['', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'];
 
-const inputCls = 'w-full px-3.5 py-2.5 rounded-xl border text-sm transition-all';
-const inputStyle = { borderColor: '#e5ddd0', background: '#ffffff', color: '#1c1917' };
-const selectCls = 'w-full px-3.5 py-2.5 rounded-xl border text-sm bg-white transition-all';
-const selectStyle = { borderColor: '#e5ddd0', color: '#1c1917' };
+const inputCls = 'input';
+const selectCls = 'input';
 
 const ClassManager = () => {
   const [classes, setClasses] = useState([]);
@@ -187,15 +185,12 @@ const ClassManager = () => {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <div>
-          <h1 className="font-display text-2xl font-semibold" style={{ color: '#1c1917' }}>Quản lý Lớp học</h1>
-          <p className="text-sm mt-0.5" style={{ color: '#78716c' }}>{classes.length} lớp đang hoạt động</p>
+          <h1 className="font-display text-2xl font-semibold" style={{ color: 'var(--text-primary)' }}>Quản lý Lớp học</h1>
+          <p className="text-sm mt-0.5" style={{ color: 'var(--text-muted)' }}>{classes.length} lớp đang hoạt động</p>
         </div>
         <button
           onClick={() => { resetForm(); setShowForm(!showForm); }}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-white transition-all"
-          style={{ background: '#e8850a' }}
-          onMouseEnter={(e) => e.currentTarget.style.background = '#d4740a'}
-          onMouseLeave={(e) => e.currentTarget.style.background = '#e8850a'}
+          className="btn-primary"
         >
           {showForm && !editingClass ? '✕ Đóng' : '+ Tạo lớp mới'}
         </button>
@@ -203,52 +198,42 @@ const ClassManager = () => {
 
       {/* Toast */}
       {message.content && (
-        <div
-          className="flex items-center gap-2.5 p-3.5 rounded-xl mb-5 text-sm border fade-in"
-          style={
-            message.type === 'error'
-              ? { background: '#fef2f2', borderColor: '#fecaca', color: '#b91c1c' }
-              : { background: '#f0fdf4', borderColor: '#bbf7d0', color: '#166534' }
-          }
-        >
+        <div className={`toast mb-5 ${message.type === 'error' ? 'toast-error' : 'toast-success'}`}>
           {message.type === 'error' ? '⚠' : '✓'} {message.content}
         </div>
       )}
 
       {/* Form */}
       {showForm && (
-        <div
-          className="bg-white rounded-2xl border p-6 mb-6 fade-in"
-          style={{ borderColor: '#e5ddd0', boxShadow: '0 2px 8px rgba(160,100,20,0.07)' }}
-        >
-          <h2 className="font-semibold text-sm mb-4 pb-3 border-b" style={{ color: '#1c1917', borderColor: '#f0ebe4' }}>
+        <div className="card p-6 mb-6 fade-in">
+          <h2 className="font-semibold text-sm mb-4 pb-3 border-b" style={{ color: 'var(--text-primary)', borderColor: 'var(--border-light)' }}>
             {editingClass ? `Chỉnh sửa: ${editingClass.name}` : 'Tạo lớp mới'}
           </h2>
           <form onSubmit={handleCreateOrUpdate} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium mb-1.5" style={{ color: '#78716c' }}>Tên lớp *</label>
+                <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Tên lớp *</label>
                 <input type="text" value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className={inputCls} style={inputStyle} required placeholder="VD: Toán 9 Nâng Cao" />
+                  className={inputCls} required placeholder="VD: Toán 9 Nâng Cao" />
               </div>
               <div>
-                <label className="block text-xs font-medium mb-1.5" style={{ color: '#78716c' }}>Mô tả</label>
+                <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Mô tả</label>
                 <input type="text" value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className={inputCls} style={inputStyle} />
+                  className={inputCls} />
               </div>
               <div>
-                <label className="block text-xs font-medium mb-1.5" style={{ color: '#78716c' }}>Học phí (VND)</label>
+                <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Học phí (VND)</label>
                 <input type="number" value={formData.tuitionFee}
                   onChange={(e) => setFormData({ ...formData, tuitionFee: e.target.value })}
-                  className={inputCls} style={inputStyle} placeholder="500000" />
+                  className={inputCls} placeholder="500000" />
               </div>
               <div>
-                <label className="block text-xs font-medium mb-1.5" style={{ color: '#78716c' }}>Loại phí</label>
+                <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Loại phí</label>
                 <select value={formData.feeType}
                   onChange={(e) => setFormData({ ...formData, feeType: e.target.value })}
-                  className={selectCls} style={selectStyle}>
+                  className={selectCls}>
                   <option value="monthly">Theo tháng</option>
                   <option value="per_session">Theo buổi</option>
                 </select>
@@ -258,10 +243,10 @@ const ClassManager = () => {
             {/* Schedule */}
             <div>
               <div className="flex items-center justify-between mb-2.5">
-                <label className="text-xs font-medium" style={{ color: '#78716c' }}>Lịch học</label>
+                <label className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>Lịch học</label>
                 <button type="button" onClick={addScheduleSlot}
                   className="text-xs font-medium px-2.5 py-1 rounded-lg transition-all"
-                  style={{ color: '#e8850a', background: 'rgba(232,133,10,0.08)' }}>
+                  style={{ color: 'var(--amber-warm)', background: 'var(--amber-soft)' }}>
                   + Thêm buổi
                 </button>
               </div>
@@ -269,36 +254,29 @@ const ClassManager = () => {
                 {formData.scheduleTemplate.map((slot, i) => (
                   <div key={i} className="flex gap-2 items-center flex-wrap">
                     <select value={slot.day} onChange={(e) => updateScheduleSlot(i, 'day', e.target.value)}
-                      className="px-3 py-2 rounded-xl border text-sm bg-white"
-                      style={{ borderColor: '#e5ddd0', color: '#1c1917' }}>
+                      className="input w-auto">
                       {[2, 3, 4, 5, 6, 7, 1].map(d => <option key={d} value={d}>{DAYS[d]}</option>)}
                     </select>
                     <input type="time" value={slot.time}
                       onChange={(e) => updateScheduleSlot(i, 'time', e.target.value)}
-                      className="px-3 py-2 rounded-xl border text-sm"
-                      style={{ borderColor: '#e5ddd0', color: '#1c1917' }} />
+                      className="input w-auto" />
                     <input type="number" value={slot.duration}
                       onChange={(e) => updateScheduleSlot(i, 'duration', e.target.value)}
-                      className="w-20 px-3 py-2 rounded-xl border text-sm"
-                      style={{ borderColor: '#e5ddd0', color: '#1c1917' }} placeholder="phút" />
-                    <span className="text-xs" style={{ color: '#a8a29e' }}>phút</span>
+                      className="input w-20" placeholder="phút" />
+                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>phút</span>
                     <button type="button" onClick={() => removeScheduleSlot(i)}
                       className="text-xs px-2 py-1 rounded-lg transition-all"
-                      style={{ color: '#dc2626', background: 'rgba(220,38,38,0.08)' }}>✕</button>
+                      style={{ color: 'var(--danger)', background: 'var(--danger-light)' }}>✕</button>
                   </div>
                 ))}
               </div>
             </div>
 
             <div className="flex gap-2 pt-1">
-              <button type="submit"
-                className="px-5 py-2.5 rounded-xl text-sm font-medium text-white"
-                style={{ background: '#e8850a' }}>
+              <button type="submit" className="btn-primary">
                 {editingClass ? 'Lưu thay đổi' : 'Tạo lớp'}
               </button>
-              <button type="button" onClick={resetForm}
-                className="px-5 py-2.5 rounded-xl border text-sm font-medium"
-                style={{ borderColor: '#e5ddd0', color: '#78716c' }}>
+              <button type="button" onClick={resetForm} className="btn-secondary">
                 Hủy
               </button>
             </div>
@@ -311,33 +289,32 @@ const ClassManager = () => {
 
         {/* Class list */}
         <div
-          className="lg:col-span-2 bg-white rounded-2xl border overflow-hidden"
-          style={{ borderColor: '#e5ddd0', boxShadow: '0 1px 3px rgba(160,100,20,0.06)' }}
+          className="lg:col-span-2 card overflow-hidden"
         >
-          <div className="px-5 py-3.5 border-b" style={{ borderColor: '#f0ebe4', background: '#faf7f2' }}>
-            <h3 className="text-xs font-semibold" style={{ color: '#a8a29e' }}>DANH SÁCH LỚP ({classes.length})</h3>
+          <div className="px-5 py-3.5 border-b" style={{ borderColor: 'var(--border-light)', background: 'var(--cream-warm)' }}>
+            <h3 className="text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>DANH SÁCH LỚP ({classes.length})</h3>
           </div>
 
           {loading ? (
-            <div className="py-10 text-center text-sm" style={{ color: '#a8a29e' }}>Đang tải...</div>
+            <div className="py-10 text-center text-sm" style={{ color: 'var(--text-muted)' }}>Đang tải...</div>
           ) : (
-            <div className="divide-y overflow-y-auto" style={{ maxHeight: 560, borderColor: '#f8f4f0' }}>
+            <div className="divide-y overflow-y-auto" style={{ maxHeight: 560, borderColor: 'var(--border-light)' }}>
               {classes.map(cls => (
                 <div
                   key={cls._id}
                   className="p-4 cursor-pointer transition-colors"
                   style={{
-                    background: selectedClass?._id === cls._id ? 'rgba(232,133,10,0.06)' : 'transparent',
-                    borderLeft: selectedClass?._id === cls._id ? '3px solid #e8850a' : '3px solid transparent',
+                    background: selectedClass?._id === cls._id ? 'var(--amber-soft)' : 'transparent',
+                    borderLeft: selectedClass?._id === cls._id ? '3px solid var(--amber-warm)' : '3px solid transparent',
                   }}
                   onClick={() => viewClassDetail(cls)}
-                  onMouseEnter={(e) => { if (selectedClass?._id !== cls._id) e.currentTarget.style.background = '#fdf8f5'; }}
+                  onMouseEnter={(e) => { if (selectedClass?._id !== cls._id) e.currentTarget.style.background = 'var(--cream-warm)'; }}
                   onMouseLeave={(e) => { if (selectedClass?._id !== cls._id) e.currentTarget.style.background = 'transparent'; }}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <h4 className="font-medium text-sm truncate" style={{ color: '#1c1917' }}>{cls.name}</h4>
-                      <p className="text-xs mt-0.5" style={{ color: '#a8a29e' }}>
+                      <h4 className="font-medium text-sm truncate" style={{ color: 'var(--text-primary)' }}>{cls.name}</h4>
+                      <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
                         {cls.students?.length || 0} học viên · {cls.feeType === 'monthly' ? 'Tháng' : 'Buổi'}
                       </p>
                     </div>
@@ -345,19 +322,19 @@ const ClassManager = () => {
                       <button
                         onClick={(e) => { e.stopPropagation(); handleEdit(cls); }}
                         className="p-1.5 rounded-lg transition-all text-xs"
-                        style={{ color: '#14213d', background: 'rgba(20,33,61,0.07)' }}
+                        style={{ color: 'var(--amber-warm)', background: 'var(--amber-soft)' }}
                       >✏</button>
                       <button
                         onClick={(e) => { e.stopPropagation(); handleDelete(cls._id); }}
                         className="p-1.5 rounded-lg transition-all text-xs"
-                        style={{ color: '#dc2626', background: 'rgba(220,38,38,0.07)' }}
+                        style={{ color: 'var(--danger)', background: 'var(--danger-light)' }}
                       >✕</button>
                     </div>
                   </div>
                 </div>
               ))}
               {classes.length === 0 && (
-                <div className="py-10 text-center text-sm" style={{ color: '#a8a29e' }}>Chưa có lớp nào</div>
+                <div className="py-10 text-center text-sm" style={{ color: 'var(--text-muted)' }}>Chưa có lớp nào</div>
               )}
             </div>
           )}
@@ -368,18 +345,15 @@ const ClassManager = () => {
           {selectedClass ? (
             <>
               {/* Info card */}
-              <div
-                className="bg-white rounded-2xl border p-5"
-                style={{ borderColor: '#e5ddd0', boxShadow: '0 1px 3px rgba(160,100,20,0.06)' }}
-              >
-                <h2 className="font-display text-lg font-semibold mb-1" style={{ color: '#1c1917' }}>{selectedClass.name}</h2>
-                <p className="text-sm mb-3" style={{ color: '#78716c' }}>{selectedClass.description || 'Chưa có mô tả'}</p>
+              <div className="card p-5">
+                <h2 className="font-display text-lg font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>{selectedClass.name}</h2>
+                <p className="text-sm mb-3" style={{ color: 'var(--text-secondary)' }}>{selectedClass.description || 'Chưa có mô tả'}</p>
                 <div className="flex flex-wrap gap-2 text-xs">
-                  <span className="px-2.5 py-1 rounded-lg font-medium" style={{ background: 'rgba(232,133,10,0.1)', color: '#e8850a' }}>
+                  <span className="badge badge-amber">
                     {selectedClass.tuitionFee?.toLocaleString('vi-VN') || 0}đ / {selectedClass.feeType === 'monthly' ? 'tháng' : 'buổi'}
                   </span>
                   {selectedClass.scheduleTemplate?.map((s, i) => (
-                    <span key={i} className="px-2.5 py-1 rounded-lg" style={{ background: '#f0ebe4', color: '#78716c' }}>
+                    <span key={i} className="badge badge-gray">
                       {DAYS[s.day]} {s.time} ({s.duration}p)
                     </span>
                   ))}
@@ -387,17 +361,13 @@ const ClassManager = () => {
               </div>
 
               {/* Students in class */}
-              <div
-                className="bg-white rounded-2xl border p-5"
-                style={{ borderColor: '#e5ddd0', boxShadow: '0 1px 3px rgba(160,100,20,0.06)' }}
-              >
-                <h3 className="font-semibold text-sm mb-3" style={{ color: '#1c1917' }}>
+              <div className="card p-5">
+                <h3 className="font-semibold text-sm mb-3" style={{ color: 'var(--text-primary)' }}>
                   Học viên ({selectedClass.students?.length || 0})
                 </h3>
                 <div className="flex gap-2 mb-3">
                   <select value={assignStudentId} onChange={(e) => setAssignStudentId(e.target.value)}
-                    className="flex-1 px-3 py-2 rounded-xl border text-sm bg-white"
-                    style={{ borderColor: '#e5ddd0', color: '#1c1917' }}>
+                    className="input flex-1">
                     <option value="">-- Chọn học viên để thêm --</option>
                     {availableStudents.map(s => (
                       <option key={s._id} value={s._id}>{s.fullName} (@{s.username})</option>
@@ -405,47 +375,43 @@ const ClassManager = () => {
                   </select>
                   <button onClick={handleAssignStudent}
                     className="px-4 py-2 rounded-xl text-sm font-medium text-white"
-                    style={{ background: '#059669' }}>
+                    style={{ background: 'var(--success)' }}>
                     Thêm
                   </button>
                 </div>
                 <div className="space-y-1.5">
                   {selectedClass.students?.map(s => (
-                    <div key={s._id} className="flex items-center justify-between px-3 py-2 rounded-xl" style={{ background: '#faf7f2' }}>
+                    <div key={s._id} className="flex items-center justify-between px-3 py-2 rounded-xl" style={{ background: 'var(--cream-warm)' }}>
                       <div className="flex items-center gap-2">
                         <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold"
-                          style={{ background: 'rgba(232,133,10,0.12)', color: '#e8850a' }}>
+                          style={{ background: 'var(--amber-soft)', color: 'var(--amber-warm)' }}>
                           {s.fullName?.charAt(0)?.toUpperCase()}
                         </div>
-                        <span className="text-sm font-medium" style={{ color: '#1c1917' }}>{s.fullName}</span>
-                        <span className="text-xs" style={{ color: '#a8a29e' }}>@{s.username}</span>
-                        {s.grade && <span className="text-xs px-1.5 py-0.5 rounded-md" style={{ background: '#fef3c7', color: '#92400e' }}>Lớp {s.grade}</span>}
+                        <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{s.fullName}</span>
+                        <span className="text-xs" style={{ color: 'var(--text-muted)' }}>@{s.username}</span>
+                        {s.grade && <span className="badge badge-amber">Lớp {s.grade}</span>}
                       </div>
                       <button onClick={() => handleRemoveStudent(s._id)}
                         className="text-xs px-2 py-1 rounded-lg"
-                        style={{ color: '#dc2626', background: 'rgba(220,38,38,0.08)' }}>
+                        style={{ color: 'var(--danger)', background: 'var(--danger-light)' }}>
                         Gỡ
                       </button>
                     </div>
                   ))}
                   {(!selectedClass.students || selectedClass.students.length === 0) && (
-                    <p className="text-sm text-center py-3" style={{ color: '#a8a29e' }}>Chưa có học viên</p>
+                    <p className="text-sm text-center py-3" style={{ color: 'var(--text-muted)' }}>Chưa có học viên</p>
                   )}
                 </div>
               </div>
 
               {/* Media in class */}
-              <div
-                className="bg-white rounded-2xl border p-5"
-                style={{ borderColor: '#e5ddd0', boxShadow: '0 1px 3px rgba(160,100,20,0.06)' }}
-              >
-                <h3 className="font-semibold text-sm mb-3" style={{ color: '#1c1917' }}>
+              <div className="card p-5">
+                <h3 className="font-semibold text-sm mb-3" style={{ color: 'var(--text-primary)' }}>
                   Tài liệu ({selectedClass.mediaResources?.length || 0})
                 </h3>
                 <div className="flex gap-2 mb-3">
                   <select value={assignMediaId} onChange={(e) => setAssignMediaId(e.target.value)}
-                    className="flex-1 px-3 py-2 rounded-xl border text-sm bg-white"
-                    style={{ borderColor: '#e5ddd0', color: '#1c1917' }}>
+                    className="input flex-1">
                     <option value="">-- Chọn tài liệu để gán --</option>
                     {availableMedias.map(m => (
                       <option key={m._id} value={m._id}>{m.title} ({m.type})</option>
@@ -453,16 +419,16 @@ const ClassManager = () => {
                   </select>
                   <button onClick={handleAssignMedia}
                     className="px-4 py-2 rounded-xl text-sm font-medium text-white"
-                    style={{ background: '#7c3aed' }}>
+                    style={{ background: 'var(--purple)' }}>
                     Gán
                   </button>
                 </div>
                 <div className="space-y-1.5">
                   {selectedClass.mediaResources?.map(m => (
-                    <div key={m._id} className="flex items-center justify-between px-3 py-2 rounded-xl" style={{ background: '#faf7f2' }}>
+                    <div key={m._id} className="flex items-center justify-between px-3 py-2 rounded-xl" style={{ background: 'var(--cream-warm)' }}>
                       <a href={m.url} target="_blank" rel="noreferrer"
                         className="text-sm font-medium flex items-center gap-2 hover:underline"
-                        style={{ color: '#14213d' }}>
+                        style={{ color: 'var(--text-primary)' }}>
                         <span className="text-base">
                           {m.type === 'video' ? '📺' : m.type === 'image' ? '🖼️' : '📄'}
                         </span>
@@ -470,25 +436,25 @@ const ClassManager = () => {
                       </a>
                       <button onClick={() => handleRemoveMedia(m._id)}
                         className="text-xs px-2 py-1 rounded-lg"
-                        style={{ color: '#dc2626', background: 'rgba(220,38,38,0.08)' }}>
+                        style={{ color: 'var(--danger)', background: 'var(--danger-light)' }}>
                         Gỡ
                       </button>
                     </div>
                   ))}
                   {(!selectedClass.mediaResources || selectedClass.mediaResources.length === 0) && (
-                    <p className="text-sm text-center py-3" style={{ color: '#a8a29e' }}>Chưa có tài liệu</p>
+                    <p className="text-sm text-center py-3" style={{ color: 'var(--text-muted)' }}>Chưa có tài liệu</p>
                   )}
                 </div>
               </div>
             </>
           ) : (
             <div
-              className="bg-white rounded-2xl border flex flex-col items-center justify-center"
-              style={{ borderColor: '#e5ddd0', minHeight: 300, boxShadow: '0 1px 3px rgba(160,100,20,0.06)' }}
+              className="card flex flex-col items-center justify-center"
+              style={{ minHeight: 300 }}
             >
               <div className="text-4xl mb-3">📋</div>
-              <p className="font-medium text-sm" style={{ color: '#78716c' }}>Chọn một lớp để xem chi tiết</p>
-              <p className="text-xs mt-1" style={{ color: '#a8a29e' }}>Hoặc tạo lớp mới bằng nút phía trên</p>
+              <p className="font-medium text-sm" style={{ color: 'var(--text-secondary)' }}>Chọn một lớp để xem chi tiết</p>
+              <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>Hoặc tạo lớp mới bằng nút phía trên</p>
             </div>
           )}
         </div>

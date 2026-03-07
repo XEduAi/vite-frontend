@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import axiosClient from '../../api/axiosClient';
 import AdminLayout from '../../components/AdminLayout';
 
@@ -20,6 +20,12 @@ const StudentManager = () => {
 
   const [resetModal, setResetModal] = useState(null);
   const [newPassword, setNewPassword] = useState('');
+
+  // Import states
+  const [showImport, setShowImport] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState(null);
+  const fileInputRef = useRef(null);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetchStudents(); }, [filterGrade, filterStatus]);
@@ -134,6 +140,60 @@ const StudentManager = () => {
     }
   };
 
+  const handleImport = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImporting(true);
+    setImportResult(null);
+
+    try {
+      const text = await file.text();
+      let students = [];
+
+      // Check if it's CSV or JSON
+      if (file.name.endsWith('.json')) {
+        students = JSON.parse(text);
+      } else if (file.name.endsWith('.csv')) {
+        // Parse CSV
+        const lines = text.split('\n').filter(line => line.trim());
+        const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+        
+        for (let i = 1; i < lines.length; i++) {
+          const values = lines[i].split(',').map(v => v.trim());
+          const student = {};
+          headers.forEach((header, idx) => {
+            student[header] = values[idx];
+          });
+          // Map CSV columns to student fields
+          students.push({
+            username: student.username || student['tên đăng nhập'],
+            password: student.password || student['mật khẩu'],
+            fullName: student.fullname || student['họ tên'] || student['fullname'],
+            phone: student.phone || student['sđt'] || student['số điện thoại'],
+            grade: student.grade || student['lớp'],
+            parentName: student.parentname || student['tên phụ huynh'],
+            parentPhone: student.parentphone || student['sđt phụ huynh']
+          });
+        }
+      } else {
+        showMessage('Vui lòng chọn file CSV hoặc JSON', 'error');
+        setImporting(false);
+        return;
+      }
+
+      const res = await axiosClient.post('/students/import', { students });
+      setImportResult(res.data.results);
+      fetchStudents(); // Refresh list
+      showMessage(res.data.message);
+    } catch (err) {
+      showMessage(err.response?.data?.message || 'Lỗi khi import', 'error');
+    } finally {
+      setImporting(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
   return (
     <AdminLayout>
       {/* Header */}
@@ -151,6 +211,12 @@ const StudentManager = () => {
           className={showForm && !editingStudent ? 'btn-secondary flex items-center gap-2' : 'btn-primary flex items-center gap-2'}
         >
           {showForm && !editingStudent ? '✕ Đóng' : '+ Thêm học viên'}
+        </button>
+        <button
+          onClick={() => setShowImport(true)}
+          className="btn-secondary flex items-center gap-2"
+        >
+          📥 Import Excel
         </button>
       </div>
 
@@ -399,6 +465,78 @@ const StudentManager = () => {
               </button>
               <button onClick={handleResetPassword} className="btn-primary">
                 Xác nhận
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Import Modal */}
+      {showImport && (
+        <div
+          className="modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4"
+          onClick={() => { setShowImport(false); setImportResult(null); }}
+        >
+          <div
+            className="modal-content card p-6 w-full max-w-md"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="font-display font-semibold text-base mb-1" style={{ color: 'var(--text-primary)' }}>
+              Import học viên từ Excel
+            </h3>
+            <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
+              Chọn file CSV hoặc JSON chứa danh sách học viên
+            </p>
+            
+            <div className="mb-4 p-4 rounded-xl" style={{ background: 'var(--bg-secondary)' }}>
+              <p className="text-xs font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Định dạng file:</p>
+              <ul className="text-xs space-y-1" style={{ color: 'var(--text-muted)' }}>
+                <li>• CSV: username, password, fullName, phone, grade, parentName, parentPhone</li>
+                <li>• JSON: Array với các trường tương tự</li>
+              </ul>
+            </div>
+
+            <input
+              type="file"
+              ref={fileInputRef}
+              accept=".csv,.json"
+              onChange={handleImport}
+              className="input mb-4"
+              disabled={importing}
+            />
+
+            {importing && (
+              <div className="text-center py-2 mb-4">
+                <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Đang import...</span>
+              </div>
+            )}
+
+            {importResult && (
+              <div className="mb-4 p-3 rounded-xl text-sm" style={{ 
+                background: importResult.failed > 0 ? 'rgba(239,68,68,0.1)' : 'rgba(34,197,94,0.1)',
+                color: importResult.failed > 0 ? '#ef4444' : 'var(--success)'
+              }}>
+                <p>Thành công: {importResult.success}</p>
+                <p>Thất bại: {importResult.failed}</p>
+                {importResult.errors.length > 0 && (
+                  <details className="mt-2">
+                    <summary className="cursor-pointer text-xs">Xem lỗi</summary>
+                    <ul className="mt-1 text-xs">
+                      {importResult.errors.slice(0, 5).map((err, i) => (
+                        <li key={i}>• {err}</li>
+                      ))}
+                      {importResult.errors.length > 5 && (
+                        <li>... và {importResult.errors.length - 5} lỗi khác</li>
+                      )}
+                    </ul>
+                  </details>
+                )}
+              </div>
+            )}
+
+            <div className="flex gap-2 justify-end">
+              <button onClick={() => { setShowImport(false); setImportResult(null); }} className="btn-secondary">
+                Đóng
               </button>
             </div>
           </div>
