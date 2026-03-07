@@ -43,6 +43,12 @@ const IconTrophy = () => (
     <path d="M7 4h10v6a5 5 0 01-10 0V4z" />
   </svg>
 );
+const IconCards = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+    <rect x="2" y="5" width="20" height="14" rx="2" />
+    <path d="M2 10h20" />
+  </svg>
+);
 const SunIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-4 h-4">
     <circle cx="12" cy="12" r="5" />
@@ -54,20 +60,9 @@ const MoonIcon = () => (
     <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
   </svg>
 );
-const IconCards = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-    <rect x="2" y="5" width="20" height="14" rx="2" />
-    <path d="M2 10h20" />
-  </svg>
-);
 const IconMenu = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" className="w-5 h-5">
     <path d="M4 6h16M4 12h16M4 18h16" />
-  </svg>
-);
-const IconClose = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" className="w-5 h-5">
-    <path d="M6 18L18 6M6 6l12 12" />
   </svg>
 );
 
@@ -76,13 +71,13 @@ const StudentLayout = ({ children }) => {
   const location = useLocation();
   const fullName = localStorage.getItem('fullName') || 'Học viên';
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const toggleTheme = () => {
-    const newTheme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(newTheme);
-    document.documentElement.setAttribute('data-theme', newTheme);
-    localStorage.setItem('theme', newTheme);
+    const next = theme === 'dark' ? 'light' : 'dark';
+    setTheme(next);
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('theme', next);
   };
 
   const handleLogout = () => {
@@ -91,243 +86,183 @@ const StudentLayout = ({ children }) => {
   };
 
   const menuItems = [
-    { path: '/student/dashboard', label: 'Lớp của tôi', icon: <IconHome /> },
-    { path: '/student/quizzes', label: 'Kiểm tra', icon: <IconQuiz /> },
-    { path: '/student/flashcards', label: 'Flashcards', icon: <IconCards /> },
-    { path: '/student/performance', label: 'Thống kê', icon: <IconChart /> },
-    { path: '/student/achievements', label: 'Thành tích', icon: <IconTrophy /> },
-    { path: '/student/tuition', label: 'Học phí', icon: <IconTuition /> },
-    { path: '/student/profile', label: 'Tài khoản', icon: <IconUser /> },
+    { path: '/student/dashboard',    label: 'Lớp của tôi', icon: <IconHome /> },
+    { path: '/student/quizzes',      label: 'Kiểm tra',    icon: <IconQuiz /> },
+    { path: '/student/flashcards',   label: 'Flashcards',  icon: <IconCards /> },
+    { path: '/student/performance',  label: 'Thống kê',    icon: <IconChart /> },
+    { path: '/student/achievements', label: 'Thành tích',  icon: <IconTrophy /> },
+    { path: '/student/tuition',      label: 'Học phí',     icon: <IconTuition /> },
+    { path: '/student/profile',      label: 'Tài khoản',   icon: <IconUser /> },
   ];
 
-  // Bottom nav shows first 5 items; the rest go into mobile menu
-  const bottomNavItems = menuItems.slice(0, 5);
-  const moreMenuItems = menuItems.slice(5);
+  // ── Sidebar content shared between desktop fixed + mobile drawer ──
+  const SidebarContent = ({ onNav }) => (
+    <div className="flex flex-col h-full">
+
+      {/* Brand */}
+      <Link
+        to="/student/dashboard"
+        onClick={onNav}
+        className="flex items-center gap-3 px-5 py-5 shrink-0"
+      >
+        <div
+          className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+          style={{ background: 'var(--grad-amber)', boxShadow: '0 4px 12px rgba(245,158,11,0.4)' }}
+        >
+          <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4 text-white">
+            <path d="M12 14l9-5-9-5-9 5 9 5z" fill="currentColor" />
+            <path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" fill="currentColor" opacity="0.7" />
+          </svg>
+        </div>
+        <span className="font-display font-bold text-lg text-white tracking-tight">EduVN</span>
+      </Link>
+
+      {/* User card */}
+      <div className="mx-3 mb-4 px-3 py-3 rounded-xl shrink-0" style={{ background: 'rgba(255,255,255,0.07)' }}>
+        <div className="flex items-center gap-2.5">
+          <div
+            className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
+            style={{ background: 'var(--grad-amber)', color: 'white' }}
+          >
+            {fullName.charAt(0).toUpperCase()}
+          </div>
+          <div className="min-w-0">
+            <div className="text-sm font-semibold truncate text-white">{fullName}</div>
+            <div className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>Học viên</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Nav label */}
+      <div className="px-5 mb-2">
+        <span className="text-[10px] font-bold tracking-widest uppercase" style={{ color: 'rgba(255,255,255,0.3)' }}>
+          Menu
+        </span>
+      </div>
+
+      {/* Nav items */}
+      <nav className="flex-1 px-3 space-y-0.5 overflow-y-auto">
+        {menuItems.map((item) => {
+          const isActive = location.pathname.startsWith(item.path);
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              onClick={onNav}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+              style={{
+                color: isActive ? 'white' : 'rgba(255,255,255,0.55)',
+                background: isActive
+                  ? 'linear-gradient(135deg, rgba(245,158,11,0.25), rgba(234,88,12,0.18))'
+                  : 'transparent',
+                borderLeft: isActive ? '2px solid var(--amber)' : '2px solid transparent',
+              }}
+              onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; e.currentTarget.style.color = 'rgba(255,255,255,0.9)'; }}
+              onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(255,255,255,0.55)'; }}}
+            >
+              <span style={{ color: isActive ? 'var(--amber-glow)' : 'inherit' }}>{item.icon}</span>
+              {item.label}
+              {isActive && (
+                <span className="ml-auto w-1.5 h-1.5 rounded-full shrink-0" style={{ background: 'var(--amber)' }} />
+              )}
+            </Link>
+          );
+        })}
+      </nav>
+
+      {/* Bottom controls */}
+      <div className="px-3 pb-4 pt-3 shrink-0" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+        <button
+          onClick={toggleTheme}
+          className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium transition-all mb-1"
+          style={{ color: 'rgba(255,255,255,0.55)' }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; e.currentTarget.style.color = 'rgba(255,255,255,0.9)'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(255,255,255,0.55)'; }}
+        >
+          {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
+          {theme === 'dark' ? 'Chế độ sáng' : 'Chế độ tối'}
+        </button>
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+          style={{ color: 'rgba(255,255,255,0.55)' }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.15)'; e.currentTarget.style.color = '#fca5a5'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(255,255,255,0.55)'; }}
+        >
+          <IconLogout />
+          Đăng xuất
+        </button>
+      </div>
+    </div>
+  );
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--cream)' }}>
+    <div className="min-h-screen flex" style={{ background: 'var(--cream)' }}>
 
-      {/* ===== DESKTOP HEADER — two-tier ===== */}
-      <header className="hidden md:block sticky top-0 z-30 glass" style={{ borderBottom: '1px solid var(--border)' }}>
-        {/* Top row: brand + user controls */}
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="flex items-center justify-between h-12">
-            {/* Brand */}
-            <Link to="/student/dashboard" className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'var(--grad-amber)' }}>
-                <svg viewBox="0 0 24 24" fill="none" className="w-3.5 h-3.5 text-white">
-                  <path d="M12 14l9-5-9-5-9 5 9 5z" fill="currentColor" />
-                  <path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" fill="currentColor" opacity="0.6" />
-                </svg>
-              </div>
-              <span className="font-display font-bold text-base" style={{ color: 'var(--navy)' }}>EduVN</span>
-            </Link>
-
-            {/* User controls */}
-            <div className="flex items-center gap-2">
-              {/* Theme toggle */}
-              <button
-                onClick={toggleTheme}
-                className="p-1.5 rounded-lg transition-all"
-                style={{ color: 'var(--text-muted)' }}
-                title={theme === 'dark' ? 'Chế độ sáng' : 'Chế độ tối'}
-              >
-                {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
-              </button>
-
-              <div className="w-px h-5 mx-1" style={{ background: 'var(--border)' }} />
-
-              {/* Avatar + name */}
-              <Link
-                to="/student/profile"
-                className="flex items-center gap-2 px-2 py-1 rounded-lg transition-all"
-                style={{ color: 'var(--text-primary)' }}
-                onMouseEnter={e => e.currentTarget.style.background = 'var(--amber-soft)'}
-                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-              >
-                <div
-                  className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
-                  style={{ background: 'var(--amber-soft)', color: 'var(--amber-warm)' }}
-                >
-                  {fullName.charAt(0).toUpperCase()}
-                </div>
-                <div>
-                  <div className="text-xs font-semibold leading-tight" style={{ color: 'var(--text-primary)' }}>
-                    {fullName.split(' ').pop()}
-                  </div>
-                  <div className="text-[10px] leading-tight" style={{ color: 'var(--text-muted)' }}>Học viên</div>
-                </div>
-              </Link>
-
-              <div className="w-px h-5 mx-1" style={{ background: 'var(--border)' }} />
-
-              {/* Logout */}
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg transition-all"
-                style={{ color: 'var(--text-muted)' }}
-                onMouseEnter={e => { e.currentTarget.style.color = '#ef4444'; e.currentTarget.style.background = 'rgba(239,68,68,0.06)'; }}
-                onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'transparent'; }}
-                title="Đăng xuất"
-              >
-                <IconLogout />
-                <span>Thoát</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom row: nav tabs */}
-        <div className="max-w-6xl mx-auto px-6" style={{ borderTop: '1px solid var(--border-light)' }}>
-          <nav className="flex items-center gap-0 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-            {menuItems.map((item) => {
-              const isActive = location.pathname.startsWith(item.path);
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className="flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium whitespace-nowrap transition-all relative shrink-0"
-                  style={{
-                    color: isActive ? 'var(--amber-warm)' : 'var(--text-secondary)',
-                    borderBottom: isActive ? '2px solid var(--amber-warm)' : '2px solid transparent',
-                    marginBottom: '-1px',
-                  }}
-                >
-                  <span style={{ opacity: isActive ? 1 : 0.7 }}>{item.icon}</span>
-                  {item.label}
-                </Link>
-              );
-            })}
-          </nav>
-        </div>
-      </header>
+      {/* ===== DESKTOP SIDEBAR ===== */}
+      <aside
+        className="hidden md:flex flex-col fixed top-0 left-0 h-screen z-30 w-56"
+        style={{ background: 'var(--navy)', boxShadow: '4px 0 24px rgba(0,0,0,0.15)' }}
+      >
+        <SidebarContent onNav={() => {}} />
+      </aside>
 
       {/* ===== MOBILE HEADER ===== */}
-      <header className="md:hidden sticky top-0 z-30 glass" style={{ borderBottom: '1px solid var(--border)' }}>
-        <div className="flex items-center justify-between px-4 h-14">
-          {/* Brand */}
-          <Link to="/student/dashboard" className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: 'var(--grad-amber)' }}>
-              <svg viewBox="0 0 24 24" fill="none" className="w-3.5 h-3.5 text-white">
-                <path d="M12 14l9-5-9-5-9 5 9 5z" fill="currentColor" />
-              </svg>
-            </div>
-            <span className="font-display font-bold text-base" style={{ color: 'var(--navy)' }}>EduVN</span>
-          </Link>
-
-          <div className="flex items-center gap-2">
-            {/* Theme toggle */}
-            <button
-              onClick={toggleTheme}
-              className="p-1.5 rounded-lg"
-              style={{ color: 'var(--text-muted)' }}
-            >
-              {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
-            </button>
-            {/* Avatar */}
-            <div
-              className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold"
-              style={{ background: 'var(--amber-soft)', color: 'var(--amber-warm)' }}
-            >
-              {fullName.charAt(0).toUpperCase()}
-            </div>
-            {/* Hamburger */}
-            <button
-              onClick={() => setMobileMenuOpen(o => !o)}
-              className="p-1.5 rounded-lg transition-all"
-              style={{ color: 'var(--text-secondary)', background: mobileMenuOpen ? 'var(--amber-soft)' : 'transparent' }}
-            >
-              {mobileMenuOpen ? <IconClose /> : <IconMenu />}
-            </button>
+      <header
+        className="md:hidden fixed top-0 left-0 right-0 z-30 flex items-center justify-between px-4 h-14"
+        style={{ background: 'var(--navy)', boxShadow: '0 2px 16px rgba(0,0,0,0.2)' }}
+      >
+        <Link to="/student/dashboard" className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: 'var(--grad-amber)' }}>
+            <svg viewBox="0 0 24 24" fill="none" className="w-3.5 h-3.5 text-white">
+              <path d="M12 14l9-5-9-5-9 5 9 5z" fill="currentColor" />
+            </svg>
           </div>
+          <span className="font-display font-bold text-base text-white">EduVN</span>
+        </Link>
+
+        <div className="flex items-center gap-2">
+          <div
+            className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold"
+            style={{ background: 'var(--grad-amber)', color: 'white' }}
+          >
+            {fullName.charAt(0).toUpperCase()}
+          </div>
+          <button
+            onClick={() => setMobileOpen(o => !o)}
+            className="p-1.5 rounded-lg transition-all"
+            style={{ color: 'rgba(255,255,255,0.7)' }}
+          >
+            <IconMenu />
+          </button>
         </div>
-
-        {/* Mobile slide-down drawer */}
-        {mobileMenuOpen && (
-          <div className="border-t" style={{ borderColor: 'var(--border-light)', background: 'var(--white)' }}>
-            <nav className="px-3 py-2 space-y-0.5">
-              {menuItems.map((item) => {
-                const isActive = location.pathname.startsWith(item.path);
-                return (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
-                    style={{
-                      color: isActive ? 'var(--amber-warm)' : 'var(--text-secondary)',
-                      background: isActive ? 'var(--amber-soft)' : 'transparent',
-                    }}
-                  >
-                    <span>{item.icon}</span>
-                    {item.label}
-                  </Link>
-                );
-              })}
-              <div className="pt-1 mt-1" style={{ borderTop: '1px solid var(--border-light)' }}>
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium w-full text-left transition-all"
-                  style={{ color: '#ef4444' }}
-                >
-                  <IconLogout />
-                  Đăng xuất
-                </button>
-              </div>
-            </nav>
-          </div>
-        )}
       </header>
 
+      {/* ===== MOBILE DRAWER ===== */}
+      {mobileOpen && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="md:hidden fixed inset-0 z-40"
+            style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(2px)' }}
+            onClick={() => setMobileOpen(false)}
+          />
+          {/* Drawer */}
+          <aside
+            className="md:hidden fixed top-0 left-0 h-screen z-50 w-64 slide-in-left"
+            style={{ background: 'var(--navy)' }}
+          >
+            <SidebarContent onNav={() => setMobileOpen(false)} />
+          </aside>
+        </>
+      )}
+
       {/* ===== MAIN CONTENT ===== */}
-      <main className="max-w-6xl mx-auto px-4 md:px-6 py-6 pb-24 md:pb-8">
-        <div className="fade-in">
+      <main className="flex-1 md:ml-56 min-h-screen pt-14 md:pt-0">
+        <div className="max-w-5xl mx-auto px-4 md:px-8 py-6 pb-8 fade-in">
           {children}
         </div>
       </main>
-
-      {/* ===== MOBILE BOTTOM NAV (first 5 items) ===== */}
-      <nav
-        className="md:hidden fixed bottom-0 left-0 right-0 z-30 glass"
-        style={{ borderTop: '1px solid var(--border)' }}
-      >
-        <div className="flex items-center justify-around h-16 px-2">
-          {bottomNavItems.map((item) => {
-            const isActive = location.pathname.startsWith(item.path);
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className="flex flex-col items-center gap-0.5 px-2 py-2 rounded-xl transition-all flex-1"
-                style={{ color: isActive ? 'var(--amber-warm)' : 'var(--text-muted)' }}
-              >
-                <span
-                  className="flex items-center justify-center w-10 h-7 rounded-lg transition-colors"
-                  style={{ background: isActive ? 'var(--amber-soft)' : 'transparent' }}
-                >
-                  {item.icon}
-                </span>
-                <span className="text-[9px] font-semibold leading-tight text-center">{item.label}</span>
-              </Link>
-            );
-          })}
-
-          {/* "More" button opens drawer for remaining items */}
-          <button
-            onClick={() => setMobileMenuOpen(o => !o)}
-            className="flex flex-col items-center gap-0.5 px-2 py-2 rounded-xl transition-all flex-1"
-            style={{ color: mobileMenuOpen ? 'var(--amber-warm)' : 'var(--text-muted)' }}
-          >
-            <span
-              className="flex items-center justify-center w-10 h-7 rounded-lg transition-colors"
-              style={{ background: mobileMenuOpen ? 'var(--amber-soft)' : 'transparent' }}
-            >
-              <IconMenu />
-            </span>
-            <span className="text-[9px] font-semibold">Thêm</span>
-          </button>
-        </div>
-      </nav>
     </div>
   );
 };
