@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axiosClient from '../../api/axiosClient';
 import StudentLayout from '../../components/StudentLayout';
 
@@ -10,8 +11,10 @@ const difficultyColor = {
 };
 
 const MyPerformance = () => {
+  const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [smartLoading, setSmartLoading] = useState(false);
 
   useEffect(() => {
     fetchPerformance();
@@ -26,6 +29,17 @@ const MyPerformance = () => {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSmartPractice = async () => {
+    try {
+      setSmartLoading(true);
+      const res = await axiosClient.post('/student/smart-practice');
+      navigate(`/student/quiz/${res.data.attemptId}`);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Không thể tạo bài luyện tập. Hãy làm thêm bài để có dữ liệu điểm yếu.');
+      setSmartLoading(false);
     }
   };
 
@@ -74,14 +88,47 @@ const MyPerformance = () => {
   return (
     <StudentLayout>
       <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="mb-6 fade-in">
-          <h1 className="font-display text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
-            Thống kê học tập
-          </h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
-            Theo dõi tiến trình và cải thiện kết quả học tập
-          </p>
+        {/* Header + Smart Practice CTA */}
+        <div className="flex items-start justify-between gap-4 mb-6 fade-in flex-wrap">
+          <div>
+            <h1 className="font-display text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+              Thống kê học tập
+            </h1>
+            <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
+              Theo dõi tiến trình và cải thiện kết quả học tập
+            </p>
+            {/* Weak topics hint */}
+            {topicStats.length > 0 && (
+              <p className="text-xs mt-2" style={{ color: 'var(--text-muted)' }}>
+                Dựa trên kết quả:{' '}
+                {topicStats.slice(0, 2).map((t, i) => (
+                  <span key={t.topic}>
+                    {i > 0 && ', '}
+                    <span style={{ color: 'var(--danger)' }}>{t.topic} ({t.percentage}%)</span>
+                  </span>
+                ))}
+              </p>
+            )}
+          </div>
+          {topicStats.length > 0 && (
+            <button
+              onClick={handleSmartPractice}
+              disabled={smartLoading}
+              className="shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all"
+              style={{
+                background: smartLoading ? 'var(--border)' : 'linear-gradient(135deg, #f59e0b, #d97706)',
+                color: 'white',
+                opacity: smartLoading ? 0.7 : 1,
+              }}>
+              {smartLoading ? (
+                <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+              ) : '🎯'}
+              {smartLoading ? 'Đang tạo...' : 'Luyện tập điểm yếu'}
+            </button>
+          )}
         </div>
 
         {/* Summary cards */}

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import axiosClient from '../../api/axiosClient';
 import AdminLayout from '../../components/AdminLayout';
 
@@ -357,6 +358,15 @@ const ClassManager = () => {
                       {DAYS[s.day]} {s.time} ({s.duration}p)
                     </span>
                   ))}
+                </div>
+                <div className="mt-4 pt-4 border-t" style={{ borderColor: 'var(--border-light)' }}>
+                  <Link
+                    to={`/admin/classes/${selectedClass._id}/lessons`}
+                    className="inline-flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-xl transition-all"
+                    style={{ background: 'var(--amber-soft)', color: 'var(--amber-warm)' }}
+                  >
+                    📚 Quản lý bài học
+                  </Link>
                 </div>
               </div>
 

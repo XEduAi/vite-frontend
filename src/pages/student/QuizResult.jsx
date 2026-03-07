@@ -4,10 +4,62 @@ import axiosClient from '../../api/axiosClient';
 import StudentLayout from '../../components/StudentLayout';
 import LatexRenderer from '../../components/LatexRenderer';
 
+// Small overlay that auto-dismisses after 4 seconds
+const GamificationOverlay = ({ data, onClose }) => {
+  useEffect(() => {
+    const t = setTimeout(onClose, 4000);
+    return () => clearTimeout(t);
+  }, [onClose]);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center pb-10 pointer-events-none px-4">
+      <div className="pointer-events-auto rounded-2xl shadow-2xl p-5 max-w-sm w-full fade-in-up"
+        style={{ background: 'linear-gradient(135deg, #0a1628, #1e3a5f)', border: '1px solid rgba(245,158,11,0.3)' }}>
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-sm font-bold text-white">🎉 Kết quả nhận được</span>
+          <button onClick={onClose} className="text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>✕</button>
+        </div>
+        <div className="flex items-center gap-3 flex-wrap">
+          {data.xpEarned > 0 && (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-bold"
+              style={{ background: 'rgba(245,158,11,0.2)', color: '#fbbf24' }}>
+              +{data.xpEarned} XP
+            </div>
+          )}
+          {data.streakCount > 0 && (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-bold"
+              style={{ background: 'rgba(239,68,68,0.2)', color: '#fca5a5' }}>
+              🔥 {data.streakCount} ngày liên tiếp
+            </div>
+          )}
+          {data.levelUp && (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-bold"
+              style={{ background: 'rgba(139,92,246,0.2)', color: '#c4b5fd' }}>
+              ⬆ Lên cấp mới!
+            </div>
+          )}
+        </div>
+        {data.newBadges?.length > 0 && (
+          <div className="mt-3 pt-3 border-t" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
+            <div className="text-xs font-medium mb-2" style={{ color: 'rgba(255,255,255,0.6)' }}>Huy hiệu mới:</div>
+            <div className="flex gap-2 flex-wrap">
+              {data.newBadges.map(b => (
+                <span key={b.id} className="text-xl" title={b.name}>{b.icon}</span>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const QuizResult = () => {
   const { attemptId } = useParams();
   const [attempt, setAttempt] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [gamification, setGamification] = useState(null);
+  const [showOverlay, setShowOverlay] = useState(false);
 
   useEffect(() => {
     const fetchResult = async () => {
@@ -15,6 +67,14 @@ const QuizResult = () => {
         setLoading(true);
         const res = await axiosClient.get(`/attempts/${attemptId}/result`);
         setAttempt(res.data.attempt);
+        // Show gamification overlay if present
+        if (res.data.gamification) {
+          const g = res.data.gamification;
+          if (g.xpEarned > 0 || g.newBadges?.length > 0 || g.levelUp || g.streakCount > 1) {
+            setGamification(g);
+            setShowOverlay(true);
+          }
+        }
       } catch (err) {
         console.error(err);
       } finally {
@@ -70,6 +130,9 @@ const QuizResult = () => {
 
   return (
     <StudentLayout>
+      {showOverlay && gamification && (
+        <GamificationOverlay data={gamification} onClose={() => setShowOverlay(false)} />
+      )}
       <div className="max-w-3xl mx-auto">
         {/* Result banner */}
         <div className="rounded-2xl p-8 md:p-10 text-center mb-8 relative overflow-hidden fade-in-up" style={{ background: grade.gradient }}>

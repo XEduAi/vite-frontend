@@ -16,7 +16,10 @@ import AnnouncementManager from './pages/admin/AnnouncementManager';
 import MyTuition from './pages/student/MyTuition';
 import MyPerformance from './pages/student/MyPerformance';
 import Profile from './pages/student/Profile';
-import { useEffect } from 'react';
+import Achievements from './pages/student/Achievements';
+import Flashcards from './pages/student/Flashcards';
+import LessonView from './pages/student/LessonView';
+import LessonManager from './pages/admin/LessonManager';
 
 // Initialize theme on app load
 const initTheme = () => {
@@ -55,6 +58,7 @@ function App() {
         <Route path="/admin/quizzes" element={<AdminRoute><QuizManager /></AdminRoute>} />
         <Route path="/admin/tuition" element={<AdminRoute><TuitionManager /></AdminRoute>} />
         <Route path="/admin/announcements" element={<AdminRoute><AnnouncementManager /></AdminRoute>} />
+        <Route path="/admin/classes/:classId/lessons" element={<AdminRoute><LessonManager /></AdminRoute>} />
 
         {/* Student */}
         <Route path="/student/dashboard" element={<StudentRoute><MyLearning /></StudentRoute>} />
@@ -65,6 +69,9 @@ function App() {
         <Route path="/student/tuition" element={<StudentRoute><MyTuition /></StudentRoute>} />
         <Route path="/student/performance" element={<StudentRoute><MyPerformance /></StudentRoute>} />
         <Route path="/student/profile" element={<StudentRoute><Profile /></StudentRoute>} />
+        <Route path="/student/achievements" element={<StudentRoute><Achievements /></StudentRoute>} />
+        <Route path="/student/flashcards" element={<StudentRoute><Flashcards /></StudentRoute>} />
+        <Route path="/student/class/:classId/lessons" element={<StudentRoute><LessonView /></StudentRoute>} />
 
         {/* Legacy redirect */}
         <Route path="/my-learning" element={<Navigate to="/student/dashboard" replace />} />

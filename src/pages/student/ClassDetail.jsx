@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axiosClient from '../../api/axiosClient';
 import StudentLayout from '../../components/StudentLayout';
+import { useNavigate } from 'react-router-dom';
 
 const DAYS = ['', 'Chủ nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
 
@@ -186,6 +187,16 @@ const ClassDetail = () => {
 
       {/* Media section */}
       <div className="card overflow-hidden fade-in" style={{ animationDelay: '0.1s' }}>
+        {/* Section header with Lessons shortcut */}
+        <div className="flex items-center justify-between px-5 pt-4 pb-2">
+          <span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>Tài nguyên lớp học</span>
+          <Link
+            to={`/student/class/${id}/lessons`}
+            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all"
+            style={{ background: 'var(--amber-soft)', color: 'var(--amber-warm)' }}>
+            📚 Xem bài học →
+          </Link>
+        </div>
         {/* Tabs */}
         <div className="border-b px-5 pt-2" style={{ borderColor: 'var(--border-light)' }}>
           <div className="flex gap-1 overflow-x-auto">

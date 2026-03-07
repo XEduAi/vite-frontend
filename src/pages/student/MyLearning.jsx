@@ -77,6 +77,7 @@ const MyLearning = () => {
   const [dashboard, setDashboard] = useState(null);
   const [dashLoading, setDashLoading] = useState(true);
   const [announcements, setAnnouncements] = useState([]);
+  const [gamification, setGamification] = useState(null);
   const fullName = localStorage.getItem('fullName') || 'Học viên';
 
   useEffect(() => {
@@ -113,9 +114,19 @@ const MyLearning = () => {
       }
     };
 
+    const fetchGamification = async () => {
+      try {
+        const res = await axiosClient.get('/student/gamification');
+        setGamification(res.data);
+      } catch {
+        // Gamification is optional — silently ignore
+      }
+    };
+
     fetchClasses();
     fetchDashboard();
     fetchAnnouncements();
+    fetchGamification();
   }, []);
 
   const getGreeting = () => {
@@ -144,6 +155,27 @@ const MyLearning = () => {
           {loading ? 'Đang tải...' : `Bạn đang theo học ${classes.length} lớp`}
         </p>
       </div>
+
+      {/* === GAMIFICATION BAR === */}
+      {gamification && (gamification.level > 1 || gamification.xp > 0 || gamification.streak > 0) && (
+        <Link to="/student/achievements"
+          className="flex items-center gap-3 rounded-2xl px-4 py-2.5 mb-5 fade-in-up card-interactive"
+          style={{ background: 'linear-gradient(135deg, #0a1628, #1e3a5f)', border: '1px solid rgba(245,158,11,0.25)' }}>
+          <span className="text-sm font-bold px-2 py-0.5 rounded-lg"
+            style={{ background: 'rgba(245,158,11,0.2)', color: '#fbbf24' }}>
+            ⭐ Cấp {gamification.level}
+          </span>
+          {gamification.streak > 0 && (
+            <span className="text-sm font-semibold" style={{ color: '#fca5a5' }}>
+              🔥 {gamification.streak} ngày liên tiếp
+            </span>
+          )}
+          <span className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.7)' }}>
+            {gamification.xp} XP
+          </span>
+          <span className="ml-auto text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>Xem thành tích →</span>
+        </Link>
+      )}
 
       {/* === IMPORTANT ANNOUNCEMENTS BANNER === */}
       {hasAnnouncements && (

@@ -11,6 +11,8 @@ const QuizList = () => {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState('official');
   const [showBuilder, setShowBuilder] = useState(false);
+  const [weakTopics, setWeakTopics] = useState([]);
+  const [smartLoading, setSmartLoading] = useState(false);
 
   const [filterOptions, setFilterOptions] = useState({ subjects: [], topics: [], grades: [] });
   const [builderForm, setBuilderForm] = useState({
@@ -42,7 +44,29 @@ const QuizList = () => {
     }
   };
 
-  useEffect(() => { fetchQuizzes(); fetchFilters(); }, []);
+  const fetchWeakTopics = async () => {
+    try {
+      const res = await axiosClient.get('/my-performance');
+      const topics = res.data?.topicStats || [];
+      // Show only weak topics (below 60%)
+      setWeakTopics(topics.filter(t => t.percentage < 60).slice(0, 3));
+    } catch {
+      // Silently ignore — feature is optional
+    }
+  };
+
+  useEffect(() => { fetchQuizzes(); fetchFilters(); fetchWeakTopics(); }, []);
+
+  const handleSmartPractice = async () => {
+    try {
+      setSmartLoading(true);
+      const res = await axiosClient.post('/student/smart-practice');
+      navigate(`/student/quiz/${res.data.attemptId}`);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Cần làm thêm bài để có dữ liệu điểm yếu.');
+      setSmartLoading(false);
+    }
+  };
 
   const handleStartQuiz = async (quizId) => {
     try {
@@ -200,7 +224,48 @@ const QuizList = () => {
           )}
 
           {tab === 'practice' && (
-            practiceQuizzes.length === 0 ? (
+            <>
+              {/* Smart Practice suggestion card */}
+              {weakTopics.length > 0 && (
+                <div className="card rounded-2xl p-5 mb-4 fade-in-up"
+                  style={{ background: 'linear-gradient(135deg, #fef3c7, #fffbeb)', border: '1.5px solid #fbbf24' }}>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-base">🎯</span>
+                        <span className="text-sm font-bold" style={{ color: '#92400e' }}>Luyện tập điểm yếu</span>
+                      </div>
+                      <p className="text-xs mb-3" style={{ color: '#78350f' }}>
+                        Dựa trên lịch sử học tập, hệ thống phát hiện bạn cần ôn tập:
+                      </p>
+                      <div className="flex flex-wrap gap-1.5 mb-3">
+                        {weakTopics.map(t => (
+                          <span key={t.topic} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold"
+                            style={{ background: '#fde68a', color: '#92400e' }}>
+                            {t.topic}
+                            <span style={{ color: '#b45309' }}>({t.percentage}%)</span>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleSmartPractice}
+                      disabled={smartLoading}
+                      className="shrink-0 flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-bold text-white transition-all"
+                      style={{ background: smartLoading ? '#d97706' : 'linear-gradient(135deg,#f59e0b,#d97706)', opacity: smartLoading ? 0.8 : 1 }}>
+                      {smartLoading ? (
+                        <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        </svg>
+                      ) : '🚀'}
+                      {smartLoading ? 'Đang tạo...' : 'Bắt đầu'}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {practiceQuizzes.length === 0 ? (
               <div className="text-center py-20 fade-in-up">
                 <div className="w-20 h-20 mx-auto rounded-2xl flex items-center justify-center mb-5" style={{ background: 'var(--amber-soft)' }}>
                   <svg viewBox="0 0 24 24" fill="none" className="w-8 h-8" style={{ color: 'var(--amber-warm)' }}>
@@ -217,7 +282,8 @@ const QuizList = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 stagger-children">
                 {practiceQuizzes.map(renderQuizCard)}
               </div>
-            )
+            )}
+            </>
           )}
         </>
       )}
