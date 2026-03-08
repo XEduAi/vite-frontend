@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import axiosClient from '../api/axiosClient';
 import AdminLayout from '../components/AdminLayout';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const IconUsers = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
@@ -30,6 +31,8 @@ const AdminDashboard = () => {
   const [stats, setStats] = useState({ students: 0, classes: 0, medias: 0 });
   const [recentStudents, setRecentStudents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [analytics, setAnalytics] = useState(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(true);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -53,6 +56,13 @@ const AdminDashboard = () => {
       }
     };
     fetchStats();
+  }, []);
+
+  useEffect(() => {
+    axiosClient.get('/admin/analytics/overview')
+      .then(res => setAnalytics(res.data))
+      .catch(console.error)
+      .finally(() => setAnalyticsLoading(false));
   }, []);
 
   const cards = [
@@ -185,6 +195,70 @@ const AdminDashboard = () => {
           )}
         </div>
       </div>
+
+      {/* Analytics Section */}
+      {!analyticsLoading && analytics && (
+        <div className="mt-8 space-y-6 fade-in">
+          {/* Additional stat cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="card p-4 text-center">
+              <div className="text-2xl font-bold font-display" style={{ color: 'var(--text-primary)' }}>
+                {analytics.quizStats?.averageScore || 0}%
+              </div>
+              <div className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>Điểm TB</div>
+            </div>
+            <div className="card p-4 text-center">
+              <div className="text-2xl font-bold font-display" style={{ color: 'var(--text-primary)' }}>
+                {analytics.quizStats?.completionRate || 0}%
+              </div>
+              <div className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>Tỉ lệ hoàn thành</div>
+            </div>
+            <div className="card p-4 text-center">
+              <div className="text-2xl font-bold font-display" style={{ color: 'var(--text-primary)' }}>
+                {analytics.students?.active || 0}
+              </div>
+              <div className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>HV hoạt động (7 ngày)</div>
+            </div>
+            <div className="card p-4 text-center">
+              <div className="text-2xl font-bold font-display" style={{ color: 'var(--text-primary)' }}>
+                {(analytics.revenue?.total || 0).toLocaleString('vi-VN')}đ
+              </div>
+              <div className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>Doanh thu</div>
+            </div>
+          </div>
+
+          {/* Charts */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Student Growth Chart */}
+            <div className="card p-5">
+              <h3 className="font-display font-bold text-sm mb-4" style={{ color: 'var(--text-primary)' }}>Học viên mới theo tháng</h3>
+              <ResponsiveContainer width="100%" height={220}>
+                <LineChart data={analytics.studentGrowth || []}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border-light)" />
+                  <XAxis dataKey="month" tick={{ fontSize: 11 }} stroke="var(--text-muted)" />
+                  <YAxis tick={{ fontSize: 11 }} stroke="var(--text-muted)" />
+                  <Tooltip />
+                  <Line type="monotone" dataKey="count" stroke="#f59e0b" strokeWidth={2} dot={{ r: 4 }} name="Học viên" />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Revenue Chart */}
+            <div className="card p-5">
+              <h3 className="font-display font-bold text-sm mb-4" style={{ color: 'var(--text-primary)' }}>Doanh thu theo tháng</h3>
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={analytics.revenue?.monthly || []}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border-light)" />
+                  <XAxis dataKey="month" tick={{ fontSize: 11 }} stroke="var(--text-muted)" />
+                  <YAxis tick={{ fontSize: 11 }} stroke="var(--text-muted)" />
+                  <Tooltip formatter={(value) => value.toLocaleString('vi-VN') + 'đ'} />
+                  <Bar dataKey="revenue" fill="#f59e0b" radius={[4, 4, 0, 0]} name="Doanh thu" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+      )}
     </AdminLayout>
   );
 };

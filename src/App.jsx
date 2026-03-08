@@ -19,7 +19,12 @@ import Profile from './pages/student/Profile';
 import Achievements from './pages/student/Achievements';
 import Flashcards from './pages/student/Flashcards';
 import LessonView from './pages/student/LessonView';
+import DocumentMarketplace from './pages/student/DocumentMarketplace';
+import DocumentDetail from './pages/student/DocumentDetail';
+import MyDocuments from './pages/student/MyDocuments';
 import LessonManager from './pages/admin/LessonManager';
+import DocumentManager from './pages/admin/DocumentManager';
+import DocumentAnalytics from './pages/admin/DocumentAnalytics';
 
 // Initialize theme on app load
 const initTheme = () => {
@@ -59,6 +64,8 @@ function App() {
         <Route path="/admin/tuition" element={<AdminRoute><TuitionManager /></AdminRoute>} />
         <Route path="/admin/announcements" element={<AdminRoute><AnnouncementManager /></AdminRoute>} />
         <Route path="/admin/classes/:classId/lessons" element={<AdminRoute><LessonManager /></AdminRoute>} />
+        <Route path="/admin/documents" element={<AdminRoute><DocumentManager /></AdminRoute>} />
+        <Route path="/admin/documents/analytics" element={<AdminRoute><DocumentAnalytics /></AdminRoute>} />
 
         {/* Student */}
         <Route path="/student/dashboard" element={<StudentRoute><MyLearning /></StudentRoute>} />
@@ -72,6 +79,9 @@ function App() {
         <Route path="/student/achievements" element={<StudentRoute><Achievements /></StudentRoute>} />
         <Route path="/student/flashcards" element={<StudentRoute><Flashcards /></StudentRoute>} />
         <Route path="/student/class/:classId/lessons" element={<StudentRoute><LessonView /></StudentRoute>} />
+        <Route path="/student/documents" element={<StudentRoute><DocumentMarketplace /></StudentRoute>} />
+        <Route path="/student/documents/:id" element={<StudentRoute><DocumentDetail /></StudentRoute>} />
+        <Route path="/student/my-documents" element={<StudentRoute><MyDocuments /></StudentRoute>} />
 
         {/* Legacy redirect */}
         <Route path="/my-learning" element={<Navigate to="/student/dashboard" replace />} />

@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import axiosClient from '../../api/axiosClient';
 import StudentLayout from '../../components/StudentLayout';
 import LatexRenderer from '../../components/LatexRenderer';
+import ShareButtons from '../../components/ShareButtons';
 
 // Small overlay that auto-dismisses after 4 seconds
 const GamificationOverlay = ({ data, onClose }) => {
@@ -161,6 +162,15 @@ const QuizResult = () => {
                 </div>
                 <div className="text-xs font-medium mt-1" style={{ color: 'var(--text-muted)' }}>Câu đúng</div>
               </div>
+            </div>
+
+            {/* Share result */}
+            <div className="mt-6 flex justify-center">
+              <ShareButtons
+                title="Kết quả kiểm tra EduVN"
+                text={`📝 Tôi đạt ${percentage}% trong bài "${quiz?.title || 'kiểm tra'}" trên EduVN! ${percentage >= 80 ? '🎉' : '💪'}`}
+                url={window.location.href}
+              />
             </div>
           </div>
         </div>

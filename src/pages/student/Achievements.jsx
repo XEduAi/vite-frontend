@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import axiosClient from '../../api/axiosClient';
 import StudentLayout from '../../components/StudentLayout';
+import ShareButtons from '../../components/ShareButtons';
 
 const ALL_BADGES = [
   { id: 'first_quiz',    name: 'Bước đầu tiên',      icon: '🎯', condition: 'Hoàn thành bài kiểm tra đầu tiên' },
@@ -92,6 +93,15 @@ const Achievements = () => {
               <div className="h-full rounded-full transition-all duration-500"
                 style={{ width: `${xpProgress}%`, background: 'linear-gradient(90deg, #f59e0b, #fbbf24)' }} />
             </div>
+          </div>
+
+          {/* Share achievements */}
+          <div className="mt-4 pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+            <ShareButtons
+              title="Thành tích EduVN"
+              text={`🎓 Tôi đã đạt cấp ${stats?.level || 1} với ${stats?.xp || 0} XP và ${earnedIds.size} huy hiệu trên EduVN! 🏆`}
+              url={window.location.origin + '/student/achievements'}
+            />
           </div>
         </div>
 
