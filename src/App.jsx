@@ -22,6 +22,7 @@ import LessonView from './pages/student/LessonView';
 import DocumentMarketplace from './pages/student/DocumentMarketplace';
 import DocumentDetail from './pages/student/DocumentDetail';
 import MyDocuments from './pages/student/MyDocuments';
+import StudyChat from './pages/student/StudyChat';
 import LessonManager from './pages/admin/LessonManager';
 import DocumentManager from './pages/admin/DocumentManager';
 import DocumentAnalytics from './pages/admin/DocumentAnalytics';
@@ -82,6 +83,7 @@ function App() {
         <Route path="/student/documents" element={<StudentRoute><DocumentMarketplace /></StudentRoute>} />
         <Route path="/student/documents/:id" element={<StudentRoute><DocumentDetail /></StudentRoute>} />
         <Route path="/student/my-documents" element={<StudentRoute><MyDocuments /></StudentRoute>} />
+        <Route path="/student/chat" element={<StudentRoute><StudyChat /></StudentRoute>} />
 
         {/* Legacy redirect */}
         <Route path="/my-learning" element={<Navigate to="/student/dashboard" replace />} />

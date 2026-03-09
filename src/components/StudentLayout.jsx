@@ -74,6 +74,12 @@ const IconMenu = () => (
     <path d="M4 6h16M4 12h16M4 18h16" />
   </svg>
 );
+const IconAIChat = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+    <path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+    <path d="M18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z" />
+  </svg>
+);
 
 const StudentLayout = ({ children }) => {
   const navigate = useNavigate();
@@ -99,6 +105,7 @@ const StudentLayout = ({ children }) => {
     { path: '/student/quizzes',      label: 'Kiểm tra',    icon: <IconQuiz /> },
     { path: '/student/flashcards',   label: 'Flashcards',  icon: <IconCards /> },
     { path: '/student/documents',    label: 'Tài liệu',    icon: <IconDocument /> },
+    { path: '/student/chat',         label: 'EduBot AI',   icon: <IconAIChat />, highlight: true },
     { path: '/student/performance',  label: 'Thống kê',    icon: <IconChart /> },
     { path: '/student/achievements', label: 'Thành tích',  icon: <IconTrophy /> },
     { path: '/student/tuition',      label: 'Học phí',     icon: <IconTuition /> },
@@ -172,6 +179,14 @@ const StudentLayout = ({ children }) => {
             >
               <span style={{ color: isActive ? 'var(--amber-glow)' : 'inherit' }}>{item.icon}</span>
               {item.label}
+              {item.highlight && !isActive && (
+                <span
+                  className="ml-auto px-1.5 py-0.5 rounded-md text-[10px] font-bold"
+                  style={{ background: 'var(--amber)', color: '#fff' }}
+                >
+                  AI
+                </span>
+              )}
               {isActive && (
                 <span className="ml-auto w-1.5 h-1.5 rounded-full shrink-0" style={{ background: 'var(--amber)' }} />
               )}

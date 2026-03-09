@@ -1,9 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axiosClient from '../../api/axiosClient';
-import StudentLayout from '../../components/StudentLayout';
-
-const difficultyLabel = { easy: 'Dễ', medium: 'Trung bình', hard: 'Khó' };
+import StudentLayout from '../../components/StudentLayout'; = { easy: 'Dễ', medium: 'Trung bình', hard: 'Khó' };
 const difficultyColor = {
   easy: { bg: 'var(--success-light)', color: 'var(--success)' },
   medium: { bg: '#fef3c7', color: '#d97706' },
@@ -129,7 +127,21 @@ const MyPerformance = () => {
               {smartLoading ? 'Đang tạo...' : 'Luyện tập điểm yếu'}
             </button>
           )}
-        </div>
+          {/* Ask EduBot about performance */}
+          <button
+            onClick={() => navigate('/student/chat?contextType=performance&contextLabel=Điểm yếu của tôi')}
+            className="shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all"
+            style={{
+              background: 'var(--amber-soft)',
+              color: 'var(--amber)',
+              border: '1px solid var(--amber)'
+            }}
+          >
+            <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4">
+              <path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Hỏi EduBot
+          </button>
 
         {/* Summary cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6 stagger-children">
