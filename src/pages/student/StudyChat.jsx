@@ -442,31 +442,33 @@ const StudyChat = () => {
             borderBottom: '1px solid var(--border)',
             background: 'var(--bg-card)',
           }}>
-            {/* Desktop: toggle sidebar strip */}
+            {/* Desktop only: toggle inline sidebar strip.
+                className="hidden md:flex" controls visibility — do NOT
+                put display:flex in the inline style or it overrides hidden. */}
             <button
               onClick={() => setSidebarOpen(v => !v)}
-              className="hidden md:flex"
+              className="hidden md:flex items-center justify-center"
               style={{
                 width: '36px', height: '36px', borderRadius: '10px',
                 border: 'none', cursor: 'pointer',
                 background: 'var(--bg-secondary)', color: 'var(--text-muted)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                transition: 'background 0.15s',
+                transition: 'background 0.15s', flexShrink: 0,
               }}
               aria-label={sidebarOpen ? 'Ẩn lịch sử' : 'Hiện lịch sử'}
             >
               <IcoMenu />
             </button>
 
-            {/* Mobile: open conversation drawer */}
+            {/* Mobile only: open conversation drawer overlay.
+                className="flex md:hidden" controls visibility — same rule. */}
             <button
               onClick={() => setMobileDrawerOpen(true)}
-              className="md:hidden"
+              className="flex md:hidden items-center justify-center"
               style={{
                 width: '40px', height: '40px', borderRadius: '10px',
                 border: 'none', cursor: 'pointer',
                 background: 'var(--bg-secondary)', color: 'var(--text-muted)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                flexShrink: 0,
               }}
               aria-label="Danh sách cuộc trò chuyện"
             >
