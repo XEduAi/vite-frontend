@@ -176,6 +176,8 @@ const StudyChat = () => {
       const decoder = new TextDecoder();
       let accumulated = '';
       let aiFullText = '';
+      let streamCompleted = false; // track xem 'done' event đã nhận chưa
+      let streamError = null;      // lỗi từ server (type: 'error')
 
       while (true) {
         const { done, value } = await reader.read();
@@ -183,50 +185,70 @@ const StudyChat = () => {
 
         accumulated += decoder.decode(value, { stream: true });
 
-        // Parse SSE events
+        // Parse SSE events — mỗi event cách nhau bởi \n\n
         const lines = accumulated.split('\n');
         accumulated = lines.pop() || ''; // Giữ lại dòng chưa hoàn chỉnh
 
         for (const line of lines) {
           if (!line.startsWith('data: ')) continue;
+
+          let data;
           try {
-            const data = JSON.parse(line.slice(6));
-
-            if (data.type === 'meta') {
-              setModelInfo(data.model || '');
-            } else if (data.type === 'chunk') {
-              aiFullText += data.text;
-              setStreamingText(aiFullText);
-            } else if (data.type === 'done') {
-              // Stream hoàn tất — thêm vào messages
-              setMessages(prev => [
-                ...prev,
-                { role: 'assistant', content: aiFullText, createdAt: new Date() }
-              ]);
-              setStreamingText('');
-              setIsStreaming(false);
-
-              // Cập nhật title conversation nếu là tin nhắn đầu tiên
-              if (messages.length <= 1) {
-                setConversations(prev =>
-                  prev.map(c =>
-                    c._id === activeConversationId
-                      ? {
-                          ...c,
-                          title: message.substring(0, 60) + (message.length > 60 ? '...' : ''),
-                          lastMessageAt: new Date()
-                        }
-                      : c
-                  )
-                );
-              }
-            } else if (data.type === 'error') {
-              throw new Error(data.message);
-            }
+            data = JSON.parse(line.slice(6));
           } catch {
-            // Bỏ qua JSON parse errors
+            // Bỏ qua JSON parse errors (partial chunks)
+            continue;
+          }
+
+          if (data.type === 'meta') {
+            setModelInfo(data.model || '');
+          } else if (data.type === 'chunk') {
+            aiFullText += data.text;
+            setStreamingText(aiFullText);
+          } else if (data.type === 'done') {
+            streamCompleted = true;
+            // Stream hoàn tất — chuyển từ streaming sang message cố định
+            setMessages(prev => [
+              ...prev,
+              { role: 'assistant', content: aiFullText, createdAt: new Date() }
+            ]);
+            setStreamingText('');
+            setIsStreaming(false);
+
+            // Cập nhật title conversation nếu là tin nhắn đầu tiên
+            if (messages.length <= 1) {
+              setConversations(prev =>
+                prev.map(c =>
+                  c._id === activeConversationId
+                    ? {
+                        ...c,
+                        title: message.substring(0, 60) + (message.length > 60 ? '...' : ''),
+                        lastMessageAt: new Date()
+                      }
+                    : c
+                )
+              );
+            }
+          } else if (data.type === 'error') {
+            streamError = data.message || 'Lỗi từ server';
           }
         }
+      }
+
+      // Nếu stream đóng mà không nhận 'done' event nhưng đã có text
+      // (connection closed sau khi gửi xong nhưng trước khi parse done)
+      if (!streamCompleted && aiFullText && !streamError) {
+        setMessages(prev => [
+          ...prev,
+          { role: 'assistant', content: aiFullText, createdAt: new Date() }
+        ]);
+        setStreamingText('');
+        setIsStreaming(false);
+      }
+
+      // Chỉ show lỗi nếu server báo lỗi rõ ràng và không có text nào trả về
+      if (streamError && !aiFullText) {
+        throw new Error(streamError);
       }
     } catch (err) {
       console.error('Chat error:', err);
