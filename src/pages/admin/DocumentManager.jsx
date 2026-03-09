@@ -85,7 +85,7 @@ const DocumentManager = () => {
     try {
       setLoading(true);
       const res = await axiosClient.get('/admin/documents');
-      setDocuments(res.data.documents || res.data || []);
+      setDocuments(res.data.data || []);
     } catch (err) {
       console.error('Lỗi khi tải tài liệu:', err);
     } finally {
@@ -96,7 +96,7 @@ const DocumentManager = () => {
   const fetchAnalytics = async () => {
     try {
       const res = await axiosClient.get('/admin/documents/analytics');
-      setAnalytics(res.data);
+      setAnalytics(res.data.data);
     } catch (err) {
       console.error('Lỗi khi tải analytics:', err);
     }
