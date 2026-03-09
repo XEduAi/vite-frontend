@@ -574,17 +574,6 @@ const StudyChat = () => {
         </div>
       </div>
 
-      {/* Page-scoped keyframes */}
-      <style>{`
-        @keyframes slideInLeft {
-          from { transform: translateX(-100%); }
-          to   { transform: translateX(0); }
-        }
-        @keyframes dotPulse {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50%       { opacity: 0.5; transform: scale(1.4); }
-        }
-      `}</style>
     </StudentLayout>
   );
 };

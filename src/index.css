@@ -411,6 +411,36 @@ input:focus, select:focus, textarea:focus {
   to { clip-path: inset(0 0 0 0); }
 }
 
+/* ── Chat page keyframes (defined here to avoid per-render <style> re-injection) ── */
+@keyframes eduIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes eduDot {
+  0%, 60%, 100% { transform: translateY(0);    opacity: 0.6; }
+  30%           { transform: translateY(-6px);  opacity: 1;   }
+}
+@keyframes eduBlink {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0; }
+}
+@keyframes eduRing {
+  0%   { transform: scale(1);   opacity: 0.55; }
+  100% { transform: scale(2.2); opacity: 0;    }
+}
+@keyframes eduFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+@keyframes dotPulse {
+  0%, 100% { opacity: 1;   transform: scale(1);   }
+  50%      { opacity: 0.5; transform: scale(1.4); }
+}
+@keyframes slideInLeft {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(0); }
+}
+
 .fade-in {
   animation: fadeIn 0.4s var(--ease-out) forwards;
 }

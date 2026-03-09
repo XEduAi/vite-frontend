@@ -216,17 +216,6 @@ const EmptyState = ({ onSuggestionClick }) => (
       ))}
     </div>
 
-    {/* CSS keyframes injected once per render */}
-    <style>{`
-      @keyframes eduRing {
-        0%   { transform: scale(1); opacity: 0.55; }
-        100% { transform: scale(2.2); opacity: 0; }
-      }
-      @keyframes eduFadeIn {
-        from { opacity: 0; transform: translateY(6px); }
-        to   { opacity: 1; transform: translateY(0); }
-      }
-    `}</style>
   </div>
 );
 
@@ -240,30 +229,41 @@ const EmptyState = ({ onSuggestionClick }) => (
  *  onSuggestionClick – (text) => void
  */
 const ChatWindow = ({ messages, streamingText, isStreaming, onSuggestionClick }) => {
-  const bottomRef = useRef(null);
+  const scrollRef = useRef(null);
   const isEmpty   = messages.length === 0 && !isStreaming;
 
+  // Smooth scroll only when a complete message is added (not during streaming)
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, streamingText]);
+    const el = scrollRef.current;
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+  }, [messages]);
+
+  // Instant scroll during streaming — no animation loop fighting itself
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (el && streamingText) el.scrollTop = el.scrollHeight;
+  }, [streamingText]);
 
   return (
-    <div style={{
-      flex: 1,
-      display: 'flex',
-      flexDirection: 'column',
-      overflowY: 'auto',
-      overscrollBehavior: 'contain',
-      scrollbarWidth: 'thin',
-      // Graph-paper grid — a subtle nod to the math-tutor context.
-      // Using 2 crossing linear-gradients at the amber hue so it adapts
-      // gracefully in both light and dark modes.
-      backgroundImage: [
-        'linear-gradient(rgba(245,158,11,0.035) 1px, transparent 1px)',
-        'linear-gradient(90deg, rgba(245,158,11,0.035) 1px, transparent 1px)',
-      ].join(', '),
-      backgroundSize: '28px 28px',
-    }}>
+    <div
+      ref={scrollRef}
+      style={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        overflowY: 'auto',
+        overscrollBehavior: 'contain',
+        scrollbarWidth: 'thin',
+        // Graph-paper grid — a subtle nod to the math-tutor context.
+        // Using 2 crossing linear-gradients at the amber hue so it adapts
+        // gracefully in both light and dark modes.
+        backgroundImage: [
+          'linear-gradient(rgba(245,158,11,0.035) 1px, transparent 1px)',
+          'linear-gradient(90deg, rgba(245,158,11,0.035) 1px, transparent 1px)',
+        ].join(', '),
+        backgroundSize: '28px 28px',
+      }}
+    >
       {isEmpty ? (
         <EmptyState onSuggestionClick={onSuggestionClick} />
       ) : (
@@ -274,25 +274,9 @@ const ChatWindow = ({ messages, streamingText, isStreaming, onSuggestionClick })
               : <AIResponse   key={i} content={msg.content} />
           )}
           {isStreaming && <AIResponse content={streamingText} streaming />}
-          <div ref={bottomRef} style={{ height: '12px' }} />
+          <div style={{ height: '12px' }} />
         </div>
       )}
-
-      {/* Global keyframes — defined here, used by all sub-components */}
-      <style>{`
-        @keyframes eduIn {
-          from { opacity: 0; transform: translateY(8px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes eduDot {
-          0%, 60%, 100% { transform: translateY(0);   opacity: 0.6; }
-          30%            { transform: translateY(-6px); opacity: 1;   }
-        }
-        @keyframes eduBlink {
-          0%, 100% { opacity: 1; }
-          50%      { opacity: 0; }
-        }
-      `}</style>
     </div>
   );
 };
