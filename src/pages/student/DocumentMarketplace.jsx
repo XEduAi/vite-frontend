@@ -111,8 +111,9 @@ const DocumentMarketplace = () => {
   // Fetch filter options
   useEffect(() => {
     axiosClient.get('/documents/filters').then(res => {
-      setSubjects(res.data.subjects || []);
-      setGrades(res.data.grades || []);
+      const d = res.data.data || res.data;
+      setSubjects(d.subjects || []);
+      setGrades(d.grades || []);
     }).catch(() => {});
   }, []);
 
@@ -130,9 +131,10 @@ const DocumentMarketplace = () => {
       if (sort) params.set('sort', sort);
 
       const res = await axiosClient.get(`/documents?${params}`);
-      setDocuments(res.data.documents || []);
-      setTotal(res.data.total || 0);
-      setTotalPages(res.data.totalPages || 0);
+      const d = res.data.data || res.data;
+      setDocuments(d.documents || []);
+      setTotal(d.total || 0);
+      setTotalPages(d.totalPages || 0);
     } catch (err) {
       console.error(err);
     } finally {

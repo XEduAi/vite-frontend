@@ -79,7 +79,7 @@ const DocumentDetail = () => {
     try {
       setLoading(true);
       const res = await axiosClient.get(`/documents/${id}`);
-      setDoc(res.data);
+      setDoc(res.data.data || res.data);
     } catch (err) {
       console.error(err);
     } finally {
@@ -90,7 +90,8 @@ const DocumentDetail = () => {
   const fetchReviews = async () => {
     try {
       const res = await axiosClient.get(`/documents/${id}/reviews`);
-      setReviews(res.data.reviews || []);
+      const d = res.data.data || res.data;
+      setReviews(Array.isArray(d) ? d : d.reviews || []);
     } catch (err) {
       console.error(err);
     }
