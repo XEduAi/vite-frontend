@@ -203,15 +203,6 @@ const StudyChat = () => {
   const contextId    = searchParams.get('contextId')    || '';
   const contextLabel = searchParams.get('contextLabel') || '';
 
-  // Lock body scroll while chat page is mounted so the page doesn't
-  // scroll up when the user swipes inside the chat container.
-  // Released on unmount (route change).
-  useEffect(() => {
-    const prev = document.documentElement.style.overflow;
-    document.documentElement.style.overflow = 'hidden';
-    return () => { document.documentElement.style.overflow = prev; };
-  }, []);
-
   // ── Data fetching ────────────────────────────────────────────────────────────
 
   const fetchConversations = useCallback(async () => {

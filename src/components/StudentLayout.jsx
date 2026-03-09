@@ -284,13 +284,16 @@ const StudentLayout = ({ children, fullHeight = false }) => {
 
       {/* ===== MAIN CONTENT ===== */}
       {fullHeight ? (
-        /* Full-height mode: used by chat page. Bypasses padding/max-width.
-           Uses 100svh (Small Viewport Height) so mobile browser chrome doesn't clip input. */
-        <main
-          className="flex-1 md:ml-56 flex flex-col overflow-hidden"
-          style={{ height: '100svh' }}
+        /* Full-height mode (chat page):
+           position:fixed + inset-0 anchors all four edges to the visual viewport,
+           completely bypassing parent height / viewport-unit browser inconsistencies.
+           md:left-56 shifts the left edge past the desktop sidebar (w-56 = 224px).
+           z-10 keeps it below the mobile header (z-30) and mobile drawer (z-40/50). */
+        <main className="fixed inset-0 md:left-56 z-10 flex flex-col overflow-hidden"
+          style={{ background: 'var(--bg-primary)' }}
         >
-          {/* pt-14 offsets the fixed mobile header; md:pt-0 removes it on desktop */}
+          {/* pt-14 creates space for the fixed mobile header (h-14 = 56px).
+              md:pt-0 removes it on desktop where there is no top bar. */}
           <div className="pt-14 md:pt-0 flex-1 flex flex-col overflow-hidden">
             {children}
           </div>
