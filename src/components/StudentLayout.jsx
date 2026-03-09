@@ -81,7 +81,7 @@ const IconAIChat = () => (
   </svg>
 );
 
-const StudentLayout = ({ children }) => {
+const StudentLayout = ({ children, fullHeight = false }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const fullName = localStorage.getItem('fullName') || 'Học viên';
@@ -283,11 +283,26 @@ const StudentLayout = ({ children }) => {
       )}
 
       {/* ===== MAIN CONTENT ===== */}
-      <main className="flex-1 md:ml-56 min-h-screen pt-14 md:pt-0">
-        <div className="max-w-5xl mx-auto px-4 md:px-8 py-6 pb-8 fade-in">
-          {children}
-        </div>
-      </main>
+      {fullHeight ? (
+        /* Full-height mode: used by chat page. Bypasses padding/max-width.
+           Uses 100svh (Small Viewport Height) so mobile browser chrome doesn't clip input. */
+        <main
+          className="flex-1 md:ml-56 flex flex-col overflow-hidden"
+          style={{ height: '100svh' }}
+        >
+          {/* pt-14 offsets the fixed mobile header; md:pt-0 removes it on desktop */}
+          <div className="pt-14 md:pt-0 flex-1 flex flex-col overflow-hidden">
+            {children}
+          </div>
+        </main>
+      ) : (
+        /* Normal mode: padded content container */
+        <main className="flex-1 md:ml-56 min-h-screen pt-14 md:pt-0">
+          <div className="max-w-5xl mx-auto px-4 md:px-8 py-6 pb-8 fade-in">
+            {children}
+          </div>
+        </main>
+      )}
     </div>
   );
 };

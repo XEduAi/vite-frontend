@@ -1,29 +1,37 @@
 import { useState, useRef, useEffect } from 'react';
 
 const QUICK_PROMPTS = [
-  'Giải thích lại cho tôi',
-  'Cho ví dụ cụ thể',
-  'Cách ghi nhớ dễ hơn?',
-  'Bài tập tương tự'
+  'Giải thích lại',
+  'Cho ví dụ',
+  'Cách ghi nhớ?',
+  'Bài tập tương tự',
 ];
 
+const SendIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5">
+    <path d="M22 2L11 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
 /**
- * ChatInput — Input + send button + quick prompts
+ * ChatInput — mobile-first, 44px touch targets, accessible
  * Props:
  *  - onSend: (message: string) => void
  *  - disabled: boolean
  *  - placeholder: string
  */
 const ChatInput = ({ onSend, disabled, placeholder = 'Nhập câu hỏi của bạn...' }) => {
-  const [input, setInput] = useState('');
-  const textareaRef = useRef(null);
+  const [input, setInput]   = useState('');
+  const textareaRef         = useRef(null);
+  const canSend             = Boolean(input.trim()) && !disabled;
 
-  // Auto-resize textarea
+  // Auto-resize textarea up to ~5 lines
   useEffect(() => {
     const el = textareaRef.current;
     if (!el) return;
     el.style.height = 'auto';
-    el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+    el.style.height = Math.min(el.scrollHeight, 140) + 'px';
   }, [input]);
 
   const handleSend = () => {
@@ -31,13 +39,14 @@ const ChatInput = ({ onSend, disabled, placeholder = 'Nhập câu hỏi của b�
     if (!msg || disabled) return;
     onSend(msg);
     setInput('');
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-    }
+    if (textareaRef.current) textareaRef.current.style.height = 'auto';
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    // Desktop: Enter sends. Shift+Enter inserts newline.
+    // Mobile: never intercept Enter so the OS keyboard works normally.
+    const isMobile = window.matchMedia('(pointer: coarse)').matches;
+    if (e.key === 'Enter' && !e.shiftKey && !isMobile) {
       e.preventDefault();
       handleSend();
     }
@@ -45,23 +54,35 @@ const ChatInput = ({ onSend, disabled, placeholder = 'Nhập câu hỏi của b�
 
   return (
     <div
-      className="border-t"
-      style={{ borderColor: 'var(--border)', padding: '12px 16px', background: 'var(--bg-card)' }}
+      className="flex-shrink-0"
+      style={{
+        borderTop: '1px solid var(--border)',
+        background: 'var(--bg-card)',
+        padding: '8px 12px 12px',
+        /* Safe area inset for iOS home bar */
+        paddingBottom: 'max(12px, env(safe-area-inset-bottom))',
+      }}
     >
-      {/* Quick prompts */}
-      <div className="flex gap-2 mb-3 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+      {/* ── Quick prompts — horizontal scroll, hidden on very small screens when keyboard is up ── */}
+      <div
+        className="flex gap-2 mb-2 overflow-x-auto"
+        style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}
+        aria-label="Gợi ý nhanh"
+      >
         {QUICK_PROMPTS.map(prompt => (
           <button
             key={prompt}
-            onClick={() => !disabled && onSend(prompt)}
+            onClick={() => { if (!disabled) onSend(prompt); }}
             disabled={disabled}
-            className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors"
+            className="flex-shrink-0 px-3 rounded-full text-xs font-medium transition-colors"
             style={{
+              height: '32px',  /* smaller than send, but still comfortable */
               background: 'var(--bg-secondary)',
               color: 'var(--text-secondary)',
               border: '1px solid var(--border)',
               cursor: disabled ? 'not-allowed' : 'pointer',
-              opacity: disabled ? 0.5 : 1
+              opacity: disabled ? 0.5 : 1,
+              whiteSpace: 'nowrap',
             }}
           >
             {prompt}
@@ -69,14 +90,15 @@ const ChatInput = ({ onSend, disabled, placeholder = 'Nhập câu hỏi của b�
         ))}
       </div>
 
-      {/* Input area */}
+      {/* ── Input row ── */}
       <div
-        className="flex items-end gap-3 rounded-2xl px-4 py-3"
+        className="flex items-end gap-2 rounded-2xl px-3 py-2"
         style={{
           background: 'var(--bg-secondary)',
-          border: '1.5px solid',
-          borderColor: input ? 'var(--amber)' : 'var(--border)',
-          transition: 'border-color 0.2s'
+          border: `1.5px solid ${input ? 'var(--amber)' : 'var(--border)'}`,
+          transition: 'border-color 0.15s',
+          /* min-height ensures the empty state row is at least 44px for touch */
+          minHeight: '44px',
         }}
       >
         <textarea
@@ -91,30 +113,39 @@ const ChatInput = ({ onSend, disabled, placeholder = 'Nhập câu hỏi của b�
           style={{
             color: 'var(--text-primary)',
             lineHeight: 1.6,
-            maxHeight: '120px',
-            scrollbarWidth: 'thin'
+            maxHeight: '140px',
+            scrollbarWidth: 'thin',
+            paddingTop: '6px',
+            paddingBottom: '6px',
           }}
+          /* Mobile keyboard hints */
+          inputMode="text"
+          enterKeyHint="send"
+          aria-label="Nhập tin nhắn"
+          aria-multiline="true"
         />
 
+        {/* Send button — 44×44px touch target */}
         <button
           onClick={handleSend}
-          disabled={disabled || !input.trim()}
-          className="flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center transition-all"
+          disabled={!canSend}
+          className="flex-shrink-0 flex items-center justify-center rounded-xl transition-all"
           style={{
-            background: disabled || !input.trim() ? 'var(--bg-tertiary)' : 'var(--amber)',
-            color: disabled || !input.trim() ? 'var(--text-muted)' : '#fff',
-            cursor: disabled || !input.trim() ? 'not-allowed' : 'pointer',
-            transform: !disabled && input.trim() ? 'scale(1)' : 'scale(0.9)',
-            transition: 'all 0.15s'
+            width: '40px',
+            height: '40px',
+            background: canSend ? 'var(--amber)' : 'var(--bg-tertiary)',
+            color:      canSend ? '#fff'         : 'var(--text-muted)',
+            cursor:     canSend ? 'pointer'      : 'not-allowed',
+            transform:  canSend ? 'scale(1)'     : 'scale(0.9)',
+            transition: 'all 0.15s',
           }}
+          aria-label="Gửi tin nhắn"
         >
-          <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4">
-            <path d="M22 2L11 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+          <SendIcon />
         </button>
       </div>
 
+      {/* Disclaimer */}
       <p className="text-xs mt-2 text-center" style={{ color: 'var(--text-muted)' }}>
         EduBot có thể mắc sai sót. Hãy kiểm tra lại thông tin quan trọng.
       </p>
