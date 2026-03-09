@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axiosClient from '../../api/axiosClient';
-import StudentLayout from '../../components/StudentLayout'; = { easy: 'Dễ', medium: 'Trung bình', hard: 'Khó' };
+import StudentLayout from '../../components/StudentLayout';
+
+const difficultyLabel = { easy: 'Dễ', medium: 'Trung bình', hard: 'Khó' };
 const difficultyColor = {
   easy: { bg: 'var(--success-light)', color: 'var(--success)' },
   medium: { bg: '#fef3c7', color: '#d97706' },
@@ -142,6 +144,7 @@ const MyPerformance = () => {
             </svg>
             Hỏi EduBot
           </button>
+        </div>
 
         {/* Summary cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6 stagger-children">
