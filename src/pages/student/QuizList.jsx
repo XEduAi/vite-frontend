@@ -1,77 +1,52 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import axiosClient from '../../api/axiosClient';
 import StudentLayout from '../../components/StudentLayout';
+import {
+  useCreatePracticeQuizMutation,
+  useQuestionFiltersQuery,
+  useQuizCatalogQuery,
+  useSmartPracticeMutation,
+  useStartQuizMutation,
+  useWeakTopicsQuery,
+} from '../../features/quiz/hooks';
 
 const QuizList = () => {
   const navigate = useNavigate();
-  const [officialQuizzes, setOfficialQuizzes] = useState([]);
-  const [practiceQuizzes, setPracticeQuizzes] = useState([]);
-  const [attempts, setAttempts] = useState({});
-  const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState('official');
   const [showBuilder, setShowBuilder] = useState(false);
-  const [weakTopics, setWeakTopics] = useState([]);
-  const [smartLoading, setSmartLoading] = useState(false);
-
-  const [filterOptions, setFilterOptions] = useState({ subjects: [], topics: [], grades: [] });
   const [builderForm, setBuilderForm] = useState({
     title: '', duration: 30,
     randomConfig: [{ subject: '', topic: '', grade: '', difficulty: '', count: 10 }]
   });
   const [builderMsg, setBuilderMsg] = useState('');
+  const quizCatalogQuery = useQuizCatalogQuery();
+  const questionFiltersQuery = useQuestionFiltersQuery();
+  const weakTopicsQuery = useWeakTopicsQuery();
+  const startQuizMutation = useStartQuizMutation();
+  const smartPracticeMutation = useSmartPracticeMutation();
+  const createPracticeQuizMutation = useCreatePracticeQuizMutation();
 
-  const fetchQuizzes = async () => {
-    try {
-      setLoading(true);
-      const res = await axiosClient.get('/my-quizzes');
-      setOfficialQuizzes(res.data.officialQuizzes || []);
-      setPracticeQuizzes(res.data.practiceQuizzes || []);
-      setAttempts(res.data.attempts || {});
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchFilters = async () => {
-    try {
-      const res = await axiosClient.get('/questions/filters');
-      setFilterOptions(res.data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const fetchWeakTopics = async () => {
-    try {
-      const res = await axiosClient.get('/my-performance');
-      const topics = res.data?.topicStats || [];
-      // Show only weak topics (below 60%)
-      setWeakTopics(topics.filter(t => t.percentage < 60).slice(0, 3));
-    } catch {
-      // Silently ignore — feature is optional
-    }
-  };
-
-  useEffect(() => { fetchQuizzes(); fetchFilters(); fetchWeakTopics(); }, []);
+  const officialQuizzes = quizCatalogQuery.data?.officialQuizzes || [];
+  const practiceQuizzes = quizCatalogQuery.data?.practiceQuizzes || [];
+  const attempts = quizCatalogQuery.data?.attempts || {};
+  const loading = quizCatalogQuery.isPending;
+  const filterOptions = questionFiltersQuery.data || { subjects: [], topics: [], grades: [] };
+  const weakTopics = weakTopicsQuery.data || [];
+  const smartLoading = smartPracticeMutation.isPending;
 
   const handleSmartPractice = async () => {
     try {
-      setSmartLoading(true);
-      const res = await axiosClient.post('/student/smart-practice');
-      navigate(`/student/quiz/${res.data.attemptId}`);
+      const data = await smartPracticeMutation.mutateAsync();
+      navigate(`/student/quiz/${data.attemptId}`);
     } catch (err) {
       alert(err.response?.data?.message || 'Cần làm thêm bài để có dữ liệu điểm yếu.');
-      setSmartLoading(false);
     }
   };
 
   const handleStartQuiz = async (quizId) => {
     try {
-      const res = await axiosClient.post(`/quizzes/${quizId}/start`);
-      navigate(`/student/quiz/${res.data.attempt._id}`);
+      const data = await startQuizMutation.mutateAsync(quizId);
+      navigate(`/student/quiz/${data.attempt._id}`);
     } catch (err) {
       alert(err.response?.data?.message || 'Lỗi khi bắt đầu quiz');
     }
@@ -105,9 +80,8 @@ const QuizList = () => {
           count: Number(r.count)
         }))
       };
-      const res = await axiosClient.post('/practice-quizzes', data);
-      const startRes = await axiosClient.post(`/quizzes/${res.data.quiz._id}/start`);
-      navigate(`/student/quiz/${startRes.data.attempt._id}`);
+      const startData = await createPracticeQuizMutation.mutateAsync(data);
+      navigate(`/student/quiz/${startData.attempt._id}`);
     } catch (err) {
       setBuilderMsg(err.response?.data?.message || 'Lỗi tạo bài luyện tập');
     }
@@ -357,8 +331,8 @@ const QuizList = () => {
                 </button>
               </div>
 
-              <button type="submit" className="btn-primary w-full py-3">
-                Tạo & Bắt đầu làm bài
+              <button type="submit" className="btn-primary w-full py-3" disabled={createPracticeQuizMutation.isPending}>
+                {createPracticeQuizMutation.isPending ? 'Đang tạo bài...' : 'Tạo & Bắt đầu làm bài'}
               </button>
             </form>
           </div>

@@ -1,6 +1,11 @@
-import { useState, useEffect } from 'react';
-import axiosClient from '../../api/axiosClient';
+import { useState } from 'react';
 import StudentLayout from '../../components/StudentLayout';
+import {
+  useMyTuitionQuery,
+  usePendingPaymentsQuery,
+  useSubmitPendingPaymentMutation,
+  useTuitionQrMutation,
+} from '../../features/tuition/hooks';
 
 const formatVND = (v) => {
   if (!v && v !== 0) return '0đ';
@@ -20,44 +25,22 @@ const statusIcon = {
 };
 
 const MyTuition = () => {
-  const [fees, setFees] = useState([]);
-  const [stats, setStats] = useState({});
-  const [loading, setLoading] = useState(true);
   const [expandedFee, setExpandedFee] = useState(null);
   const [showQRModal, setShowQRModal] = useState(null);
   const [showConfirmModal, setShowConfirmModal] = useState(null);
   const [qrData, setQrData] = useState(null);
-  const [pendingPayments, setPendingPayments] = useState([]);
   const [paymentAmount, setPaymentAmount] = useState('');
   const [transactionRef, setTransactionRef] = useState('');
   const [message, setMessage] = useState({ type: '', content: '' });
+  const tuitionQuery = useMyTuitionQuery();
+  const pendingPaymentsQuery = usePendingPaymentsQuery();
+  const tuitionQrMutation = useTuitionQrMutation();
+  const submitPendingPaymentMutation = useSubmitPendingPaymentMutation();
 
-  useEffect(() => {
-    fetchFees();
-    fetchPendingPayments();
-  }, []);
-
-  const fetchFees = async () => {
-    try {
-      setLoading(true);
-      const res = await axiosClient.get('/my-tuition');
-      setFees(res.data.fees || []);
-      setStats(res.data.stats || {});
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchPendingPayments = async () => {
-    try {
-      const res = await axiosClient.get('/my-pending-payments');
-      setPendingPayments(res.data.pendingPayments || []);
-    } catch (err) {
-      console.error(err);
-    }
-  };
+  const fees = tuitionQuery.data?.fees || [];
+  const stats = tuitionQuery.data?.stats || {};
+  const loading = tuitionQuery.isPending;
+  const pendingPayments = pendingPaymentsQuery.data || [];
 
   const showMsg = (content, type = 'success') => {
     setMessage({ type, content });
@@ -67,13 +50,14 @@ const MyTuition = () => {
   const handleShowQR = async (fee) => {
     try {
       const remainingAmount = fee.finalAmount - fee.paidAmount;
-      const res = await axiosClient.get(`/tuition-fees/${fee._id}/qr`, {
-        params: { amount: remainingAmount }
+      const data = await tuitionQrMutation.mutateAsync({
+        feeId: fee._id,
+        amount: remainingAmount,
       });
-      setQrData({ ...res.data, feeId: fee._id });
+      setQrData(data);
       setShowQRModal(fee);
       setPaymentAmount(String(remainingAmount));
-    } catch (err) {
+    } catch {
       showMsg('Không thể tạo mã QR', 'error');
     }
   };
@@ -84,7 +68,7 @@ const MyTuition = () => {
       return;
     }
     try {
-      await axiosClient.post('/pending-payments', {
+      await submitPendingPaymentMutation.mutateAsync({
         tuitionFeeId: qrData.feeId,
         amount: Number(paymentAmount),
         transactionRef
@@ -93,8 +77,6 @@ const MyTuition = () => {
       setShowQRModal(null);
       setShowConfirmModal(null);
       setTransactionRef('');
-      fetchPendingPayments();
-      fetchFees();
     } catch (err) {
       showMsg(err.response?.data?.message || 'Lỗi khi gửi xác nhận', 'error');
     }
@@ -430,10 +412,11 @@ const MyTuition = () => {
               </button>
               <button
                 onClick={handleConfirmPayment}
+                disabled={submitPendingPaymentMutation.isPending}
                 className="flex-1 py-2.5 rounded-lg text-sm font-medium transition-colors"
                 style={{ background: 'var(--success)', color: 'white' }}
               >
-                Đã chuyển
+                {submitPendingPaymentMutation.isPending ? 'Đang gửi...' : 'Đã chuyển'}
               </button>
             </div>
           </div>

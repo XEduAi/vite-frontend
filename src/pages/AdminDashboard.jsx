@@ -1,8 +1,7 @@
-import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import axiosClient from '../api/axiosClient';
 import AdminLayout from '../components/AdminLayout';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useAdminDashboardStatsQuery, useAdminOverviewQuery } from '../features/admin-dashboard/hooks';
 
 const IconUsers = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
@@ -28,42 +27,14 @@ const IconArrow = () => (
 );
 
 const AdminDashboard = () => {
-  const [stats, setStats] = useState({ students: 0, classes: 0, medias: 0 });
-  const [recentStudents, setRecentStudents] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [analytics, setAnalytics] = useState(null);
-  const [analyticsLoading, setAnalyticsLoading] = useState(true);
+  const statsQuery = useAdminDashboardStatsQuery();
+  const overviewQuery = useAdminOverviewQuery();
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const [studentRes, classRes, mediaRes] = await Promise.all([
-          axiosClient.get('/students'),
-          axiosClient.get('/classes'),
-          axiosClient.get('/media')
-        ]);
-        const studentList = studentRes.data.students || [];
-        setStats({
-          students: studentList.length,
-          classes: (classRes.data.classes || []).length,
-          medias: (mediaRes.data.medias || []).length
-        });
-        setRecentStudents(studentList.slice(0, 5));
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchStats();
-  }, []);
-
-  useEffect(() => {
-    axiosClient.get('/admin/analytics/overview')
-      .then(res => setAnalytics(res.data))
-      .catch(console.error)
-      .finally(() => setAnalyticsLoading(false));
-  }, []);
+  const stats = statsQuery.data?.stats || { students: 0, classes: 0, medias: 0 };
+  const recentStudents = statsQuery.data?.recentStudents || [];
+  const loading = statsQuery.isPending;
+  const analytics = overviewQuery.data;
+  const analyticsLoading = overviewQuery.isPending;
 
   const cards = [
     {

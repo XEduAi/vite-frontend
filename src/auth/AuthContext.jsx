@@ -5,6 +5,7 @@ import axiosClient, {
   setAccessToken,
 } from '../api/axiosClient';
 import { AuthContext } from './context';
+import { queryClient } from '../query/client';
 
 const applyAuthPayload = (data, setUserState, setTokenState) => {
   const nextToken = data?.accessToken || data?.token || null;
@@ -27,6 +28,7 @@ export function AuthProvider({ children }) {
     clearAccessToken();
     setAccessTokenState(null);
     setUser(null);
+    queryClient.clear();
   }, []);
 
   const refreshSession = useCallback(async () => {

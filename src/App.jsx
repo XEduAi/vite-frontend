@@ -1,32 +1,34 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import Login from './pages/Login';
-import AdminDashboard from './pages/AdminDashboard';
-import StudentManager from './pages/admin/StudentManager';
-import MediaManager from './pages/admin/MediaManager';
-import ClassManager from './pages/admin/ClassManager';
-import QuestionPool from './pages/admin/QuestionPool';
-import QuizManager from './pages/admin/QuizManager';
-import MyLearning from './pages/student/MyLearning';
-import ClassDetail from './pages/student/ClassDetail';
-import QuizList from './pages/student/QuizList';
-import DoQuiz from './pages/student/DoQuiz';
-import QuizResult from './pages/student/QuizResult';
-import TuitionManager from './pages/admin/TuitionManager';
-import AnnouncementManager from './pages/admin/AnnouncementManager';
-import MyTuition from './pages/student/MyTuition';
-import MyPerformance from './pages/student/MyPerformance';
-import Profile from './pages/student/Profile';
-import Achievements from './pages/student/Achievements';
-import Flashcards from './pages/student/Flashcards';
-import LessonView from './pages/student/LessonView';
-import DocumentMarketplace from './pages/student/DocumentMarketplace';
-import DocumentDetail from './pages/student/DocumentDetail';
-import MyDocuments from './pages/student/MyDocuments';
-import StudyChat from './pages/student/StudyChat';
-import LessonManager from './pages/admin/LessonManager';
-import DocumentManager from './pages/admin/DocumentManager';
-import DocumentAnalytics from './pages/admin/DocumentAnalytics';
 import { useAuth } from './auth/useAuth';
+
+const Login = lazy(() => import('./pages/Login'));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const StudentManager = lazy(() => import('./pages/admin/StudentManager'));
+const MediaManager = lazy(() => import('./pages/admin/MediaManager'));
+const ClassManager = lazy(() => import('./pages/admin/ClassManager'));
+const QuestionPool = lazy(() => import('./pages/admin/QuestionPool'));
+const QuizManager = lazy(() => import('./pages/admin/QuizManager'));
+const MyLearning = lazy(() => import('./pages/student/MyLearning'));
+const ClassDetail = lazy(() => import('./pages/student/ClassDetail'));
+const QuizList = lazy(() => import('./pages/student/QuizList'));
+const DoQuiz = lazy(() => import('./pages/student/DoQuiz'));
+const QuizResult = lazy(() => import('./pages/student/QuizResult'));
+const TuitionManager = lazy(() => import('./pages/admin/TuitionManager'));
+const AnnouncementManager = lazy(() => import('./pages/admin/AnnouncementManager'));
+const MyTuition = lazy(() => import('./pages/student/MyTuition'));
+const MyPerformance = lazy(() => import('./pages/student/MyPerformance'));
+const Profile = lazy(() => import('./pages/student/Profile'));
+const Achievements = lazy(() => import('./pages/student/Achievements'));
+const Flashcards = lazy(() => import('./pages/student/Flashcards'));
+const LessonView = lazy(() => import('./pages/student/LessonView'));
+const DocumentMarketplace = lazy(() => import('./pages/student/DocumentMarketplace'));
+const DocumentDetail = lazy(() => import('./pages/student/DocumentDetail'));
+const MyDocuments = lazy(() => import('./pages/student/MyDocuments'));
+const StudyChat = lazy(() => import('./pages/student/StudyChat'));
+const LessonManager = lazy(() => import('./pages/admin/LessonManager'));
+const DocumentManager = lazy(() => import('./pages/admin/DocumentManager'));
+const DocumentAnalytics = lazy(() => import('./pages/admin/DocumentAnalytics'));
 
 // Initialize theme on app load
 const initTheme = () => {
@@ -47,6 +49,12 @@ const FullPageLoader = () => (
       <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Đang khởi tạo phiên đăng nhập...</span>
     </div>
   </div>
+);
+
+const RoutePage = ({ Component }) => (
+  <Suspense fallback={<FullPageLoader />}>
+    <Component />
+  </Suspense>
 );
 
 const ProtectedRoute = ({ children, requiredRole }) => {
@@ -77,37 +85,37 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/login" element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
+        <Route path="/login" element={<PublicOnlyRoute><RoutePage Component={Login} /></PublicOnlyRoute>} />
 
         {/* Admin */}
-        <Route path="/admin/dashboard" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
-        <Route path="/admin/students" element={<ProtectedRoute requiredRole="admin"><StudentManager /></ProtectedRoute>} />
-        <Route path="/admin/classes" element={<ProtectedRoute requiredRole="admin"><ClassManager /></ProtectedRoute>} />
-        <Route path="/admin/upload" element={<ProtectedRoute requiredRole="admin"><MediaManager /></ProtectedRoute>} />
-        <Route path="/admin/questions" element={<ProtectedRoute requiredRole="admin"><QuestionPool /></ProtectedRoute>} />
-        <Route path="/admin/quizzes" element={<ProtectedRoute requiredRole="admin"><QuizManager /></ProtectedRoute>} />
-        <Route path="/admin/tuition" element={<ProtectedRoute requiredRole="admin"><TuitionManager /></ProtectedRoute>} />
-        <Route path="/admin/announcements" element={<ProtectedRoute requiredRole="admin"><AnnouncementManager /></ProtectedRoute>} />
-        <Route path="/admin/classes/:classId/lessons" element={<ProtectedRoute requiredRole="admin"><LessonManager /></ProtectedRoute>} />
-        <Route path="/admin/documents" element={<ProtectedRoute requiredRole="admin"><DocumentManager /></ProtectedRoute>} />
-        <Route path="/admin/documents/analytics" element={<ProtectedRoute requiredRole="admin"><DocumentAnalytics /></ProtectedRoute>} />
+        <Route path="/admin/dashboard" element={<ProtectedRoute requiredRole="admin"><RoutePage Component={AdminDashboard} /></ProtectedRoute>} />
+        <Route path="/admin/students" element={<ProtectedRoute requiredRole="admin"><RoutePage Component={StudentManager} /></ProtectedRoute>} />
+        <Route path="/admin/classes" element={<ProtectedRoute requiredRole="admin"><RoutePage Component={ClassManager} /></ProtectedRoute>} />
+        <Route path="/admin/upload" element={<ProtectedRoute requiredRole="admin"><RoutePage Component={MediaManager} /></ProtectedRoute>} />
+        <Route path="/admin/questions" element={<ProtectedRoute requiredRole="admin"><RoutePage Component={QuestionPool} /></ProtectedRoute>} />
+        <Route path="/admin/quizzes" element={<ProtectedRoute requiredRole="admin"><RoutePage Component={QuizManager} /></ProtectedRoute>} />
+        <Route path="/admin/tuition" element={<ProtectedRoute requiredRole="admin"><RoutePage Component={TuitionManager} /></ProtectedRoute>} />
+        <Route path="/admin/announcements" element={<ProtectedRoute requiredRole="admin"><RoutePage Component={AnnouncementManager} /></ProtectedRoute>} />
+        <Route path="/admin/classes/:classId/lessons" element={<ProtectedRoute requiredRole="admin"><RoutePage Component={LessonManager} /></ProtectedRoute>} />
+        <Route path="/admin/documents" element={<ProtectedRoute requiredRole="admin"><RoutePage Component={DocumentManager} /></ProtectedRoute>} />
+        <Route path="/admin/documents/analytics" element={<ProtectedRoute requiredRole="admin"><RoutePage Component={DocumentAnalytics} /></ProtectedRoute>} />
 
         {/* Student */}
-        <Route path="/student/dashboard" element={<ProtectedRoute requiredRole="student"><MyLearning /></ProtectedRoute>} />
-        <Route path="/student/class/:id" element={<ProtectedRoute requiredRole="student"><ClassDetail /></ProtectedRoute>} />
-        <Route path="/student/quizzes" element={<ProtectedRoute requiredRole="student"><QuizList /></ProtectedRoute>} />
-        <Route path="/student/quiz/:attemptId" element={<ProtectedRoute requiredRole="student"><DoQuiz /></ProtectedRoute>} />
-        <Route path="/student/quiz-result/:attemptId" element={<ProtectedRoute requiredRole="student"><QuizResult /></ProtectedRoute>} />
-        <Route path="/student/tuition" element={<ProtectedRoute requiredRole="student"><MyTuition /></ProtectedRoute>} />
-        <Route path="/student/performance" element={<ProtectedRoute requiredRole="student"><MyPerformance /></ProtectedRoute>} />
-        <Route path="/student/profile" element={<ProtectedRoute requiredRole="student"><Profile /></ProtectedRoute>} />
-        <Route path="/student/achievements" element={<ProtectedRoute requiredRole="student"><Achievements /></ProtectedRoute>} />
-        <Route path="/student/flashcards" element={<ProtectedRoute requiredRole="student"><Flashcards /></ProtectedRoute>} />
-        <Route path="/student/class/:classId/lessons" element={<ProtectedRoute requiredRole="student"><LessonView /></ProtectedRoute>} />
-        <Route path="/student/documents" element={<ProtectedRoute requiredRole="student"><DocumentMarketplace /></ProtectedRoute>} />
-        <Route path="/student/documents/:id" element={<ProtectedRoute requiredRole="student"><DocumentDetail /></ProtectedRoute>} />
-        <Route path="/student/my-documents" element={<ProtectedRoute requiredRole="student"><MyDocuments /></ProtectedRoute>} />
-        <Route path="/student/chat" element={<ProtectedRoute requiredRole="student"><StudyChat /></ProtectedRoute>} />
+        <Route path="/student/dashboard" element={<ProtectedRoute requiredRole="student"><RoutePage Component={MyLearning} /></ProtectedRoute>} />
+        <Route path="/student/class/:id" element={<ProtectedRoute requiredRole="student"><RoutePage Component={ClassDetail} /></ProtectedRoute>} />
+        <Route path="/student/quizzes" element={<ProtectedRoute requiredRole="student"><RoutePage Component={QuizList} /></ProtectedRoute>} />
+        <Route path="/student/quiz/:attemptId" element={<ProtectedRoute requiredRole="student"><RoutePage Component={DoQuiz} /></ProtectedRoute>} />
+        <Route path="/student/quiz-result/:attemptId" element={<ProtectedRoute requiredRole="student"><RoutePage Component={QuizResult} /></ProtectedRoute>} />
+        <Route path="/student/tuition" element={<ProtectedRoute requiredRole="student"><RoutePage Component={MyTuition} /></ProtectedRoute>} />
+        <Route path="/student/performance" element={<ProtectedRoute requiredRole="student"><RoutePage Component={MyPerformance} /></ProtectedRoute>} />
+        <Route path="/student/profile" element={<ProtectedRoute requiredRole="student"><RoutePage Component={Profile} /></ProtectedRoute>} />
+        <Route path="/student/achievements" element={<ProtectedRoute requiredRole="student"><RoutePage Component={Achievements} /></ProtectedRoute>} />
+        <Route path="/student/flashcards" element={<ProtectedRoute requiredRole="student"><RoutePage Component={Flashcards} /></ProtectedRoute>} />
+        <Route path="/student/class/:classId/lessons" element={<ProtectedRoute requiredRole="student"><RoutePage Component={LessonView} /></ProtectedRoute>} />
+        <Route path="/student/documents" element={<ProtectedRoute requiredRole="student"><RoutePage Component={DocumentMarketplace} /></ProtectedRoute>} />
+        <Route path="/student/documents/:id" element={<ProtectedRoute requiredRole="student"><RoutePage Component={DocumentDetail} /></ProtectedRoute>} />
+        <Route path="/student/my-documents" element={<ProtectedRoute requiredRole="student"><RoutePage Component={MyDocuments} /></ProtectedRoute>} />
+        <Route path="/student/chat" element={<ProtectedRoute requiredRole="student"><RoutePage Component={StudyChat} /></ProtectedRoute>} />
 
         {/* Legacy redirect */}
         <Route path="/my-learning" element={<Navigate to="/student/dashboard" replace />} />

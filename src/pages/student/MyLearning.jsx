@@ -1,8 +1,12 @@
-import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import axiosClient from '../../api/axiosClient';
 import StudentLayout from '../../components/StudentLayout';
 import { useAuth } from '../../auth/useAuth';
+import {
+  useAnnouncementsQuery,
+  useStudentClassesQuery,
+  useStudentDashboardSummaryQuery,
+  useStudentGamificationQuery,
+} from '../../features/dashboard/hooks';
 
 const DAYS = ['', 'CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
 
@@ -74,62 +78,18 @@ const timeAgo = (date) => {
 
 const MyLearning = () => {
   const { user } = useAuth();
-  const [classes, setClasses] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [dashboard, setDashboard] = useState(null);
-  const [dashLoading, setDashLoading] = useState(true);
-  const [announcements, setAnnouncements] = useState([]);
-  const [gamification, setGamification] = useState(null);
   const fullName = user?.fullName || 'Học viên';
+  const classesQuery = useStudentClassesQuery();
+  const dashboardQuery = useStudentDashboardSummaryQuery();
+  const announcementsQuery = useAnnouncementsQuery();
+  const gamificationQuery = useStudentGamificationQuery();
 
-  useEffect(() => {
-    const fetchClasses = async () => {
-      try {
-        setLoading(true);
-        const res = await axiosClient.get('/my-classes');
-        setClasses(res.data.classes || []);
-      } catch (error) {
-        console.error('Lỗi tải lớp học:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const fetchDashboard = async () => {
-      try {
-        setDashLoading(true);
-        const res = await axiosClient.get('/student/dashboard-summary');
-        setDashboard(res.data);
-      } catch (error) {
-        console.error('Lỗi tải dashboard:', error);
-      } finally {
-        setDashLoading(false);
-      }
-    };
-
-    const fetchAnnouncements = async () => {
-      try {
-        const res = await axiosClient.get('/announcements');
-        setAnnouncements(res.data.announcements || []);
-      } catch (error) {
-        console.error('Lỗi tải thông báo:', error);
-      }
-    };
-
-    const fetchGamification = async () => {
-      try {
-        const res = await axiosClient.get('/student/gamification');
-        setGamification(res.data);
-      } catch {
-        // Gamification is optional — silently ignore
-      }
-    };
-
-    fetchClasses();
-    fetchDashboard();
-    fetchAnnouncements();
-    fetchGamification();
-  }, []);
+  const classes = classesQuery.data || [];
+  const dashboard = dashboardQuery.data;
+  const announcements = announcementsQuery.data || [];
+  const gamification = gamificationQuery.data;
+  const loading = classesQuery.isPending;
+  const dashLoading = dashboardQuery.isPending;
 
   const getGreeting = () => {
     const hour = new Date().getHours();
