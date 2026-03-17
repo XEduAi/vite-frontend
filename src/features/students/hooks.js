@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import axiosClient from '../../api/axiosClient';
 
 const invalidateStudentQueries = async (queryClient) => {
@@ -60,5 +60,40 @@ export function useImportStudentsMutation() {
     onSuccess: async () => {
       await invalidateStudentQueries(queryClient);
     },
+  });
+}
+
+export function useBulkStudentActionMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (payload) => {
+      const { data } = await axiosClient.post('/students/bulk-actions', payload);
+      return data;
+    },
+    onSuccess: async () => {
+      await invalidateStudentQueries(queryClient);
+    },
+  });
+}
+
+export function useStudentParentReportQuery(studentId, { enabled = true } = {}) {
+  return useQuery({
+    enabled: enabled && Boolean(studentId),
+    queryKey: ['admin', 'students', 'parent-report', studentId],
+    queryFn: async () => {
+      const { data } = await axiosClient.get(`/students/${studentId}/parent-report`);
+      return data;
+    },
+  });
+}
+
+export function exportStudentsCsv({ filters = {}, ids = [] } = {}) {
+  return axiosClient.get('/students/export', {
+    params: {
+      ...filters,
+      ids: ids.length > 0 ? ids.join(',') : undefined,
+    },
+    responseType: 'blob',
   });
 }

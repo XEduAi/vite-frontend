@@ -148,6 +148,14 @@ const QuizResult = () => {
             </div>
             <h1 className="font-display text-2xl md:text-3xl font-bold mb-1" style={{ color: grade.color }}>{grade.text}</h1>
             <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)' }}>{quiz?.title || 'Bài kiểm tra'}</p>
+            {attempt.status === 'auto_submitted' && (
+              <div
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold mb-5"
+                style={{ background: 'rgba(239,68,68,0.08)', color: 'var(--danger)' }}
+              >
+                Hệ thống đã tự nộp bài khi hết thời gian làm bài
+              </div>
+            )}
 
             <div className="flex items-center justify-center gap-8">
               <div className="text-center">

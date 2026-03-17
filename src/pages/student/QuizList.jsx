@@ -90,17 +90,21 @@ const QuizList = () => {
   const getAttemptBadge = (quizId) => {
     const a = attempts[quizId];
     if (!a) return null;
-    if (a.status === 'submitted') {
+    if (['submitted', 'auto_submitted'].includes(a.status)) {
       const cls = a.percentage >= 80 ? 'badge-green' : a.percentage >= 50 ? 'badge-amber' : 'badge-red';
-      return <span className={`badge ${cls}`}>{a.score}/{a.totalQuestions} ({a.percentage}%)</span>;
+      return (
+        <span className={`badge ${cls}`}>
+          {a.status === 'auto_submitted' ? 'Tự nộp' : `${a.score}/${a.totalQuestions} (${a.percentage}%)`}
+        </span>
+      );
     }
     return <span className="badge badge-blue">Đang làm</span>;
   };
 
   const renderQuizCard = (quiz) => {
     const attempt = attempts[quiz._id];
-    const isSubmitted = attempt?.status === 'submitted';
-    const isInProgress = attempt?.status === 'in_progress';
+    const isSubmitted = ['submitted', 'auto_submitted'].includes(attempt?.status);
+    const isInProgress = ['created', 'in_progress'].includes(attempt?.status);
 
     return (
       <div key={quiz._id} className="card p-5 transition-all hover:shadow-lg group">

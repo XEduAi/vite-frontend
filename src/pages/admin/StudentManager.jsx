@@ -1,14 +1,17 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { getApiErrorMessage } from '../../api/errors';
 import AdminQueryErrors from '../../components/AdminQueryErrors';
 import AdminLayout from '../../components/AdminLayout';
 import AdminToast from '../../components/AdminToast';
-import { useAdminStudentsQuery } from '../../features/admin/lookups';
+import { useAdminClassesQuery, useAdminStudentsQuery } from '../../features/admin/lookups';
 import {
+  exportStudentsCsv,
+  useBulkStudentActionMutation,
   useDeleteStudentMutation,
   useImportStudentsMutation,
   useResetStudentPasswordMutation,
   useSaveStudentMutation,
+  useStudentParentReportQuery,
 } from '../../features/students/hooks';
 
 const EMPTY_FORM = {
@@ -77,6 +80,10 @@ const StudentManager = () => {
   const [newPassword, setNewPassword] = useState('');
   const [showImport, setShowImport] = useState(false);
   const [importResult, setImportResult] = useState(null);
+  const [selectedStudentIds, setSelectedStudentIds] = useState([]);
+  const [bulkClassId, setBulkClassId] = useState('');
+  const [parentReportStudent, setParentReportStudent] = useState(null);
+  const [exporting, setExporting] = useState(false);
   const fileInputRef = useRef(null);
 
   const studentsQuery = useAdminStudentsQuery({
@@ -90,10 +97,21 @@ const StudentManager = () => {
   const deleteStudentMutation = useDeleteStudentMutation();
   const resetStudentPasswordMutation = useResetStudentPasswordMutation();
   const importStudentsMutation = useImportStudentsMutation();
+  const bulkStudentActionMutation = useBulkStudentActionMutation();
+  const classesQuery = useAdminClassesQuery();
+  const parentReportQuery = useStudentParentReportQuery(parentReportStudent?._id, {
+    enabled: Boolean(parentReportStudent),
+  });
 
   const students = studentsQuery.data || [];
+  const classes = classesQuery.data || [];
   const loading = studentsQuery.isPending;
   const importing = importStudentsMutation.isPending;
+  const allStudentsSelected = students.length > 0 && students.every((student) => selectedStudentIds.includes(student._id));
+
+  useEffect(() => {
+    setSelectedStudentIds((previousIds) => previousIds.filter((studentId) => students.some((student) => student._id === studentId)));
+  }, [students]);
 
   const showMessage = (content, type = 'success') => {
     setMessage({ type, content });
@@ -229,6 +247,96 @@ const StudentManager = () => {
     }
   };
 
+  const toggleStudentSelection = (studentId) => {
+    setSelectedStudentIds((previousIds) => (
+      previousIds.includes(studentId)
+        ? previousIds.filter((id) => id !== studentId)
+        : [...previousIds, studentId]
+    ));
+  };
+
+  const toggleAllStudents = () => {
+    setSelectedStudentIds(allStudentsSelected ? [] : students.map((student) => student._id));
+  };
+
+  const handleBulkAction = async (action) => {
+    if (selectedStudentIds.length === 0) {
+      return;
+    }
+
+    if ((action === 'assign_class' || action === 'remove_class') && !bulkClassId) {
+      showMessage('Vui lòng chọn lớp trước khi thực hiện thao tác', 'error');
+      return;
+    }
+
+    try {
+      const data = await bulkStudentActionMutation.mutateAsync({
+        studentIds: selectedStudentIds,
+        action,
+        classId: bulkClassId || undefined,
+      });
+      setSelectedStudentIds([]);
+      showMessage(data.message || 'Đã cập nhật hàng loạt');
+    } catch (error) {
+      showMessage(getApiErrorMessage(error, 'Lỗi khi thực hiện thao tác hàng loạt'), 'error');
+    }
+  };
+
+  const handleExport = async ({ onlySelected = false } = {}) => {
+    try {
+      setExporting(true);
+      const response = await exportStudentsCsv({
+        filters: {
+          grade: filterGrade || undefined,
+          status: filterStatus || undefined,
+          search: submittedSearch || undefined,
+        },
+        ids: onlySelected ? selectedStudentIds : [],
+      });
+
+      const blob = new Blob([response.data], { type: 'text/csv;charset=utf-8;' });
+      const url = window.URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = onlySelected ? 'students-selected.csv' : 'students.csv';
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      window.URL.revokeObjectURL(url);
+
+      showMessage(onlySelected ? 'Đã xuất CSV cho danh sách đã chọn' : 'Đã xuất CSV cho danh sách hiện tại');
+    } catch (error) {
+      showMessage(getApiErrorMessage(error, 'Không thể xuất danh sách học viên'), 'error');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleDownloadParentReport = () => {
+    if (!parentReportQuery.data?.shareText || !parentReportStudent) {
+      return;
+    }
+
+    const blob = new Blob([parentReportQuery.data.shareText], { type: 'text/plain;charset=utf-8' });
+    const url = window.URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `parent-report-${parentReportStudent.username || parentReportStudent._id}.txt`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    window.URL.revokeObjectURL(url);
+  };
+
+  const handleCopyParentReport = async () => {
+    try {
+      await navigator.clipboard.writeText(parentReportQuery.data?.shareText || '');
+      showMessage('Đã copy nội dung báo cáo phụ huynh');
+    } catch {
+      showMessage('Không thể copy nội dung báo cáo', 'error');
+    }
+  };
+
   const queryErrors = studentsQuery.isError
     ? [
         {
@@ -269,6 +377,13 @@ const StudentManager = () => {
             className="btn-secondary flex items-center gap-2"
           >
             📥 Import Excel
+          </button>
+          <button
+            onClick={() => handleExport()}
+            disabled={exporting}
+            className="btn-secondary flex items-center gap-2 disabled:opacity-60"
+          >
+            📤 Xuất CSV
           </button>
         </div>
       </div>
@@ -407,6 +522,66 @@ const StudentManager = () => {
         </form>
       </div>
 
+      {selectedStudentIds.length > 0 && (
+        <div className="card p-4 mb-4 fade-in-up" style={{ border: '1px solid var(--amber)' }}>
+          <div className="flex flex-wrap items-end gap-3">
+            <div>
+              <div className="text-xs mb-1.5" style={{ color: 'var(--text-muted)' }}>Đã chọn</div>
+              <div className="font-semibold" style={{ color: 'var(--text-primary)' }}>
+                {selectedStudentIds.length} học viên
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs mb-1.5" style={{ color: 'var(--text-muted)' }}>Lớp học</label>
+              <select value={bulkClassId} onChange={(e) => setBulkClassId(e.target.value)} className="input min-w-44">
+                <option value="">Chọn lớp</option>
+                {classes.map((classItem) => (
+                  <option key={classItem._id} value={classItem._id}>{classItem.name}</option>
+                ))}
+              </select>
+            </div>
+            <button
+              onClick={() => handleBulkAction('activate')}
+              disabled={bulkStudentActionMutation.isPending}
+              className="btn-secondary disabled:opacity-60"
+            >
+              Kích hoạt
+            </button>
+            <button
+              onClick={() => handleBulkAction('suspend')}
+              disabled={bulkStudentActionMutation.isPending}
+              className="btn-secondary disabled:opacity-60"
+            >
+              Khóa
+            </button>
+            <button
+              onClick={() => handleBulkAction('assign_class')}
+              disabled={bulkStudentActionMutation.isPending}
+              className="btn-primary disabled:opacity-60"
+            >
+              Gán lớp
+            </button>
+            <button
+              onClick={() => handleBulkAction('remove_class')}
+              disabled={bulkStudentActionMutation.isPending}
+              className="btn-secondary disabled:opacity-60"
+            >
+              Gỡ khỏi lớp
+            </button>
+            <button
+              onClick={() => handleExport({ onlySelected: true })}
+              disabled={exporting}
+              className="btn-secondary disabled:opacity-60"
+            >
+              Xuất đã chọn
+            </button>
+            <button onClick={() => setSelectedStudentIds([])} className="btn-secondary">
+              Bỏ chọn
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="card overflow-hidden fade-in-up">
         {loading ? (
           <div className="p-6 space-y-3">
@@ -426,6 +601,9 @@ const StudentManager = () => {
             <table className="min-w-full text-sm">
               <thead>
                 <tr style={{ background: 'var(--cream)', borderBottom: '1px solid var(--border-light)' }}>
+                  <th className="px-5 py-3 text-left text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>
+                    <input type="checkbox" checked={allStudentsSelected} onChange={toggleAllStudents} />
+                  </th>
                   {['Học viên', 'Username', 'Lớp', 'Điện thoại', 'Trạng thái', 'Ngày tạo', 'Thao tác'].map((header) => (
                     <th key={header} className="px-5 py-3 text-left text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>
                       {header.toUpperCase()}
@@ -436,6 +614,13 @@ const StudentManager = () => {
               <tbody>
                 {students.map((student) => (
                   <tr key={student._id} className="table-row border-b" style={{ borderColor: 'var(--border-light)' }}>
+                    <td className="px-5 py-3.5">
+                      <input
+                        type="checkbox"
+                        checked={selectedStudentIds.includes(student._id)}
+                        onChange={() => toggleStudentSelection(student._id)}
+                      />
+                    </td>
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-3">
                         <div
@@ -484,6 +669,12 @@ const StudentManager = () => {
                         >
                           MK
                         </button>
+                        <button
+                          onClick={() => setParentReportStudent(student)}
+                          className="badge badge-amber cursor-pointer hover:opacity-80 transition-opacity"
+                        >
+                          PH
+                        </button>
                         <button onClick={() => handleDelete(student._id)} className="badge badge-red cursor-pointer hover:opacity-80 transition-opacity">
                           Xóa
                         </button>
@@ -493,7 +684,7 @@ const StudentManager = () => {
                 ))}
                 {students.length === 0 && (
                   <tr>
-                    <td colSpan="7" className="px-5 py-12 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
+                    <td colSpan="8" className="px-5 py-12 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
                       Chưa có học viên nào
                     </td>
                   </tr>
@@ -609,6 +800,109 @@ const StudentManager = () => {
                 Đóng
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {parentReportStudent && (
+        <div className="modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setParentReportStudent(null)}>
+          <div className="modal-content card p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start justify-between gap-4 mb-5">
+              <div>
+                <h3 className="font-display font-semibold text-lg" style={{ color: 'var(--text-primary)' }}>
+                  Báo cáo phụ huynh
+                </h3>
+                <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
+                  {parentReportStudent.fullName} · {parentReportStudent.parentInfo?.name || 'Chưa có tên phụ huynh'}
+                </p>
+              </div>
+              <button onClick={() => setParentReportStudent(null)} className="btn-secondary">
+                Đóng
+              </button>
+            </div>
+
+            {parentReportQuery.isPending ? (
+              <div className="py-14 text-center text-sm" style={{ color: 'var(--text-muted)' }}>Đang tải báo cáo...</div>
+            ) : parentReportQuery.isError ? (
+              <div className="toast toast-error">
+                {getApiErrorMessage(parentReportQuery.error, 'Không thể tải báo cáo phụ huynh')}
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+                  <div className="card p-4">
+                    <div className="text-xs mb-1" style={{ color: 'var(--text-muted)' }}>Điểm TB</div>
+                    <div className="font-display font-bold text-lg" style={{ color: 'var(--text-primary)' }}>
+                      {parentReportQuery.data?.overview?.avgScore || 0}%
+                    </div>
+                  </div>
+                  <div className="card p-4">
+                    <div className="text-xs mb-1" style={{ color: 'var(--text-muted)' }}>Điểm cao nhất</div>
+                    <div className="font-display font-bold text-lg" style={{ color: 'var(--text-primary)' }}>
+                      {parentReportQuery.data?.overview?.bestScore || 0}%
+                    </div>
+                  </div>
+                  <div className="card p-4">
+                    <div className="text-xs mb-1" style={{ color: 'var(--text-muted)' }}>Số bài đã làm</div>
+                    <div className="font-display font-bold text-lg" style={{ color: 'var(--text-primary)' }}>
+                      {parentReportQuery.data?.overview?.totalAttempts || 0}
+                    </div>
+                  </div>
+                  <div className="card p-4">
+                    <div className="text-xs mb-1" style={{ color: 'var(--text-muted)' }}>Công nợ</div>
+                    <div className="font-display font-bold text-lg" style={{ color: 'var(--text-primary)' }}>
+                      {(parentReportQuery.data?.overview?.outstandingAmount || 0).toLocaleString('vi-VN')}đ
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-5">
+                  <div className="card p-4">
+                    <h4 className="font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>Cảnh báo</h4>
+                    {parentReportQuery.data?.riskFlags?.length > 0 ? (
+                      <div className="space-y-2">
+                        {parentReportQuery.data.riskFlags.map((risk) => (
+                          <div key={risk.code} className="p-3 rounded-xl" style={{ background: 'var(--bg-secondary)' }}>
+                            <div className="font-medium" style={{ color: 'var(--text-primary)' }}>{risk.title}</div>
+                            <div className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>{risk.message}</div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Không có cảnh báo lớn trong kỳ này.</p>
+                    )}
+                  </div>
+
+                  <div className="card p-4">
+                    <h4 className="font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>Khuyến nghị</h4>
+                    <ul className="space-y-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
+                      {(parentReportQuery.data?.recommendedActions || []).map((action) => (
+                        <li key={action}>• {action}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="card p-4 mb-5">
+                  <h4 className="font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>Nội dung chia sẻ nhanh cho phụ huynh</h4>
+                  <pre
+                    className="whitespace-pre-wrap text-sm rounded-xl p-4 overflow-x-auto"
+                    style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}
+                  >
+                    {parentReportQuery.data?.shareText}
+                  </pre>
+                </div>
+
+                <div className="flex flex-wrap gap-2 justify-end">
+                  <button onClick={handleCopyParentReport} className="btn-secondary">
+                    Copy nội dung
+                  </button>
+                  <button onClick={handleDownloadParentReport} className="btn-primary">
+                    Tải file .txt
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

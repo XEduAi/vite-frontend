@@ -3,10 +3,15 @@ import axiosClient from '../../api/axiosClient';
 
 const getPayload = (responseData) => responseData?.data ?? responseData;
 
+const normalizeMessage = (message) => ({
+  ...message,
+  citations: message?.citations || [],
+});
+
 const normalizeConversation = (conversation) => ({
   ...conversation,
   contextLabel: conversation?.contextLabel || '',
-  messages: conversation?.messages || [],
+  messages: (conversation?.messages || []).map(normalizeMessage),
   title: conversation?.title || 'Cuộc trò chuyện mới',
 });
 
@@ -82,6 +87,16 @@ export function useAiStatsQuery() {
     queryKey: ['admin', 'ai-stats'],
     queryFn: async () => {
       const { data } = await axiosClient.get('/admin/ai-stats');
+      return getPayload(data);
+    },
+  });
+}
+
+export function useMyAiUsageQuery() {
+  return useQuery({
+    queryKey: ['chat', 'usage'],
+    queryFn: async () => {
+      const { data } = await axiosClient.get('/chat/usage');
       return getPayload(data);
     },
   });

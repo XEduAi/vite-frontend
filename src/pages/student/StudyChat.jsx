@@ -8,6 +8,7 @@ import { getApiErrorMessage } from '../../api/errors';
 import { useAuth } from '../../auth/useAuth';
 import {
   upsertConversationPreview,
+  useMyAiUsageQuery,
   useChatConversationQuery,
   useChatConversationsQuery,
   useCreateConversationMutation,
@@ -236,11 +237,13 @@ const StudyChat = () => {
   const contextLabel = searchParams.get('contextLabel') || '';
 
   const conversationsQuery = useChatConversationsQuery();
+  const aiUsageQuery = useMyAiUsageQuery();
   const { mutateAsync: createConversationAsync, isPending: creating } = useCreateConversationMutation();
   const { mutateAsync: deleteConversationAsync } = useDeleteConversationMutation();
   const activeConversationQuery = useChatConversationQuery(activeConversationId);
 
   const conversations = conversationsQuery.data || [];
+  const aiUsage = aiUsageQuery.data || null;
   const activeConversation = activeConversationQuery.data || null;
   const loadingConversations = conversationsQuery.isPending;
   const conversationsErrorMessage = conversationsQuery.isError
@@ -371,6 +374,8 @@ const StudyChat = () => {
       let aiFullText   = '';
       let serverError  = null;
       let tokensUsed   = 0;
+      let citations    = [];
+      let latestUsage  = null;
 
       while (true) {
         const { done, value } = await reader.read();
@@ -385,9 +390,19 @@ const StudyChat = () => {
           let data;
           try { data = JSON.parse(line.slice(6)); } catch { continue; }
 
-          if      (data.type === 'meta')  { setModelInfo(data.model || ''); }
+          if      (data.type === 'meta')  {
+            setModelInfo(data.model || '');
+            if (data.usage) {
+              latestUsage = data.usage;
+              queryClient.setQueryData(['chat', 'usage'], data.usage);
+            }
+          }
           else if (data.type === 'chunk') { aiFullText += data.text; setStreamingText(aiFullText); }
-          else if (data.type === 'done')  { tokensUsed = data.tokensUsed || 0; }
+          else if (data.type === 'done')  {
+            tokensUsed = data.tokensUsed || 0;
+            citations = data.citations || [];
+            latestUsage = data.usage || latestUsage;
+          }
           else if (data.type === 'error') { serverError = data.message || 'Lỗi từ server'; }
         }
       }
@@ -398,6 +413,7 @@ const StudyChat = () => {
         const assistantMessage = {
           role: 'assistant',
           content: aiFullText,
+          citations,
           createdAt: new Date().toISOString(),
         };
         const nextTitle = messageCountBeforeSend <= 1
@@ -432,12 +448,19 @@ const StudyChat = () => {
           })
         );
 
+        if (latestUsage) {
+          queryClient.setQueryData(['chat', 'usage'], latestUsage);
+        }
+
         queryClient.invalidateQueries({ queryKey: ['chat', 'conversation', activeConversationId] });
         queryClient.invalidateQueries({ queryKey: ['chat', 'conversations'] });
       }
 
     } catch (err) {
       console.error('Chat error:', err);
+      if (err.response?.data?.usage) {
+        queryClient.setQueryData(['chat', 'usage'], err.response.data.usage);
+      }
       setMessages((previousMessages) => [...previousMessages, {
         role: 'assistant',
         content: `❌ ${getApiErrorMessage(err, 'Xin lỗi, đã xảy ra lỗi khi xử lý yêu cầu của bạn. Vui lòng thử lại.')}`,
@@ -583,17 +606,29 @@ const StudyChat = () => {
 
             {/* Model badge — only on wider screens */}
             {modelInfo && (
-              <span
-                className="hidden sm:inline-flex"
-                style={{
-                  padding: '3px 8px', borderRadius: '100px',
-                  background: 'var(--amber-soft)', color: 'var(--amber)',
-                  fontSize: '11px', fontWeight: 600, flexShrink: 0,
-                  fontFamily: "'JetBrains Mono', monospace",
-                }}
-              >
-                {modelInfo}
-              </span>
+              <div className="hidden sm:flex items-center gap-2">
+                <span
+                  style={{
+                    padding: '3px 8px', borderRadius: '100px',
+                    background: 'var(--amber-soft)', color: 'var(--amber)',
+                    fontSize: '11px', fontWeight: 600, flexShrink: 0,
+                    fontFamily: "'JetBrains Mono', monospace",
+                  }}
+                >
+                  {modelInfo}
+                </span>
+                {aiUsage && (
+                  <span
+                    style={{
+                      padding: '3px 8px', borderRadius: '100px',
+                      background: 'var(--bg-secondary)', color: 'var(--text-secondary)',
+                      fontSize: '11px', fontWeight: 600, flexShrink: 0,
+                    }}
+                  >
+                    {aiUsage.dailyLimit === -1 ? 'Không giới hạn' : `Còn ${aiUsage.remainingToday} lượt hôm nay`}
+                  </span>
+                )}
+              </div>
             )}
 
             {/* New chat */}

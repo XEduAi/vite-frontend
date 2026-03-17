@@ -71,7 +71,42 @@ const UserBubble = ({ content }) => (
 // ─── AI message — typographic, no bubble ──────────────────────────────────────
 // The asymmetric design is the key differentiator: user messages = inputs (compact bubble),
 // AI messages = content to read (typeset text like a tutor's notes on paper).
-const AIResponse = ({ content, streaming = false }) => (
+const CitationList = ({ citations = [] }) => (
+  citations.length > 0 ? (
+    <div style={{ marginTop: '14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      <div style={{
+        fontSize: '10px',
+        fontWeight: 700,
+        letterSpacing: '0.11em',
+        textTransform: 'uppercase',
+        color: 'var(--text-muted)',
+        fontFamily: "'Space Grotesk', sans-serif",
+      }}>
+        Tài liệu tham khảo
+      </div>
+      {citations.map((citation, index) => (
+        <div
+          key={`${citation.label}-${index}`}
+          style={{
+            border: '1px solid var(--border)',
+            borderRadius: '12px',
+            padding: '10px 12px',
+            background: 'var(--bg-card)',
+          }}
+        >
+          <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '4px' }}>
+            {citation.label || 'Nguồn nội bộ'}
+          </div>
+          <div style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+            {citation.excerpt}
+          </div>
+        </div>
+      ))}
+    </div>
+  ) : null
+);
+
+const AIResponse = ({ content, citations = [], streaming = false }) => (
   <div style={{ display: 'flex', gap: '11px', marginBottom: '22px',
     animation: streaming ? 'none' : 'eduIn 0.28s cubic-bezier(0.16,1,0.3,1) both' }}>
     <div style={{ paddingTop: '1px' }}>
@@ -103,6 +138,7 @@ const AIResponse = ({ content, streaming = false }) => (
       ) : (
         <TypingDots />
       )}
+      {!streaming && <CitationList citations={citations} />}
     </div>
   </div>
 );
@@ -271,7 +307,7 @@ const ChatWindow = ({ messages, streamingText, isStreaming, onSuggestionClick })
           {messages.map((msg, i) =>
             msg.role === 'user'
               ? <UserBubble   key={i} content={msg.content} />
-              : <AIResponse   key={i} content={msg.content} />
+              : <AIResponse   key={i} content={msg.content} citations={msg.citations} />
           )}
           {isStreaming && <AIResponse content={streamingText} streaming />}
           <div style={{ height: '12px' }} />

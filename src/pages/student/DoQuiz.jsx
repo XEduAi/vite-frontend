@@ -14,47 +14,97 @@ const DoQuiz = () => {
   const [timeLeft, setTimeLeft] = useState(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const [saveStatus, setSaveStatus] = useState('');
-  const saveTimer = useRef(null);
+  const [syncMessage, setSyncMessage] = useState('');
   const timerRef = useRef(null);
+  const heartbeatRef = useRef(null);
+  const latestAnswersRef = useRef({});
+  const dirtyAnswersRef = useRef(false);
+  const submittingRef = useRef(false);
+
+  const navigateToResult = useCallback(() => {
+    navigate(`/student/quiz-result/${attemptId}`, { replace: true });
+  }, [attemptId, navigate]);
+
+  const mapAnswersToPayload = useCallback((sourceAnswers = latestAnswersRef.current) => (
+    Object.entries(sourceAnswers).map(([questionId, selectedOption]) => ({
+      questionId,
+      selectedOption,
+    }))
+  ), []);
+
+  const handleAttemptTimeout = useCallback((message) => {
+    setSaveStatus('expired');
+    setSyncMessage(message || 'Bài làm đã hết thời gian và được nộp tự động.');
+    navigateToResult();
+  }, [navigateToResult]);
+
+  const hydrateAttempt = useCallback((payload) => {
+    const attemptData = payload.attempt;
+    setAttempt(attemptData);
+    setTimeLeft(payload.remainingSeconds ?? null);
+    setSyncMessage('');
+
+    const existingAnswers = {};
+    attemptData.questions?.forEach((questionItem) => {
+      const questionId = questionItem.question?._id || questionItem.question;
+      if (questionItem.selectedOption >= 0) {
+        existingAnswers[questionId] = questionItem.selectedOption;
+      }
+    });
+    latestAnswersRef.current = existingAnswers;
+    dirtyAnswersRef.current = false;
+    setAnswers(existingAnswers);
+
+    if (attemptData.status === 'in_progress' && attemptData.lastSavedAt) {
+      const lastSavedAt = new Date(attemptData.lastSavedAt).getTime();
+      const startedAt = new Date(attemptData.startedAt).getTime();
+      if (lastSavedAt - startedAt > 10000) {
+        setSaveStatus('resumed');
+      }
+    }
+  }, []);
+
+  const fetchAttempt = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await axiosClient.get(`/attempts/${attemptId}`);
+      const payload = res.data;
+
+      if (payload.redirectToResult || ['submitted', 'auto_submitted'].includes(payload.attempt?.status)) {
+        navigateToResult();
+        return;
+      }
+
+      hydrateAttempt(payload);
+    } catch (err) {
+      if (err.response?.data?.code === 'QUIZ_AUTO_SUBMITTED') {
+        handleAttemptTimeout(err.response?.data?.message);
+        return;
+      }
+      console.error(err);
+      setSyncMessage(err.response?.data?.message || 'Không thể tải bài làm.');
+    } finally {
+      setLoading(false);
+    }
+  }, [attemptId, handleAttemptTimeout, hydrateAttempt, navigateToResult]);
 
   useEffect(() => {
-    const fetchAttempt = async () => {
-      try {
-        setLoading(true);
-        const res = await axiosClient.get(`/attempts/${attemptId}`);
-        const data = res.data.attempt;
-        setAttempt(data);
-
-        const existingAnswers = {};
-        data.questions?.forEach(q => {
-          const qId = q.question?._id || q.question;
-          if (q.selectedOption >= 0) {
-            existingAnswers[qId] = q.selectedOption;
-          }
-        });
-        setAnswers(existingAnswers);
-
-        if (data.quiz?.duration) {
-          const elapsed = Math.floor((Date.now() - new Date(data.startedAt).getTime()) / 1000);
-          const remaining = Math.max(0, data.quiz.duration * 60 - elapsed);
-          setTimeLeft(remaining);
-        }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchAttempt();
-  }, [attemptId]);
+  }, [fetchAttempt]);
+
+  useEffect(() => {
+    latestAnswersRef.current = answers;
+  }, [answers]);
 
   useEffect(() => {
     if (timeLeft === null || timeLeft <= 0) return;
     timerRef.current = setInterval(() => {
-      setTimeLeft(prev => {
+      setTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(timerRef.current);
-          handleSubmit();
+          if (!submittingRef.current) {
+            handleSubmit();
+          }
           return 0;
         }
         return prev - 1;
@@ -64,47 +114,120 @@ const DoQuiz = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeLeft !== null]);
 
-  const doSave = useCallback(async () => {
-    if (Object.keys(answers).length === 0) return;
-    try {
-      setSaveStatus('saving');
-      const answerList = Object.entries(answers).map(([questionId, selectedOption]) => ({
-        questionId, selectedOption
-      }));
-      await axiosClient.put(`/attempts/${attemptId}/save`, { answers: answerList });
-      setSaveStatus('saved');
-      setTimeout(() => setSaveStatus(''), 2000);
-    } catch {
-      setSaveStatus('');
+  useEffect(() => {
+    if (!attempt || ['submitted', 'auto_submitted'].includes(attempt.status)) {
+      return undefined;
     }
-  }, [answers, attemptId]);
+
+    heartbeatRef.current = setInterval(async () => {
+      if (submittingRef.current) {
+        return;
+      }
+
+      const shouldSendAnswers = dirtyAnswersRef.current;
+
+      try {
+        if (shouldSendAnswers) {
+          setSaveStatus('saving');
+        }
+
+        const res = await axiosClient.post(`/attempts/${attemptId}/heartbeat`, shouldSendAnswers
+          ? { answers: mapAnswersToPayload() }
+          : {});
+
+        setTimeLeft(res.data.remainingSeconds ?? null);
+        setSyncMessage('');
+
+        if (shouldSendAnswers) {
+          dirtyAnswersRef.current = false;
+          setSaveStatus('saved');
+        }
+      } catch (err) {
+        if (err.response?.data?.code === 'QUIZ_AUTO_SUBMITTED') {
+          handleAttemptTimeout(err.response?.data?.message);
+          return;
+        }
+
+        if (!err.response) {
+          setSaveStatus('offline');
+          setSyncMessage('Mất kết nối. Bài làm sẽ được đồng bộ lại khi có mạng.');
+          return;
+        }
+
+        setSaveStatus('');
+      }
+    }, 12000);
+
+    return () => clearInterval(heartbeatRef.current);
+  }, [attempt, attemptId, handleAttemptTimeout, mapAnswersToPayload]);
 
   useEffect(() => {
-    if (saveTimer.current) clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(doSave, 15000);
-    return () => clearTimeout(saveTimer.current);
-  }, [answers, doSave]);
+    const handleOnline = () => {
+      setSyncMessage('');
+      if (saveStatus === 'offline') {
+        setSaveStatus('pending');
+      }
+    };
+
+    const handleOffline = () => {
+      setSyncMessage('Mất kết nối. Bài làm sẽ được đồng bộ lại khi có mạng.');
+      setSaveStatus('offline');
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [saveStatus]);
+
+  useEffect(() => {
+    if (!['saved', 'resumed'].includes(saveStatus)) {
+      return undefined;
+    }
+
+    const timeoutId = setTimeout(() => {
+      setSaveStatus((current) => (['saved', 'resumed'].includes(current) ? '' : current));
+    }, 2200);
+
+    return () => clearTimeout(timeoutId);
+  }, [saveStatus]);
 
   const handleSelectOption = (questionId, optionIndex) => {
-    setAnswers(prev => ({ ...prev, [questionId]: optionIndex }));
+    dirtyAnswersRef.current = true;
+    setSaveStatus('pending');
+    setAnswers((prev) => ({ ...prev, [questionId]: optionIndex }));
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async () => {
+    if (submittingRef.current) {
+      return;
+    }
+
     try {
+      submittingRef.current = true;
       setSubmitting(true);
-      const answerList = Object.entries(answers).map(([questionId, selectedOption]) => ({
-        questionId, selectedOption
-      }));
+      setSaveStatus('saving');
+      const answerList = mapAnswersToPayload();
       if (answerList.length > 0) {
         await axiosClient.put(`/attempts/${attemptId}/save`, { answers: answerList });
       }
       await axiosClient.post(`/attempts/${attemptId}/submit`);
-      navigate(`/student/quiz-result/${attemptId}`, { replace: true });
+      dirtyAnswersRef.current = false;
+      navigateToResult();
     } catch (err) {
+      if (err.response?.data?.code === 'QUIZ_AUTO_SUBMITTED') {
+        handleAttemptTimeout(err.response?.data?.message);
+        return;
+      }
       alert(err.response?.data?.message || 'Lỗi khi nộp bài');
       setSubmitting(false);
+      submittingRef.current = false;
+      setSaveStatus('');
     }
-  };
+  }, [attemptId, handleAttemptTimeout, mapAnswersToPayload, navigateToResult]);
 
   const formatTime = (seconds) => {
     if (seconds === null) return '--:--';
@@ -153,6 +276,8 @@ const DoQuiz = () => {
   const answeredCount = Object.keys(answers).length;
   const isUrgent = timeLeft !== null && timeLeft < 60;
   const progressPercent = Math.round((answeredCount / questions.length) * 100);
+  const hasResumeState = attempt?.status === 'in_progress' && attempt?.lastSavedAt
+    && (new Date(attempt.lastSavedAt).getTime() - new Date(attempt.startedAt).getTime()) > 10000;
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'var(--cream)' }}>
@@ -175,6 +300,21 @@ const DoQuiz = () => {
                   <span className="flex items-center gap-1">
                     <svg className="animate-spin w-3 h-3" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
                     Đang lưu
+                  </span>
+                ) : saveStatus === 'pending' ? (
+                  <span className="flex items-center gap-1" style={{ color: 'var(--amber-warm)' }}>
+                    <svg viewBox="0 0 16 16" fill="currentColor" className="w-3 h-3"><path d="M8 3.25a.75.75 0 01.75.75v3.25h2.5a.75.75 0 010 1.5H8A.75.75 0 017.25 8V4A.75.75 0 018 3.25z" /><path fillRule="evenodd" d="M8 14.75A6.75 6.75 0 108 1.25a6.75 6.75 0 000 13.5zm0-1.5A5.25 5.25 0 108 2.75a5.25 5.25 0 000 10.5z" clipRule="evenodd" /></svg>
+                    Chờ đồng bộ
+                  </span>
+                ) : saveStatus === 'offline' ? (
+                  <span className="flex items-center gap-1" style={{ color: 'var(--danger)' }}>
+                    <svg viewBox="0 0 16 16" fill="currentColor" className="w-3 h-3"><path fillRule="evenodd" d="M8 2.75a5.25 5.25 0 00-4.829 7.307.75.75 0 01-1.381.586A6.75 6.75 0 118 14.75a.75.75 0 010-1.5 5.25 5.25 0 000-10.5zm4.28 8.22a.75.75 0 01-1.06 1.06L8 8.81l-3.22 3.22a.75.75 0 01-1.06-1.06L6.94 7.75 3.72 4.53a.75.75 0 011.06-1.06L8 6.69l3.22-3.22a.75.75 0 111.06 1.06L9.06 7.75l3.22 3.22z" clipRule="evenodd" /></svg>
+                    Mất kết nối
+                  </span>
+                ) : saveStatus === 'resumed' ? (
+                  <span className="flex items-center gap-1" style={{ color: 'var(--info)' }}>
+                    <svg viewBox="0 0 16 16" fill="currentColor" className="w-3 h-3"><path fillRule="evenodd" d="M3.5 8a4.5 4.5 0 117.91 2.911.75.75 0 111.29.764A6 6 0 102 8a.75.75 0 011.5 0z" clipRule="evenodd" /><path fillRule="evenodd" d="M3.25 2.5a.75.75 0 01.75.75v3.5A.75.75 0 013.25 7h-3.5a.75.75 0 010-1.5H2.5V3.25a.75.75 0 01.75-.75z" clipRule="evenodd" /></svg>
+                    Đã khôi phục bài làm
                   </span>
                 ) : (
                   <span className="flex items-center gap-1" style={{ color: 'var(--success)' }}>
@@ -207,6 +347,17 @@ const DoQuiz = () => {
         <div className="progress-bar" style={{ height: 3, borderRadius: 0 }}>
           <div className="progress-bar-fill" style={{ width: `${progressPercent}%` }} />
         </div>
+        {(hasResumeState || syncMessage) && (
+          <div
+            className="px-4 py-2 text-xs font-medium"
+            style={{
+              background: syncMessage ? 'var(--danger-light)' : 'var(--info-light)',
+              color: syncMessage ? 'var(--danger)' : 'var(--info)',
+            }}
+          >
+            {syncMessage || 'Bài làm đã được khôi phục từ lần làm trước. Thời gian được đồng bộ theo máy chủ.'}
+          </div>
+        )}
       </header>
 
       <div className="flex-1 max-w-5xl mx-auto w-full px-4 py-6 flex gap-6">
