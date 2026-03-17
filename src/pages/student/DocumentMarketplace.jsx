@@ -1,7 +1,11 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import axiosClient from '../../api/axiosClient';
+import { getApiErrorMessage } from '../../api/errors';
 import StudentLayout from '../../components/StudentLayout';
+import {
+  useDocumentFiltersQuery,
+  useDocumentMarketplaceQuery,
+} from '../../features/documents/hooks';
 
 const CATEGORY_MAP = {
   đề_thi: 'Đề thi',
@@ -93,10 +97,6 @@ const DocumentMarketplace = () => {
   const [sort, setSort] = useState(searchParams.get('sort') || 'newest');
   const [page, setPage] = useState(Number(searchParams.get('page')) || 1);
 
-  // Filter options from API
-  const [subjects, setSubjects] = useState([]);
-  const [grades, setGrades] = useState([]);
-
   // Debounced search
   const [debouncedSearch, setDebouncedSearch] = useState(search);
 
@@ -108,43 +108,32 @@ const DocumentMarketplace = () => {
     return () => clearTimeout(timer);
   }, [search]);
 
-  // Fetch filter options
-  useEffect(() => {
-    axiosClient.get('/documents/filters').then(res => {
-      const d = res.data.data || res.data;
-      setSubjects(d.subjects || []);
-      setGrades(d.grades || []);
-    }).catch(() => {});
-  }, []);
-
-  // Fetch documents
-  const fetchDocuments = useCallback(async () => {
-    try {
-      setLoading(true);
-      const params = new URLSearchParams();
-      params.set('page', page);
-      params.set('limit', 12);
-      if (debouncedSearch) params.set('search', debouncedSearch);
-      if (subject) params.set('subject', subject);
-      if (grade) params.set('grade', grade);
-      if (category) params.set('category', category);
-      if (sort) params.set('sort', sort);
-
-      const res = await axiosClient.get(`/documents?${params}`);
-      const d = res.data.data || res.data;
-      setDocuments(d.documents || []);
-      setTotal(d.total || 0);
-      setTotalPages(d.totalPages || 0);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  }, [page, debouncedSearch, subject, grade, category, sort]);
+  const documentFiltersQuery = useDocumentFiltersQuery();
+  const documentsQuery = useDocumentMarketplaceQuery({
+    category: category || undefined,
+    grade: grade || undefined,
+    page,
+    search: debouncedSearch || undefined,
+    sort,
+    subject: subject || undefined,
+  });
 
   useEffect(() => {
-    fetchDocuments();
-  }, [fetchDocuments]);
+    setLoading(documentsQuery.isPending);
+  }, [documentsQuery.isPending]);
+
+  useEffect(() => {
+    const data = documentsQuery.data;
+    setDocuments(data?.documents || []);
+    setTotal(data?.total || 0);
+    setTotalPages(data?.totalPages || 0);
+  }, [documentsQuery.data]);
+
+  const subjects = documentFiltersQuery.data?.subjects || [];
+  const grades = documentFiltersQuery.data?.grades || [];
+  const documentsErrorMessage = documentsQuery.isError
+    ? getApiErrorMessage(documentsQuery.error, 'Không thể tải kho tài liệu')
+    : '';
 
   // Sync filters to URL
   useEffect(() => {
@@ -240,7 +229,7 @@ const DocumentMarketplace = () => {
         </div>
 
         {/* Results count */}
-        {!loading && (
+        {!loading && !documentsErrorMessage && (
           <div className="mb-4 text-xs font-medium fade-in" style={{ color: 'var(--text-muted)' }}>
             {total > 0 ? `Tìm thấy ${total} tài liệu` : ''}
           </div>
@@ -250,6 +239,24 @@ const DocumentMarketplace = () => {
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
+          </div>
+        ) : documentsErrorMessage ? (
+          <div className="card p-12 text-center fade-in-up">
+            <div className="w-16 h-16 mx-auto rounded-2xl flex items-center justify-center mb-4" style={{ background: 'var(--danger-light)' }}>
+              <span className="text-3xl">⚠️</span>
+            </div>
+            <h3 className="font-display font-bold text-lg" style={{ color: 'var(--text-primary)' }}>
+              Không thể tải tài liệu
+            </h3>
+            <p className="text-sm mt-1 mb-5" style={{ color: 'var(--text-muted)' }}>
+              {documentsErrorMessage}
+            </p>
+            <button
+              onClick={() => documentsQuery.refetch()}
+              className="btn-primary inline-flex items-center gap-2 py-2.5 px-5 text-sm rounded-xl"
+            >
+              Thử lại
+            </button>
           </div>
         ) : documents.length === 0 ? (
           /* Empty state */

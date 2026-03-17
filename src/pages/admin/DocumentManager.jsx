@@ -1,7 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import axiosClient from '../../api/axiosClient';
+import { getApiErrorMessage } from '../../api/errors';
 import AdminLayout from '../../components/AdminLayout';
+import {
+  useAdminDocumentsQuery,
+  useDeleteDocumentMutation,
+  useDocumentAnalyticsQuery,
+  useSaveDocumentMutation,
+} from '../../features/documents/hooks';
 
 const CATEGORIES = [
   { value: 'đề_thi', label: 'Đề thi' },
@@ -62,45 +68,30 @@ const IconSearch = () => (
 );
 
 const DocumentManager = () => {
-  const [documents, setDocuments] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [analytics, setAnalytics] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState({ ...EMPTY_FORM });
   const [selectedFile, setSelectedFile] = useState(null);
-  const [submitting, setSubmitting] = useState(false);
   const [msg, setMsg] = useState({ text: '', type: '' });
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const fileInputRef = useRef();
+  const adminDocumentsQuery = useAdminDocumentsQuery();
+  const analyticsQuery = useDocumentAnalyticsQuery();
+  const saveDocumentMutation = useSaveDocumentMutation();
+  const deleteDocumentMutation = useDeleteDocumentMutation();
 
-  useEffect(() => {
-    fetchDocuments();
-    fetchAnalytics();
-  }, []);
-
-  const fetchDocuments = async () => {
-    try {
-      setLoading(true);
-      const res = await axiosClient.get('/admin/documents');
-      setDocuments(res.data.data || []);
-    } catch (err) {
-      console.error('Lỗi khi tải tài liệu:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchAnalytics = async () => {
-    try {
-      const res = await axiosClient.get('/admin/documents/analytics');
-      setAnalytics(res.data.data);
-    } catch (err) {
-      console.error('Lỗi khi tải analytics:', err);
-    }
-  };
+  const documents = adminDocumentsQuery.data || [];
+  const analytics = analyticsQuery.data || null;
+  const loading = adminDocumentsQuery.isPending;
+  const submitting = saveDocumentMutation.isPending;
+  const documentsErrorMessage = adminDocumentsQuery.isError
+    ? getApiErrorMessage(adminDocumentsQuery.error, 'Không thể tải danh sách tài liệu')
+    : '';
+  const analyticsErrorMessage = analyticsQuery.isError
+    ? getApiErrorMessage(analyticsQuery.error, 'Không thể tải thống kê tài liệu')
+    : '';
 
   const showMsg = (text, type = 'success') => {
     setMsg({ text, type });
@@ -138,7 +129,6 @@ const DocumentManager = () => {
     if (!form.title.trim()) { showMsg('Vui lòng nhập tên tài liệu', 'error'); return; }
 
     try {
-      setSubmitting(true);
       const formData = new FormData();
       formData.append('title', form.title);
       formData.append('description', form.description);
@@ -153,49 +143,40 @@ const DocumentManager = () => {
       formData.append('isPublished', form.isPublished);
       if (selectedFile) formData.append('file', selectedFile);
 
+      await saveDocumentMutation.mutateAsync({
+        documentId: editingId,
+        payload: formData,
+      });
+
       if (editingId) {
-        await axiosClient.put(`/admin/documents/${editingId}`, formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
         showMsg('Cập nhật tài liệu thành công');
       } else {
-        await axiosClient.post('/admin/documents', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
         showMsg('Thêm tài liệu thành công');
       }
       setShowModal(false);
-      fetchDocuments();
-      fetchAnalytics();
     } catch (err) {
-      showMsg(err.response?.data?.message || 'Lỗi khi lưu tài liệu', 'error');
-    } finally {
-      setSubmitting(false);
+      showMsg(getApiErrorMessage(err, 'Lỗi khi lưu tài liệu'), 'error');
     }
   };
 
   const handleDelete = async (id) => {
     if (!window.confirm('Bạn có chắc muốn xóa tài liệu này?')) return;
     try {
-      await axiosClient.delete(`/admin/documents/${id}`);
+      await deleteDocumentMutation.mutateAsync(id);
       showMsg('Đã xóa tài liệu');
-      fetchDocuments();
-      fetchAnalytics();
     } catch (err) {
-      showMsg('Lỗi khi xóa tài liệu', 'error');
+      showMsg(getApiErrorMessage(err, 'Lỗi khi xóa tài liệu'), 'error');
     }
   };
 
   const handleTogglePublished = async (doc) => {
     try {
-      await axiosClient.put(`/admin/documents/${doc._id}`, {
-        isPublished: !doc.isPublished,
+      await saveDocumentMutation.mutateAsync({
+        documentId: doc._id,
+        payload: { isPublished: !doc.isPublished },
       });
-      setDocuments(prev =>
-        prev.map(d => d._id === doc._id ? { ...d, isPublished: !d.isPublished } : d)
-      );
     } catch (err) {
-      showMsg('Lỗi khi cập nhật trạng thái', 'error');
+      showMsg(getApiErrorMessage(err, 'Lỗi khi cập nhật trạng thái'), 'error');
     }
   };
 
@@ -255,6 +236,43 @@ const DocumentManager = () => {
       {msg.text && (
         <div className={`toast mb-5 ${msg.type === 'error' ? 'toast-error' : 'toast-success'}`}>
           {msg.type === 'error' ? '⚠' : '✓'} {msg.text}
+        </div>
+      )}
+
+      {(documentsErrorMessage || analyticsErrorMessage) && (
+        <div className="card p-4 mb-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-1">
+              {documentsErrorMessage && (
+                <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+                  {documentsErrorMessage}
+                </p>
+              )}
+              {analyticsErrorMessage && (
+                <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+                  {analyticsErrorMessage}
+                </p>
+              )}
+            </div>
+            <div className="flex gap-2">
+              {documentsErrorMessage && (
+                <button
+                  onClick={() => adminDocumentsQuery.refetch()}
+                  className="btn-secondary inline-flex items-center gap-2 py-2 px-4 text-sm rounded-xl"
+                >
+                  Tải lại danh sách
+                </button>
+              )}
+              {analyticsErrorMessage && (
+                <button
+                  onClick={() => analyticsQuery.refetch()}
+                  className="btn-secondary inline-flex items-center gap-2 py-2 px-4 text-sm rounded-xl"
+                >
+                  Tải lại thống kê
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       )}
 

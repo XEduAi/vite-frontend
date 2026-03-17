@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import axiosClient from '../../api/axiosClient';
+import { getApiErrorMessage } from '../../api/errors';
 import AdminLayout from '../../components/AdminLayout';
+import { useDocumentAnalyticsQuery } from '../../features/documents/hooks';
 import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
@@ -24,22 +24,9 @@ const IconArrowLeft = () => (
 );
 
 const DocumentAnalytics = () => {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchAnalytics = async () => {
-      try {
-        const res = await axiosClient.get('/admin/documents/analytics');
-        setData(res.data);
-      } catch (err) {
-        console.error('Lỗi khi tải analytics:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchAnalytics();
-  }, []);
+  const analyticsQuery = useDocumentAnalyticsQuery();
+  const data = analyticsQuery.data || null;
+  const loading = analyticsQuery.isPending;
 
   const formatVND = (value) => {
     if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
@@ -90,10 +77,20 @@ const DocumentAnalytics = () => {
       <AdminLayout>
         <div className="py-20 text-center">
           <div className="text-3xl mb-3">📊</div>
-          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Không thể tải dữ liệu phân tích</p>
+          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+            {getApiErrorMessage(analyticsQuery.error, 'Không thể tải dữ liệu phân tích')}
+          </p>
+          <button
+            onClick={() => analyticsQuery.refetch()}
+            className="btn-secondary inline-flex items-center gap-2 py-2 px-4 text-sm rounded-xl mt-4"
+          >
+            Thử lại
+          </button>
+          <div>
           <Link to="/admin/documents" className="text-sm font-semibold mt-3 inline-block" style={{ color: 'var(--amber-warm)' }}>
             ← Quay lại Kho Tài Liệu
           </Link>
+          </div>
         </div>
       </AdminLayout>
     );

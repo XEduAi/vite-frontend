@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { normalizeApiError } from './errors';
 
 let accessToken = null;
 let refreshHandler = null;
@@ -40,6 +41,7 @@ axiosClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
+    error.normalized = error.normalized || normalizeApiError(error);
 
     if (
       error.response?.status !== 401 ||
@@ -66,6 +68,7 @@ axiosClient.interceptors.response.use(
 
       return axiosClient(originalRequest);
     } catch (refreshError) {
+      refreshError.normalized = refreshError.normalized || normalizeApiError(refreshError);
       return Promise.reject(refreshError);
     }
   }

@@ -1,7 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import axiosClient from '../../api/axiosClient';
+import { getApiErrorMessage } from '../../api/errors';
 import StudentLayout from '../../components/StudentLayout';
+import {
+  useDownloadDocumentMutation,
+  useMyDocumentsQuery,
+} from '../../features/documents/hooks';
 
 const CATEGORY_MAP = {
   đề_thi: 'Đề thi',
@@ -36,37 +40,23 @@ const CATEGORY_ICON = {
 };
 
 const MyDocuments = () => {
-  const [documents, setDocuments] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [downloadingId, setDownloadingId] = useState(null);
   const [message, setMessage] = useState({ type: '', content: '' });
+  const myDocumentsQuery = useMyDocumentsQuery();
+  const downloadDocumentMutation = useDownloadDocumentMutation();
+
+  const documents = myDocumentsQuery.data || [];
+  const loading = myDocumentsQuery.isPending;
 
   const showMsg = (content, type = 'success') => {
     setMessage({ type, content });
     setTimeout(() => setMessage({ type: '', content: '' }), 4000);
   };
 
-  const fetchMyDocuments = async () => {
-    try {
-      setLoading(true);
-      const res = await axiosClient.get('/student/my-documents');
-      setDocuments(res.data.documents || []);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchMyDocuments();
-  }, []);
-
   const handleDownload = async (docId) => {
     try {
       setDownloadingId(docId);
-      const res = await axiosClient.get(`/student/my-documents/${docId}/download`);
-      const urls = res.data.downloadUrls || res.data.files || [];
+      const urls = await downloadDocumentMutation.mutateAsync(docId);
 
       if (Array.isArray(urls) && urls.length > 0) {
         urls.forEach((file) => {
@@ -75,13 +65,11 @@ const MyDocuments = () => {
             window.open(url, '_blank');
           }
         });
-      } else if (res.data.url) {
-        window.open(res.data.url, '_blank');
       } else {
         showMsg('Không tìm thấy tệp tải về', 'error');
       }
     } catch (err) {
-      showMsg(err.response?.data?.message || 'Lỗi khi tải tài liệu', 'error');
+      showMsg(getApiErrorMessage(err, 'Lỗi khi tải tài liệu'), 'error');
     } finally {
       setDownloadingId(null);
     }
@@ -134,6 +122,22 @@ const MyDocuments = () => {
         {message.content && (
           <div className={`toast mb-5 ${message.type === 'error' ? 'toast-error' : 'toast-success'}`}>
             {message.type === 'error' ? '⚠' : '✓'} {message.content}
+          </div>
+        )}
+
+        {myDocumentsQuery.isError && (
+          <div className="card p-4 mb-6 fade-in-up">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+                {getApiErrorMessage(myDocumentsQuery.error, 'Không thể tải thư viện tài liệu của bạn')}
+              </p>
+              <button
+                onClick={() => myDocumentsQuery.refetch()}
+                className="btn-secondary inline-flex items-center gap-2 py-2 px-4 text-sm rounded-xl"
+              >
+                Thử lại
+              </button>
+            </div>
           </div>
         )}
 

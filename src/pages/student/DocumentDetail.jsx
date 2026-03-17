@@ -1,7 +1,16 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import axiosClient from '../../api/axiosClient';
+import { getApiErrorMessage } from '../../api/errors';
+import { useAuth } from '../../auth/useAuth';
 import StudentLayout from '../../components/StudentLayout';
+import { useStudentGamificationQuery } from '../../features/dashboard/hooks';
+import {
+  useDocumentDetailQuery,
+  useDocumentReviewsQuery,
+  useMyDocumentsQuery,
+  usePurchaseDocumentMutation,
+  useSubmitDocumentReviewMutation,
+} from '../../features/documents/hooks';
 
 const CATEGORY_MAP = {
   đề_thi: 'Đề thi',
@@ -54,63 +63,42 @@ const StarSelector = ({ value, onChange }) => (
 
 const DocumentDetail = () => {
   const { id } = useParams();
-  const [doc, setDoc] = useState(null);
-  const [reviews, setReviews] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [purchasing, setPurchasing] = useState(false);
+  const { user } = useAuth();
   const [message, setMessage] = useState({ type: '', content: '' });
 
   // Review form
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
-  const [submittingReview, setSubmittingReview] = useState(false);
 
   // Payment method
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('bank_transfer');
-  const [userXp, setUserXp] = useState(0);
+  const documentQuery = useDocumentDetailQuery(id);
+  const reviewsQuery = useDocumentReviewsQuery(id);
+  const myDocumentsQuery = useMyDocumentsQuery();
+  const gamificationQuery = useStudentGamificationQuery();
+  const purchaseDocumentMutation = usePurchaseDocumentMutation(id);
+  const submitDocumentReviewMutation = useSubmitDocumentReviewMutation(id);
+
+  const doc = documentQuery.data || null;
+  const reviews = reviewsQuery.data || [];
+  const myDocuments = myDocumentsQuery.data || [];
+  const purchased = myDocuments.some((purchase) => purchase.document?._id === id);
+  const hasReviewed = Boolean(
+    user?.id && reviews.some((review) => review.user?._id === user.id)
+  );
+  const userXp = gamificationQuery.data?.xp || 0;
+  const loading = documentQuery.isPending || myDocumentsQuery.isPending;
+  const purchasing = purchaseDocumentMutation.isPending;
+  const submittingReview = submitDocumentReviewMutation.isPending;
+  const reviewsErrorMessage = reviewsQuery.isError
+    ? getApiErrorMessage(reviewsQuery.error, 'Không thể tải đánh giá')
+    : '';
 
   const showMsg = (content, type = 'success') => {
     setMessage({ type, content });
     setTimeout(() => setMessage({ type: '', content: '' }), 4000);
   };
-
-  const fetchDocument = async () => {
-    try {
-      setLoading(true);
-      const res = await axiosClient.get(`/documents/${id}`);
-      setDoc(res.data.data || res.data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchReviews = async () => {
-    try {
-      const res = await axiosClient.get(`/documents/${id}/reviews`);
-      const d = res.data.data || res.data;
-      setReviews(Array.isArray(d) ? d : d.reviews || []);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const fetchUserXp = async () => {
-    try {
-      const res = await axiosClient.get('/student/gamification');
-      setUserXp(res.data.xp || 0);
-    } catch {
-      // Silently ignore
-    }
-  };
-
-  useEffect(() => {
-    fetchDocument();
-    fetchReviews();
-    fetchUserXp();
-  }, [id]);
 
   const handlePurchase = async () => {
     if (!doc) return;
@@ -118,14 +106,10 @@ const DocumentDetail = () => {
     // Free document — auto-complete
     if (doc.price === 0) {
       try {
-        setPurchasing(true);
-        await axiosClient.post(`/documents/${id}/purchase`, { paymentMethod: 'free' });
+        await purchaseDocumentMutation.mutateAsync({ paymentMethod: 'free' });
         showMsg('Đã thêm tài liệu miễn phí vào thư viện!');
-        fetchDocument();
       } catch (err) {
-        showMsg(err.response?.data?.message || 'Lỗi khi tải tài liệu', 'error');
-      } finally {
-        setPurchasing(false);
+        showMsg(getApiErrorMessage(err, 'Lỗi khi tải tài liệu'), 'error');
       }
       return;
     }
@@ -136,15 +120,11 @@ const DocumentDetail = () => {
 
   const confirmPurchase = async () => {
     try {
-      setPurchasing(true);
-      await axiosClient.post(`/documents/${id}/purchase`, { paymentMethod });
+      await purchaseDocumentMutation.mutateAsync({ paymentMethod });
       showMsg('Mua tài liệu thành công!');
       setShowPaymentModal(false);
-      fetchDocument();
     } catch (err) {
-      showMsg(err.response?.data?.message || 'Lỗi khi mua tài liệu', 'error');
-    } finally {
-      setPurchasing(false);
+      showMsg(getApiErrorMessage(err, 'Lỗi khi mua tài liệu'), 'error');
     }
   };
 
@@ -155,20 +135,15 @@ const DocumentDetail = () => {
       return;
     }
     try {
-      setSubmittingReview(true);
-      await axiosClient.post(`/documents/${id}/reviews`, {
+      await submitDocumentReviewMutation.mutateAsync({
         rating: reviewRating,
         comment: reviewComment,
       });
       showMsg('Đã gửi đánh giá!');
       setReviewComment('');
       setReviewRating(5);
-      fetchReviews();
-      fetchDocument();
     } catch (err) {
-      showMsg(err.response?.data?.message || 'Lỗi khi gửi đánh giá', 'error');
-    } finally {
-      setSubmittingReview(false);
+      showMsg(getApiErrorMessage(err, 'Lỗi khi gửi đánh giá'), 'error');
     }
   };
 
@@ -196,10 +171,10 @@ const DocumentDetail = () => {
             <span className="text-3xl">😕</span>
           </div>
           <h3 className="font-display font-bold text-lg" style={{ color: 'var(--text-primary)' }}>
-            Không tìm thấy tài liệu
+            Không thể tải tài liệu
           </h3>
           <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
-            Tài liệu này có thể đã bị xóa hoặc không tồn tại
+            {getApiErrorMessage(documentQuery.error, 'Tài liệu này có thể đã bị xóa hoặc không tồn tại')}
           </p>
           <Link
             to="/student/documents"
@@ -338,7 +313,7 @@ const DocumentDetail = () => {
                   </div>
                 </div>
 
-                {doc.purchased ? (
+                {purchased ? (
                   <div className="flex items-center gap-2">
                     <span
                       className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold"
@@ -394,7 +369,7 @@ const DocumentDetail = () => {
                       </div>
                     )}
                   </div>
-                  {doc.purchased ? (
+                  {purchased ? (
                     <a
                       href={file.url}
                       target="_blank"
@@ -442,7 +417,7 @@ const DocumentDetail = () => {
           )}
 
           {/* Review form — only if purchased and not yet reviewed */}
-          {doc.purchased && !doc.hasReviewed && (
+          {purchased && !hasReviewed && (
             <form onSubmit={handleSubmitReview} className="mb-6 pb-5" style={{ borderBottom: '1px solid var(--border-light)' }}>
               <div className="text-xs font-semibold mb-2 uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
                 Viết đánh giá
@@ -469,7 +444,20 @@ const DocumentDetail = () => {
           )}
 
           {/* Reviews list */}
-          {reviews.length > 0 ? (
+          {reviewsErrorMessage ? (
+            <div className="text-center py-6">
+              <span className="text-2xl mb-2 block">⚠️</span>
+              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+                {reviewsErrorMessage}
+              </p>
+              <button
+                onClick={() => reviewsQuery.refetch()}
+                className="btn-secondary inline-flex items-center gap-2 py-2 px-4 text-sm rounded-xl mt-4"
+              >
+                Thử lại
+              </button>
+            </div>
+          ) : reviews.length > 0 ? (
             <div className="space-y-4">
               {reviews.map((review) => (
                 <div key={review._id} className="pb-4" style={{ borderBottom: '1px solid var(--border-light)' }}>

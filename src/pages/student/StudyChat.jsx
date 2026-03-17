@@ -1,10 +1,18 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import StudentLayout from '../../components/StudentLayout';
 import ChatWindow from '../../components/ChatWindow';
 import ChatInput from '../../components/ChatInput';
-import axiosClient from '../../api/axiosClient';
+import { getApiErrorMessage } from '../../api/errors';
 import { useAuth } from '../../auth/useAuth';
+import {
+  upsertConversationPreview,
+  useChatConversationQuery,
+  useChatConversationsQuery,
+  useCreateConversationMutation,
+  useDeleteConversationMutation,
+} from '../../features/chat/hooks';
 
 // ─── Context labels ────────────────────────────────────────────────────────────
 const CONTEXT_LABELS = {
@@ -104,7 +112,7 @@ const ConvItem = ({ conv, isActive, onSelect, onDelete }) => (
 
 // ─── Sidebar panel (shared between desktop strip + mobile drawer) ──────────────
 const SidebarPanel = ({ conversations, activeConversationId, loadingConversations,
-  contextLabel, creating, onSelect, onDelete, onNew, onClose }) => (
+  contextLabel, creating, errorMessage, onSelect, onDelete, onNew, onClose }) => (
   <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--bg-secondary)' }}>
 
     {/* Header */}
@@ -185,6 +193,10 @@ const SidebarPanel = ({ conversations, activeConversationId, loadingConversation
         <p style={{ padding: '16px', textAlign: 'center', fontSize: '12px', color: 'var(--text-muted)' }}>
           Đang tải...
         </p>
+      ) : errorMessage ? (
+        <p style={{ padding: '16px', textAlign: 'center', fontSize: '12px', color: 'var(--text-muted)' }}>
+          {errorMessage}
+        </p>
       ) : conversations.length === 0 ? (
         <p style={{ padding: '16px', textAlign: 'center', fontSize: '12px', color: 'var(--text-muted)' }}>
           Chưa có cuộc trò chuyện nào
@@ -205,12 +217,11 @@ const SidebarPanel = ({ conversations, activeConversationId, loadingConversation
 // ─── Main page ─────────────────────────────────────────────────────────────────
 const StudyChat = () => {
   const { accessToken, refreshSession } = useAuth();
+  const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
 
   // ── State ────────────────────────────────────────────────────────────────────
-  const [conversations,          setConversations]          = useState([]);
   const [activeConversationId,   setActiveConversationId]   = useState(null);
-  const [activeConversation,     setActiveConversation]     = useState(null);
   const [messages,               setMessages]               = useState([]);
   const [streamingText,          setStreamingText]          = useState('');
   const [isStreaming,            setIsStreaming]            = useState(false);
@@ -220,86 +231,107 @@ const StudyChat = () => {
   const [sidebarOpen,     setSidebarOpen]     = useState(() => typeof window !== 'undefined' && window.innerWidth >= 768);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
 
-  const [loadingConversations, setLoadingConversations] = useState(true);
-  const [creating,             setCreating]             = useState(false);
-
   const contextType  = searchParams.get('contextType')  || 'general';
   const contextId    = searchParams.get('contextId')    || '';
   const contextLabel = searchParams.get('contextLabel') || '';
 
+  const conversationsQuery = useChatConversationsQuery();
+  const { mutateAsync: createConversationAsync, isPending: creating } = useCreateConversationMutation();
+  const { mutateAsync: deleteConversationAsync } = useDeleteConversationMutation();
+  const activeConversationQuery = useChatConversationQuery(activeConversationId);
+
+  const conversations = conversationsQuery.data || [];
+  const activeConversation = activeConversationQuery.data || null;
+  const loadingConversations = conversationsQuery.isPending;
+  const conversationsErrorMessage = conversationsQuery.isError
+    ? getApiErrorMessage(conversationsQuery.error, 'Không thể tải lịch sử trò chuyện')
+    : '';
+  const activeConversationErrorMessage = activeConversationQuery.isError
+    ? getApiErrorMessage(activeConversationQuery.error, 'Không thể tải cuộc trò chuyện')
+    : '';
+
   // ── Data ─────────────────────────────────────────────────────────────────────
-  const fetchConversations = useCallback(async () => {
-    try {
-      const res = await axiosClient.get('/chat/conversations');
-      setConversations(res.data.data || []);
-    } catch (err) {
-      console.error('Lỗi load conversations:', err);
-    } finally {
-      setLoadingConversations(false);
-    }
-  }, []);
-
-  useEffect(() => { fetchConversations(); }, [fetchConversations]);
-
-  const loadConversation = useCallback(async (id) => {
-    try {
-      const res = await axiosClient.get(`/chat/conversations/${id}`);
-      const conv = res.data.data;
-      setActiveConversation(conv);
-      setActiveConversationId(id);
-      setMessages(conv.messages || []);
-      setStreamingText('');
-    } catch (err) {
-      console.error('Lỗi load conversation:', err);
-    }
-  }, []);
-
   const createNewConversation = useCallback(async (override = {}) => {
-    setCreating(true);
     try {
-      const res = await axiosClient.post('/chat/conversations', {
+      const newConversation = await createConversationAsync({
         contextType:  override.contextType  || contextType,
         contextId:    override.contextId    || contextId,
         contextLabel: override.contextLabel || contextLabel,
       });
-      const newConv = res.data.data;
-      setConversations(prev => [newConv, ...prev]);
-      await loadConversation(newConv._id);
+      setActiveConversationId(newConversation._id);
+      setMessages([]);
+      setModelInfo('');
+      setStreamingText('');
     } catch (err) {
       console.error('Lỗi tạo conversation:', err);
-    } finally {
-      setCreating(false);
     }
-  }, [contextType, contextId, contextLabel, loadConversation]);
+  }, [contextId, contextLabel, contextType, createConversationAsync]);
 
   useEffect(() => {
-    if (!loadingConversations && conversations.length === 0) createNewConversation();
-    else if (!loadingConversations && conversations.length > 0 && !activeConversationId)
-      loadConversation(conversations[0]._id);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loadingConversations]);
+    if (loadingConversations || activeConversationId) {
+      return;
+    }
+
+    if (conversations.length === 0) {
+      createNewConversation();
+      return;
+    }
+
+    setActiveConversationId(conversations[0]._id);
+  }, [activeConversationId, conversations, createNewConversation, loadingConversations]);
+
+  useEffect(() => {
+    if (!activeConversationId) {
+      setMessages([]);
+      setModelInfo('');
+      setStreamingText('');
+    }
+  }, [activeConversationId]);
+
+  useEffect(() => {
+    if (activeConversation && !isStreaming) {
+      setMessages(activeConversation.messages || []);
+      setModelInfo(activeConversation.modelUsed || '');
+      setStreamingText('');
+    }
+  }, [activeConversation, isStreaming]);
+
+  const selectConversation = (id) => {
+    setActiveConversationId(id);
+    setMessages([]);
+    setModelInfo('');
+    setStreamingText('');
+  };
 
   const deleteConversation = async (id, e) => {
     e.stopPropagation();
-    if (!confirm('Xóa cuộc trò chuyện này?')) return;
+    if (!window.confirm('Xóa cuộc trò chuyện này?')) return;
     try {
-      await axiosClient.delete(`/chat/conversations/${id}`);
-      const remaining = conversations.filter(c => c._id !== id);
-      setConversations(remaining);
+      await deleteConversationAsync(id);
+      const remaining = conversations.filter((conversation) => conversation._id !== id);
       if (activeConversationId === id) {
         setActiveConversationId(null);
-        setActiveConversation(null);
         setMessages([]);
-        if (remaining.length > 0) loadConversation(remaining[0]._id);
       }
-    } catch (err) { console.error('Lỗi xóa:', err); }
+      if (remaining.length > 0) {
+        setActiveConversationId(remaining[0]._id);
+      }
+    } catch (err) {
+      console.error('Lỗi xóa:', err);
+    }
   };
 
   // ── SSE streaming ─────────────────────────────────────────────────────────────
   const handleSendMessage = async (message) => {
     if (!activeConversationId || isStreaming) return;
 
-    setMessages(prev => [...prev, { role: 'user', content: message, createdAt: new Date() }]);
+    const userMessage = {
+      role: 'user',
+      content: message,
+      createdAt: new Date().toISOString(),
+    };
+    const messageCountBeforeSend = messages.length;
+    setMessages((previousMessages) => [...previousMessages, userMessage]);
     setIsStreaming(true);
     setStreamingText('');
 
@@ -320,6 +352,10 @@ const StudyChat = () => {
         token = await refreshSession();
       }
 
+      if (!token) {
+        throw new Error('Phiên đăng nhập đã hết hạn');
+      }
+
       let response = await openStream(token);
 
       if (response.status === 401) {
@@ -333,8 +369,8 @@ const StudyChat = () => {
       const decoder    = new TextDecoder();
       let accumulated  = '';
       let aiFullText   = '';
-      let done_        = false;
       let serverError  = null;
+      let tokensUsed   = 0;
 
       while (true) {
         const { done, value } = await reader.read();
@@ -351,36 +387,61 @@ const StudyChat = () => {
 
           if      (data.type === 'meta')  { setModelInfo(data.model || ''); }
           else if (data.type === 'chunk') { aiFullText += data.text; setStreamingText(aiFullText); }
-          else if (data.type === 'done')  {
-            done_ = true;
-            setMessages(prev => [...prev, { role: 'assistant', content: aiFullText, createdAt: new Date() }]);
-            setStreamingText('');
-            setIsStreaming(false);
-            if (messages.length <= 1) {
-              setConversations(prev => prev.map(c =>
-                c._id === activeConversationId
-                  ? { ...c, title: message.substring(0, 60) + (message.length > 60 ? '...' : ''), lastMessageAt: new Date() }
-                  : c
-              ));
-            }
-          }
+          else if (data.type === 'done')  { tokensUsed = data.tokensUsed || 0; }
           else if (data.type === 'error') { serverError = data.message || 'Lỗi từ server'; }
         }
       }
 
-      if (!done_ && aiFullText && !serverError) {
-        setMessages(prev => [...prev, { role: 'assistant', content: aiFullText, createdAt: new Date() }]);
-        setStreamingText('');
-        setIsStreaming(false);
-      }
       if (serverError && !aiFullText) throw new Error(serverError);
+
+      if (aiFullText) {
+        const assistantMessage = {
+          role: 'assistant',
+          content: aiFullText,
+          createdAt: new Date().toISOString(),
+        };
+        const nextTitle = messageCountBeforeSend <= 1
+          ? `${message.substring(0, 60)}${message.length > 60 ? '...' : ''}`
+          : activeConversation?.title || 'Cuộc trò chuyện mới';
+        const nextLastMessageAt = new Date().toISOString();
+
+        setMessages((previousMessages) => [...previousMessages, assistantMessage]);
+
+        queryClient.setQueryData(['chat', 'conversation', activeConversationId], (previousConversation) => (
+          previousConversation
+            ? {
+                ...previousConversation,
+                lastMessageAt: nextLastMessageAt,
+                messages: [...(previousConversation.messages || []), userMessage, assistantMessage],
+                title: nextTitle,
+                totalTokens: (previousConversation.totalTokens || 0) + tokensUsed,
+              }
+            : previousConversation
+        ));
+
+        queryClient.setQueryData(['chat', 'conversations'], (previousConversations = []) =>
+          upsertConversationPreview(previousConversations, {
+            _id: activeConversationId,
+            contextLabel: activeConversation?.contextLabel || contextLabel,
+            contextType: activeConversation?.contextType || contextType,
+            createdAt: activeConversation?.createdAt || nextLastMessageAt,
+            lastMessageAt: nextLastMessageAt,
+            modelUsed: modelInfo || activeConversation?.modelUsed || '',
+            title: nextTitle,
+            totalTokens: (activeConversation?.totalTokens || 0) + tokensUsed,
+          })
+        );
+
+        queryClient.invalidateQueries({ queryKey: ['chat', 'conversation', activeConversationId] });
+        queryClient.invalidateQueries({ queryKey: ['chat', 'conversations'] });
+      }
 
     } catch (err) {
       console.error('Chat error:', err);
-      setMessages(prev => [...prev, {
+      setMessages((previousMessages) => [...previousMessages, {
         role: 'assistant',
-        content: '❌ Xin lỗi, đã xảy ra lỗi khi xử lý yêu cầu của bạn. Vui lòng thử lại.',
-        createdAt: new Date(),
+        content: `❌ ${getApiErrorMessage(err, 'Xin lỗi, đã xảy ra lỗi khi xử lý yêu cầu của bạn. Vui lòng thử lại.')}`,
+        createdAt: new Date().toISOString(),
       }]);
     } finally {
       setIsStreaming(false);
@@ -391,8 +452,8 @@ const StudyChat = () => {
   // ── Shared sidebar props ──────────────────────────────────────────────────────
   const sidebarProps = {
     conversations, activeConversationId, loadingConversations,
-    contextLabel, creating,
-    onSelect: loadConversation, onDelete: deleteConversation,
+    contextLabel, creating, errorMessage: conversationsErrorMessage,
+    onSelect: selectConversation, onDelete: deleteConversation,
     onNew: () => createNewConversation(),
   };
 
@@ -566,6 +627,21 @@ const StudyChat = () => {
             </button>
           </div>
 
+          {activeConversationErrorMessage && (
+            <div
+              style={{
+                margin: '10px 12px 0',
+                padding: '10px 12px',
+                borderRadius: '12px',
+                background: 'var(--danger-light)',
+                color: 'var(--danger)',
+                fontSize: '12px',
+              }}
+            >
+              {activeConversationErrorMessage}
+            </div>
+          )}
+
           {/* ─ Messages ─ */}
           <ChatWindow
             messages={messages}
@@ -577,7 +653,7 @@ const StudyChat = () => {
           {/* ─ Input ─ */}
           <ChatInput
             onSend={handleSendMessage}
-            disabled={isStreaming || !activeConversationId}
+            disabled={isStreaming || !activeConversationId || activeConversationQuery.isPending}
             placeholder={
               activeConversation?.contextLabel
                 ? `Hỏi về "${activeConversation.contextLabel}"...`
