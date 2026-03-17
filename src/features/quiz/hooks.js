@@ -89,3 +89,56 @@ export function useCreatePracticeQuizMutation() {
     },
   });
 }
+
+export function useAdminQuizListQuery() {
+  return useQuery({
+    queryKey: ['admin', 'quizzes'],
+    queryFn: async () => {
+      const { data } = await axiosClient.get('/quizzes');
+      return data.quizzes || [];
+    },
+  });
+}
+
+export function useAdminQuizAttemptsQuery(quizId) {
+  return useQuery({
+    enabled: Boolean(quizId),
+    queryKey: ['admin', 'quiz-attempts', quizId],
+    queryFn: async () => {
+      const { data } = await axiosClient.get(`/quizzes/${quizId}/attempts`);
+      return data.attempts || [];
+    },
+  });
+}
+
+export function useSaveQuizMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ quizId, payload }) => {
+      const response = quizId
+        ? await axiosClient.put(`/quizzes/${quizId}`, payload)
+        : await axiosClient.post('/quizzes', payload);
+
+      return response.data.quiz;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'quizzes'] });
+    },
+  });
+}
+
+export function useDeleteQuizMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (quizId) => {
+      await axiosClient.delete(`/quizzes/${quizId}`);
+      return quizId;
+    },
+    onSuccess: (quizId) => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'quizzes'] });
+      queryClient.removeQueries({ queryKey: ['admin', 'quiz-attempts', quizId] });
+    },
+  });
+}

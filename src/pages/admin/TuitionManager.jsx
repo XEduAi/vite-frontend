@@ -1,6 +1,19 @@
-import { useState, useEffect } from 'react';
-import axiosClient from '../../api/axiosClient';
+import { useState } from 'react';
+import { getApiErrorMessage } from '../../api/errors';
 import AdminLayout from '../../components/AdminLayout';
+import { useAdminClassesQuery, useAdminStudentsQuery } from '../../features/admin/lookups';
+import {
+  useAdminPendingPaymentsQuery,
+  useAdminTuitionFeesQuery,
+  useApprovePendingPaymentMutation,
+  useCreateBatchTuitionFeesMutation,
+  useCreateTuitionFeeMutation,
+  useDeletePendingPaymentMutation,
+  useDeleteTuitionFeeMutation,
+  useRecordTuitionPaymentMutation,
+  useRejectPendingPaymentMutation,
+  useTuitionSemestersQuery,
+} from '../../features/tuition/hooks';
 
 const formatVND = (v) => {
   if (!v && v !== 0) return '0đ';
@@ -11,112 +24,69 @@ const statusLabel = { unpaid: 'Chưa đóng', partial: 'Đóng 1 phần', paid: 
 const statusColor = {
   unpaid: { bg: 'var(--danger-light)', color: 'var(--danger)' },
   partial: { bg: '#fef3c7', color: '#d97706' },
-  paid: { bg: 'var(--success-light)', color: 'var(--success)' }
+  paid: { bg: 'var(--success-light)', color: 'var(--success)' },
 };
 
 const pendingStatusLabel = { pending: 'Chờ duyệt', approved: 'Đã duyệt', rejected: 'Đã từ chối' };
 const pendingStatusColor = {
   pending: { bg: 'var(--amber-soft)', color: 'var(--amber-warm)' },
   approved: { bg: 'var(--success-light)', color: 'var(--success)' },
-  rejected: { bg: 'var(--danger-light)', color: 'var(--danger)' }
+  rejected: { bg: 'var(--danger-light)', color: 'var(--danger)' },
+};
+
+const EMPTY_FORM_DATA = {
+  studentId: '',
+  classId: '',
+  semester: '',
+  schoolYear: '',
+  amount: '',
+  discount: '',
+  note: '',
+  dueDate: '',
 };
 
 const TuitionManager = () => {
-  const [fees, setFees] = useState([]);
-  const [stats, setStats] = useState({});
-  const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [formMode, setFormMode] = useState('single'); // 'single' | 'batch'
+  const [formMode, setFormMode] = useState('single');
   const [message, setMessage] = useState({ type: '', content: '' });
   const [paymentModal, setPaymentModal] = useState(null);
   const [paymentData, setPaymentData] = useState({ amount: '', method: 'cash', note: '' });
-  const [activeTab, setActiveTab] = useState('fees'); // 'fees' | 'pending'
-
-  // Pending payments state
-  const [pendingPayments, setPendingPayments] = useState([]);
+  const [activeTab, setActiveTab] = useState('fees');
   const [pendingFilter, setPendingFilter] = useState('pending');
   const [reviewModal, setReviewModal] = useState(null);
   const [reviewNote, setReviewNote] = useState('');
-
-  // Filters
   const [filterSemester, setFilterSemester] = useState('');
   const [filterClass, setFilterClass] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
-  const [search, setSearch] = useState('');
-  const [semesters, setSemesters] = useState([]);
-  const [classes, setClasses] = useState([]);
-  const [students, setStudents] = useState([]);
+  const [searchInput, setSearchInput] = useState('');
+  const [submittedSearch, setSubmittedSearch] = useState('');
+  const [formData, setFormData] = useState({ ...EMPTY_FORM_DATA });
 
-  const [formData, setFormData] = useState({
-    studentId: '', classId: '', semester: '', schoolYear: '',
-    amount: '', discount: '', note: '', dueDate: ''
+  const feesQuery = useAdminTuitionFeesQuery({
+    semester: filterSemester,
+    classId: filterClass,
+    status: filterStatus,
+    search: submittedSearch,
   });
+  const semestersQuery = useTuitionSemestersQuery();
+  const classesQuery = useAdminClassesQuery();
+  const studentsQuery = useAdminStudentsQuery({ enabled: showForm && formMode === 'single' });
+  const pendingPaymentsQuery = useAdminPendingPaymentsQuery(pendingFilter);
+  const createTuitionFeeMutation = useCreateTuitionFeeMutation();
+  const createBatchTuitionFeesMutation = useCreateBatchTuitionFeesMutation();
+  const deleteTuitionFeeMutation = useDeleteTuitionFeeMutation();
+  const recordTuitionPaymentMutation = useRecordTuitionPaymentMutation();
+  const approvePendingPaymentMutation = useApprovePendingPaymentMutation();
+  const rejectPendingPaymentMutation = useRejectPendingPaymentMutation();
+  const deletePendingPaymentMutation = useDeletePendingPaymentMutation();
 
-  useEffect(() => {
-    fetchFees();
-    fetchSemesters();
-    fetchClasses();
-    fetchStudents();
-    fetchPendingPayments();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterSemester, filterClass, filterStatus, activeTab]);
-
-  useEffect(() => {
-    if (activeTab === 'pending') {
-      fetchPendingPayments();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pendingFilter]);
-
-  const fetchFees = async () => {
-    try {
-      setLoading(true);
-      const params = {};
-      if (filterSemester) params.semester = filterSemester;
-      if (filterClass) params.classId = filterClass;
-      if (filterStatus) params.status = filterStatus;
-      if (search) params.search = search;
-      const res = await axiosClient.get('/tuition-fees', { params });
-      setFees(res.data.fees || []);
-      setStats(res.data.stats || {});
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchSemesters = async () => {
-    try {
-      const res = await axiosClient.get('/tuition-fees/semesters');
-      setSemesters(res.data.semesters || []);
-    } catch { /* */ }
-  };
-
-  const fetchClasses = async () => {
-    try {
-      const res = await axiosClient.get('/classes');
-      setClasses(res.data.classes || []);
-    } catch { /* */ }
-  };
-
-  const fetchStudents = async () => {
-    try {
-      const res = await axiosClient.get('/students');
-      setStudents(res.data.students || []);
-    } catch { /* */ }
-  };
-
-  const fetchPendingPayments = async () => {
-    try {
-      const params = {};
-      if (pendingFilter) params.status = pendingFilter;
-      const res = await axiosClient.get('/pending-payments', { params });
-      setPendingPayments(res.data.pendingPayments || []);
-    } catch (err) {
-      console.error(err);
-    }
-  };
+  const fees = feesQuery.data?.fees || [];
+  const stats = feesQuery.data?.stats || {};
+  const loading = feesQuery.isPending;
+  const pendingPayments = pendingPaymentsQuery.data || [];
+  const semesters = semestersQuery.data || [];
+  const classes = classesQuery.data || [];
+  const students = studentsQuery.data || [];
 
   const showMsg = (content, type = 'success') => {
     setMessage({ type, content });
@@ -124,25 +94,26 @@ const TuitionManager = () => {
   };
 
   const resetForm = () => {
-    setFormData({ studentId: '', classId: '', semester: '', schoolYear: '', amount: '', discount: '', note: '', dueDate: '' });
+    setFormData({ ...EMPTY_FORM_DATA });
     setShowForm(false);
   };
 
   const handleCreate = async (e) => {
     e.preventDefault();
+
     try {
       if (formMode === 'batch') {
-        const res = await axiosClient.post('/tuition-fees/batch', {
+        const data = await createBatchTuitionFeesMutation.mutateAsync({
           classId: formData.classId,
           semester: formData.semester,
           schoolYear: formData.schoolYear,
           amount: Number(formData.amount),
           discount: formData.discount ? Number(formData.discount) : 0,
-          dueDate: formData.dueDate || undefined
+          dueDate: formData.dueDate || undefined,
         });
-        showMsg(res.data.message);
+        showMsg(data.message || 'Đã tạo phiếu học phí cho cả lớp');
       } else {
-        await axiosClient.post('/tuition-fees', {
+        await createTuitionFeeMutation.mutateAsync({
           studentId: formData.studentId,
           classId: formData.classId,
           semester: formData.semester,
@@ -150,88 +121,101 @@ const TuitionManager = () => {
           amount: Number(formData.amount),
           discount: formData.discount ? Number(formData.discount) : 0,
           note: formData.note,
-          dueDate: formData.dueDate || undefined
+          dueDate: formData.dueDate || undefined,
         });
         showMsg('Tạo phiếu học phí thành công!');
       }
       resetForm();
-      fetchFees();
-      fetchSemesters();
     } catch (err) {
-      showMsg(err.response?.data?.message || 'Lỗi tạo phiếu học phí', 'error');
+      showMsg(getApiErrorMessage(err, 'Lỗi tạo phiếu học phí'), 'error');
     }
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (feeId) => {
     if (!window.confirm('Bạn có chắc muốn xóa phiếu học phí này?')) return;
+
     try {
-      await axiosClient.delete(`/tuition-fees/${id}`);
-      setFees(fees.filter(f => f._id !== id));
+      await deleteTuitionFeeMutation.mutateAsync(feeId);
       showMsg('Đã xóa phiếu học phí');
-    } catch {
-      showMsg('Lỗi khi xóa', 'error');
+    } catch (err) {
+      showMsg(getApiErrorMessage(err, 'Lỗi khi xóa phiếu học phí'), 'error');
     }
   };
 
   const handlePayment = async () => {
     if (!paymentData.amount || Number(paymentData.amount) <= 0) return;
+
     try {
-      const res = await axiosClient.post(`/tuition-fees/${paymentModal._id}/payment`, {
-        amount: Number(paymentData.amount),
-        method: paymentData.method,
-        note: paymentData.note
+      await recordTuitionPaymentMutation.mutateAsync({
+        feeId: paymentModal._id,
+        payload: {
+          amount: Number(paymentData.amount),
+          method: paymentData.method,
+          note: paymentData.note,
+        },
       });
-      setFees(fees.map(f => f._id === paymentModal._id ? res.data.fee : f));
       setPaymentModal(null);
       setPaymentData({ amount: '', method: 'cash', note: '' });
       showMsg('Ghi nhận thanh toán thành công!');
-      fetchFees();
     } catch (err) {
-      showMsg(err.response?.data?.message || 'Lỗi thanh toán', 'error');
+      showMsg(getApiErrorMessage(err, 'Lỗi thanh toán'), 'error');
     }
   };
 
   const handleApprove = async () => {
     try {
-      await axiosClient.put(`/pending-payments/${reviewModal._id}/approve`, { note: reviewNote });
+      await approvePendingPaymentMutation.mutateAsync({
+        paymentId: reviewModal._id,
+        note: reviewNote,
+      });
       showMsg('Đã duyệt thanh toán!');
       setReviewModal(null);
       setReviewNote('');
-      fetchPendingPayments();
-      fetchFees();
     } catch (err) {
-      showMsg(err.response?.data?.message || 'Lỗi khi duyệt', 'error');
+      showMsg(getApiErrorMessage(err, 'Lỗi khi duyệt'), 'error');
     }
   };
 
   const handleReject = async () => {
     try {
-      await axiosClient.put(`/pending-payments/${reviewModal._id}/reject`, { note: reviewNote });
+      await rejectPendingPaymentMutation.mutateAsync({
+        paymentId: reviewModal._id,
+        note: reviewNote,
+      });
       showMsg('Đã từ chối thanh toán!');
       setReviewModal(null);
       setReviewNote('');
-      fetchPendingPayments();
     } catch (err) {
-      showMsg(err.response?.data?.message || 'Lỗi khi từ chối', 'error');
+      showMsg(getApiErrorMessage(err, 'Lỗi khi từ chối'), 'error');
     }
   };
 
-  const handleDeletePending = async (id) => {
+  const handleDeletePending = async (paymentId) => {
     if (!window.confirm('Bạn có chắc muốn xóa yêu cầu này?')) return;
+
     try {
-      await axiosClient.delete(`/pending-payments/${id}`);
-      setPendingPayments(pendingPayments.filter(p => p._id !== id));
+      await deletePendingPaymentMutation.mutateAsync(paymentId);
       showMsg('Đã xóa yêu cầu');
-    } catch {
-      showMsg('Lỗi khi xóa', 'error');
+    } catch (err) {
+      showMsg(getApiErrorMessage(err, 'Lỗi khi xóa'), 'error');
     }
   };
 
-  const handleSearch = (e) => { e.preventDefault(); fetchFees(); };
+  const handleSearch = (e) => {
+    e.preventDefault();
+    setSubmittedSearch(searchInput);
+  };
+
+  const queryErrors = [
+    feesQuery.isError ? { key: 'fees', message: getApiErrorMessage(feesQuery.error, 'Không thể tải danh sách học phí') } : null,
+    semestersQuery.isError ? { key: 'semesters', message: getApiErrorMessage(semestersQuery.error, 'Không thể tải danh sách học kỳ') } : null,
+    classesQuery.isError ? { key: 'classes', message: getApiErrorMessage(classesQuery.error, 'Không thể tải danh sách lớp') } : null,
+    studentsQuery.isError ? { key: 'students', message: getApiErrorMessage(studentsQuery.error, 'Không thể tải danh sách học viên') } : null,
+    pendingPaymentsQuery.isError ? { key: 'pending', message: getApiErrorMessage(pendingPaymentsQuery.error, 'Không thể tải yêu cầu thanh toán') } : null,
+  ].filter(Boolean);
 
   return (
     <AdminLayout>
-      {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6 fade-in">
         <div>
           <h1 className="font-display text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
@@ -242,14 +226,19 @@ const TuitionManager = () => {
           </p>
         </div>
         <button
-          onClick={() => { resetForm(); setShowForm(!showForm); }}
+          onClick={() => {
+            if (showForm) {
+              resetForm();
+              return;
+            }
+            setShowForm(true);
+          }}
           className={showForm ? 'btn-secondary flex items-center gap-2' : 'btn-primary flex items-center gap-2'}
         >
           {showForm ? '✕ Đóng' : '+ Tạo phiếu học phí'}
         </button>
       </div>
 
-      {/* Stats cards */}
       {!loading && stats.total > 0 && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6 stagger-children">
           <div className="card p-4">
@@ -274,7 +263,7 @@ const TuitionManager = () => {
                 className="h-full rounded-full transition-all"
                 style={{
                   width: `${stats.totalAmount > 0 ? Math.round((stats.totalPaid / stats.totalAmount) * 100) : 0}%`,
-                  background: 'var(--grad-amber)'
+                  background: 'var(--grad-amber)',
                 }}
               />
             </div>
@@ -282,18 +271,40 @@ const TuitionManager = () => {
         </div>
       )}
 
-      {/* Toast */}
       {message.content && (
         <div className={`toast mb-5 ${message.type === 'error' ? 'toast-error' : 'toast-success'}`}>
           {message.type === 'error' ? '⚠' : '✓'} {message.content}
         </div>
       )}
 
-      {/* Tabs */}
+      {queryErrors.length > 0 && (
+        <div className="card p-4 mb-5">
+          <div className="space-y-3">
+            {queryErrors.map((error) => (
+              <div key={error.key} className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{error.message}</p>
+                <button
+                  onClick={() => {
+                    if (error.key === 'fees') feesQuery.refetch();
+                    if (error.key === 'semesters') semestersQuery.refetch();
+                    if (error.key === 'classes') classesQuery.refetch();
+                    if (error.key === 'students') studentsQuery.refetch();
+                    if (error.key === 'pending') pendingPaymentsQuery.refetch();
+                  }}
+                  className="btn-secondary text-sm"
+                >
+                  Thử lại
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="flex gap-2 mb-5">
         <button
           onClick={() => setActiveTab('fees')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'fees' ? '' : ''}`}
+          className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
           style={{
             background: activeTab === 'fees' ? 'var(--amber-soft)' : 'transparent',
             color: activeTab === 'fees' ? 'var(--amber-warm)' : 'var(--text-muted)',
@@ -304,7 +315,7 @@ const TuitionManager = () => {
         </button>
         <button
           onClick={() => setActiveTab('pending')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'pending' ? '' : ''}`}
+          className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
           style={{
             background: activeTab === 'pending' ? 'var(--amber-soft)' : 'transparent',
             color: activeTab === 'pending' ? 'var(--amber-warm)' : 'var(--text-muted)',
@@ -312,22 +323,20 @@ const TuitionManager = () => {
           }}
         >
           Yêu cầu thanh toán
-          {pendingPayments.filter(p => p.status === 'pending').length > 0 && (
+          {pendingPayments.filter((payment) => payment.status === 'pending').length > 0 && (
             <span className="ml-2 px-1.5 py-0.5 rounded-full text-[10px] font-bold" style={{ background: 'var(--danger)', color: 'white' }}>
-              {pendingPayments.filter(p => p.status === 'pending').length}
+              {pendingPayments.filter((payment) => payment.status === 'pending').length}
             </span>
           )}
         </button>
       </div>
 
-      {/* Create Form */}
       {showForm && (
         <div className="card p-6 mb-6 fade-in-up">
-          {/* Mode tabs */}
           <div className="flex gap-2 mb-5">
             <button
               onClick={() => setFormMode('single')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${formMode === 'single' ? '' : ''}`}
+              className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
               style={{
                 background: formMode === 'single' ? 'var(--amber-soft)' : 'transparent',
                 color: formMode === 'single' ? 'var(--amber-warm)' : 'var(--text-muted)',
@@ -353,95 +362,84 @@ const TuitionManager = () => {
             {formMode === 'single' && (
               <div>
                 <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Học viên *</label>
-                <select value={formData.studentId} onChange={(e) => setFormData({ ...formData, studentId: e.target.value })}
-                  className="input" required>
+                <select value={formData.studentId} onChange={(e) => setFormData({ ...formData, studentId: e.target.value })} className="input" required>
                   <option value="">-- Chọn học viên --</option>
-                  {students.map(s => (
-                    <option key={s._id} value={s._id}>{s.fullName} ({s.username}) - Lớp {s.grade || '?'}</option>
+                  {students.map((student) => (
+                    <option key={student._id} value={student._id}>{student.fullName} ({student.username}) - Lớp {student.grade || '?'}</option>
                   ))}
                 </select>
               </div>
             )}
             <div>
               <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Lớp học *</label>
-              <select value={formData.classId} onChange={(e) => setFormData({ ...formData, classId: e.target.value })}
-                className="input" required>
+              <select value={formData.classId} onChange={(e) => setFormData({ ...formData, classId: e.target.value })} className="input" required>
                 <option value="">-- Chọn lớp --</option>
-                {classes.map(c => (
-                  <option key={c._id} value={c._id}>{c.name}</option>
+                {classes.map((item) => (
+                  <option key={item._id} value={item._id}>{item.name}</option>
                 ))}
               </select>
             </div>
             <div>
               <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Học kỳ *</label>
-              <input type="text" placeholder="VD: HK1 2025-2026" value={formData.semester}
-                onChange={(e) => setFormData({ ...formData, semester: e.target.value })}
-                className="input" required />
+              <input type="text" placeholder="VD: HK1 2025-2026" value={formData.semester} onChange={(e) => setFormData({ ...formData, semester: e.target.value })} className="input" required />
             </div>
             <div>
               <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Năm học *</label>
-              <input type="text" placeholder="VD: 2025-2026" value={formData.schoolYear}
-                onChange={(e) => setFormData({ ...formData, schoolYear: e.target.value })}
-                className="input" required />
+              <input type="text" placeholder="VD: 2025-2026" value={formData.schoolYear} onChange={(e) => setFormData({ ...formData, schoolYear: e.target.value })} className="input" required />
             </div>
             <div>
               <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Số tiền (VNĐ) *</label>
-              <input type="number" placeholder="VD: 3000000" value={formData.amount}
-                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                className="input" required min="0" />
+              <input type="number" placeholder="VD: 3000000" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} className="input" required min="0" />
             </div>
             <div>
               <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Giảm giá (VNĐ)</label>
-              <input type="number" placeholder="0" value={formData.discount}
-                onChange={(e) => setFormData({ ...formData, discount: e.target.value })}
-                className="input" min="0" />
+              <input type="number" placeholder="0" value={formData.discount} onChange={(e) => setFormData({ ...formData, discount: e.target.value })} className="input" min="0" />
             </div>
             <div>
               <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Hạn đóng</label>
-              <input type="date" value={formData.dueDate}
-                onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-                className="input" />
+              <input type="date" value={formData.dueDate} onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })} className="input" />
             </div>
             {formMode === 'single' && (
               <div>
                 <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Ghi chú</label>
-                <input type="text" value={formData.note}
-                  onChange={(e) => setFormData({ ...formData, note: e.target.value })}
-                  className="input" />
+                <input type="text" value={formData.note} onChange={(e) => setFormData({ ...formData, note: e.target.value })} className="input" />
               </div>
             )}
             <div className="sm:col-span-2">
-              <button type="submit" className="btn-primary">
-                {formMode === 'batch' ? 'Tạo cho cả lớp' : 'Tạo phiếu học phí'}
+              <button
+                type="submit"
+                disabled={createTuitionFeeMutation.isPending || createBatchTuitionFeesMutation.isPending}
+                className="btn-primary disabled:opacity-60"
+              >
+                {(createTuitionFeeMutation.isPending || createBatchTuitionFeesMutation.isPending)
+                  ? 'Đang tạo...'
+                  : formMode === 'batch' ? 'Tạo cho cả lớp' : 'Tạo phiếu học phí'}
               </button>
             </div>
           </form>
         </div>
       )}
 
-      {/* Fees Tab */}
       {activeTab === 'fees' && (
         <>
-          {/* Filters */}
           <div className="card p-4 mb-5">
             <form onSubmit={handleSearch} className="flex flex-wrap items-end gap-3">
               <div className="flex-1 min-w-[180px]">
                 <label className="block text-[11px] font-medium mb-1" style={{ color: 'var(--text-muted)' }}>Tìm kiếm</label>
-                <input type="text" placeholder="Tên học viên..." value={search}
-                  onChange={(e) => setSearch(e.target.value)} className="input" />
+                <input type="text" placeholder="Tên học viên..." value={searchInput} onChange={(e) => setSearchInput(e.target.value)} className="input" />
               </div>
               <div>
                 <label className="block text-[11px] font-medium mb-1" style={{ color: 'var(--text-muted)' }}>Học kỳ</label>
                 <select value={filterSemester} onChange={(e) => setFilterSemester(e.target.value)} className="input">
                   <option value="">Tất cả</option>
-                  {semesters.map(s => <option key={s} value={s}>{s}</option>)}
+                  {semesters.map((semester) => <option key={semester} value={semester}>{semester}</option>)}
                 </select>
               </div>
               <div>
                 <label className="block text-[11px] font-medium mb-1" style={{ color: 'var(--text-muted)' }}>Lớp</label>
                 <select value={filterClass} onChange={(e) => setFilterClass(e.target.value)} className="input">
                   <option value="">Tất cả</option>
-                  {classes.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
+                  {classes.map((item) => <option key={item._id} value={item._id}>{item.name}</option>)}
                 </select>
               </div>
               <div>
@@ -457,7 +455,6 @@ const TuitionManager = () => {
             </form>
           </div>
 
-          {/* Table */}
           {loading ? (
             <div className="py-20 text-center">
               <div className="inline-flex items-center gap-3 px-5 py-3 rounded-2xl card">
@@ -531,7 +528,7 @@ const TuitionManager = () => {
                             className="inline-block px-2.5 py-1 rounded-full text-[11px] font-semibold"
                             style={{
                               background: statusColor[fee.status]?.bg,
-                              color: statusColor[fee.status]?.color
+                              color: statusColor[fee.status]?.color,
                             }}
                           >
                             {statusLabel[fee.status]}
@@ -572,10 +569,8 @@ const TuitionManager = () => {
         </>
       )}
 
-      {/* Pending Payments Tab */}
       {activeTab === 'pending' && (
         <>
-          {/* Filter */}
           <div className="card p-4 mb-5">
             <div className="flex items-center gap-3">
               <label className="text-[11px] font-medium" style={{ color: 'var(--text-muted)' }}>Lọc theo trạng thái:</label>
@@ -587,8 +582,17 @@ const TuitionManager = () => {
             </div>
           </div>
 
-          {/* Pending Payments List */}
-          {pendingPayments.length === 0 ? (
+          {pendingPaymentsQuery.isPending ? (
+            <div className="py-20 text-center">
+              <div className="inline-flex items-center gap-3 px-5 py-3 rounded-2xl card">
+                <svg className="animate-spin w-5 h-5" style={{ color: 'var(--amber)' }} viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Đang tải...</span>
+              </div>
+            </div>
+          ) : pendingPayments.length === 0 ? (
             <div className="card p-12 text-center fade-in-up">
               <div className="w-16 h-16 mx-auto rounded-2xl flex items-center justify-center mb-4" style={{ background: 'var(--amber-soft)' }}>
                 <svg viewBox="0 0 24 24" fill="none" className="w-7 h-7" style={{ color: 'var(--amber)' }}>
@@ -600,75 +604,68 @@ const TuitionManager = () => {
             </div>
           ) : (
             <div className="space-y-3 fade-in-up">
-              {pendingPayments.map((pp) => (
-                <div key={pp._id} className="card p-4">
+              {pendingPayments.map((payment) => (
+                <div key={payment._id} className="card p-4">
                   <div className="flex flex-wrap items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-2">
                         <span className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>
-                          {pp.student?.fullName || '—'}
+                          {payment.student?.fullName || '—'}
                         </span>
                         <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                          ({pp.student?.username})
+                          ({payment.student?.username})
                         </span>
                         <span
                           className="px-2 py-0.5 rounded-full text-[10px] font-semibold"
                           style={{
-                            background: pendingStatusColor[pp.status]?.bg,
-                            color: pendingStatusColor[pp.status]?.color
+                            background: pendingStatusColor[payment.status]?.bg,
+                            color: pendingStatusColor[payment.status]?.color,
                           }}
                         >
-                          {pendingStatusLabel[pp.status]}
+                          {pendingStatusLabel[payment.status]}
                         </span>
                       </div>
                       <div className="text-xs mb-1" style={{ color: 'var(--text-muted)' }}>
-                        {pp.tuitionFee?.semester} · {pp.tuitionFee?.schoolYear} · {pp.tuitionFee?.class?.name}
+                        {payment.tuitionFee?.semester} · {payment.tuitionFee?.schoolYear} · {payment.tuitionFee?.class?.name || '—'}
                       </div>
                       <div className="flex items-center gap-4 text-sm">
                         <span className="font-medium" style={{ color: 'var(--text-primary)' }}>
-                          {formatVND(pp.amount)}
+                          {formatVND(payment.amount)}
                         </span>
                         <span style={{ color: 'var(--text-muted)' }}>
-                          {pp.method === 'transfer' ? 'Chuyển khoản' : pp.method === 'cash' ? 'Tiền mặt' : 'Khác'}
+                          {payment.method === 'transfer' ? 'Chuyển khoản' : payment.method === 'cash' ? 'Tiền mặt' : 'Khác'}
                         </span>
-                        {pp.transactionRef && (
+                        {payment.transactionRef && (
                           <span style={{ color: 'var(--text-muted)' }}>
-                            Mã GD: {pp.transactionRef}
+                            Mã GD: {payment.transactionRef}
                           </span>
                         )}
                       </div>
                       <div className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
-                        Gửi lúc: {new Date(pp.submittedAt).toLocaleString('vi-VN')}
+                        Gửi lúc: {new Date(payment.submittedAt).toLocaleString('vi-VN')}
                       </div>
-                      {pp.adminNote && (
+                      {payment.adminNote && (
                         <div className="text-xs mt-2 px-2 py-1 rounded" style={{ background: 'var(--border-light)', color: 'var(--text-secondary)' }}>
-                          Ghi chú: {pp.adminNote}
+                          Ghi chú: {payment.adminNote}
                         </div>
                       )}
                     </div>
                     <div className="flex gap-2">
-                      {pp.status === 'pending' && (
-                        <>
-                          <button
-                            onClick={() => { setReviewModal(pp); setReviewNote(''); }}
-                            className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
-                            style={{ background: 'var(--success-light)', color: 'var(--success)' }}
-                            title="Duyệt"
-                          >
-                            ✓ Duyệt
-                          </button>
-                          <button
-                            onClick={() => { setReviewModal(pp); setReviewNote(''); }}
-                            className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
-                            style={{ background: 'var(--danger-light)', color: 'var(--danger)' }}
-                            title="Từ chối"
-                          >
-                            ✕ Từ chối
-                          </button>
-                        </>
+                      {payment.status === 'pending' && (
+                        <button
+                          onClick={() => {
+                            setReviewModal(payment);
+                            setReviewNote('');
+                          }}
+                          className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                          style={{ background: 'var(--success-light)', color: 'var(--success)' }}
+                          title="Xem xét"
+                        >
+                          ✓ Xem xét
+                        </button>
                       )}
                       <button
-                        onClick={() => handleDeletePending(pp._id)}
+                        onClick={() => handleDeletePending(payment._id)}
                         className="px-2 py-1.5 rounded-lg text-xs font-medium transition-colors"
                         style={{ background: 'var(--border-light)', color: 'var(--text-muted)' }}
                         title="Xóa"
@@ -684,7 +681,6 @@ const TuitionManager = () => {
         </>
       )}
 
-      {/* Payment Modal */}
       {paymentModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="fixed inset-0 modal-overlay" onClick={() => setPaymentModal(null)} />
@@ -712,9 +708,7 @@ const TuitionManager = () => {
             <div className="space-y-3">
               <div>
                 <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Số tiền thanh toán (VNĐ) *</label>
-                <input type="number" value={paymentData.amount}
-                  onChange={(e) => setPaymentData({ ...paymentData, amount: e.target.value })}
-                  className="input" required min="1" />
+                <input type="number" value={paymentData.amount} onChange={(e) => setPaymentData({ ...paymentData, amount: e.target.value })} className="input" required min="1" />
               </div>
               <div>
                 <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Phương thức</label>
@@ -726,20 +720,19 @@ const TuitionManager = () => {
               </div>
               <div>
                 <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Ghi chú</label>
-                <input type="text" value={paymentData.note}
-                  onChange={(e) => setPaymentData({ ...paymentData, note: e.target.value })}
-                  className="input" placeholder="VD: Đóng ngày 15/3" />
+                <input type="text" value={paymentData.note} onChange={(e) => setPaymentData({ ...paymentData, note: e.target.value })} className="input" placeholder="VD: Đóng ngày 15/3" />
               </div>
             </div>
             <div className="flex gap-2 mt-5">
               <button onClick={() => setPaymentModal(null)} className="btn-secondary flex-1">Hủy</button>
-              <button onClick={handlePayment} className="btn-primary flex-1">Xác nhận thanh toán</button>
+              <button onClick={handlePayment} disabled={recordTuitionPaymentMutation.isPending} className="btn-primary flex-1 disabled:opacity-60">
+                {recordTuitionPaymentMutation.isPending ? 'Đang lưu...' : 'Xác nhận thanh toán'}
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Review Modal */}
       {reviewModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="fixed inset-0 modal-overlay" onClick={() => setReviewModal(null)} />
@@ -769,18 +762,12 @@ const TuitionManager = () => {
             </div>
             <div className="mb-4">
               <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Ghi chú (tùy chọn)</label>
-              <textarea
-                value={reviewNote}
-                onChange={(e) => setReviewNote(e.target.value)}
-                className="input"
-                rows="2"
-                placeholder="Lý do duyệt/từ chối..."
-              />
+              <textarea value={reviewNote} onChange={(e) => setReviewNote(e.target.value)} className="input" rows="2" placeholder="Lý do duyệt/từ chối..." />
             </div>
             <div className="flex gap-2">
               <button onClick={() => setReviewModal(null)} className="btn-secondary flex-1">Hủy</button>
-              <button onClick={handleReject} className="btn-danger flex-1">Từ chối</button>
-              <button onClick={handleApprove} className="btn-success flex-1">Duyệt</button>
+              <button onClick={handleReject} disabled={rejectPendingPaymentMutation.isPending || approvePendingPaymentMutation.isPending} className="btn-danger flex-1 disabled:opacity-60">Từ chối</button>
+              <button onClick={handleApprove} disabled={approvePendingPaymentMutation.isPending || rejectPendingPaymentMutation.isPending} className="btn-success flex-1 disabled:opacity-60">Duyệt</button>
             </div>
           </div>
         </div>
