@@ -117,9 +117,19 @@ export function usePurchaseDocumentMutation(documentId) {
   return useMutation({
     mutationFn: async (payload) => {
       const { data } = await axiosClient.post(`/documents/${documentId}/purchase`, payload);
-      return getPayload(data);
+      return normalizeDocumentPurchase(getPayload(data));
     },
-    onSuccess: () => {
+    onSuccess: (purchase) => {
+      if (purchase?.status === 'completed') {
+        queryClient.setQueryData(['student', 'my-documents'], (currentPurchases = []) => {
+          if (currentPurchases.some((item) => item.document?._id === purchase.document?._id)) {
+            return currentPurchases;
+          }
+
+          return [purchase, ...currentPurchases];
+        });
+      }
+
       queryClient.invalidateQueries({ queryKey: ['documents'] });
       queryClient.invalidateQueries({ queryKey: ['documents', 'detail', documentId] });
       queryClient.invalidateQueries({ queryKey: ['student', 'my-documents'] });
@@ -145,8 +155,13 @@ export function useSubmitDocumentReviewMutation(documentId) {
 
 export function useDownloadDocumentMutation() {
   return useMutation({
-    mutationFn: async (documentId) => {
-      const { data } = await axiosClient.get(`/student/my-documents/${documentId}/download`);
+    mutationFn: async (input) => {
+      const documentId = typeof input === 'string' ? input : input?.documentId;
+      const params = typeof input === 'string' || input?.fileIndex === undefined
+        ? undefined
+        : { fileIndex: input.fileIndex };
+
+      const { data } = await axiosClient.get(`/student/my-documents/${documentId}/download`, { params });
       const payload = getPayload(data);
 
       if (Array.isArray(payload?.downloadUrls)) {

@@ -5,6 +5,7 @@ import { useAuth } from '../../auth/useAuth';
 import StudentLayout from '../../components/StudentLayout';
 import { useStudentGamificationQuery } from '../../features/dashboard/hooks';
 import {
+  useDownloadDocumentMutation,
   useDocumentDetailQuery,
   useDocumentReviewsQuery,
   useMyDocumentsQuery,
@@ -69,6 +70,7 @@ const DocumentDetail = () => {
   // Review form
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
+  const [downloadingFileIndex, setDownloadingFileIndex] = useState(null);
 
   // Payment method
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -78,6 +80,7 @@ const DocumentDetail = () => {
   const myDocumentsQuery = useMyDocumentsQuery();
   const gamificationQuery = useStudentGamificationQuery();
   const purchaseDocumentMutation = usePurchaseDocumentMutation(id);
+  const downloadDocumentMutation = useDownloadDocumentMutation();
   const submitDocumentReviewMutation = useSubmitDocumentReviewMutation(id);
 
   const doc = documentQuery.data || null;
@@ -90,6 +93,7 @@ const DocumentDetail = () => {
   const userXp = gamificationQuery.data?.xp || 0;
   const loading = documentQuery.isPending || myDocumentsQuery.isPending;
   const purchasing = purchaseDocumentMutation.isPending;
+  const downloading = downloadDocumentMutation.isPending;
   const submittingReview = submitDocumentReviewMutation.isPending;
   const reviewsErrorMessage = reviewsQuery.isError
     ? getApiErrorMessage(reviewsQuery.error, 'Không thể tải đánh giá')
@@ -106,8 +110,8 @@ const DocumentDetail = () => {
     // Free document — auto-complete
     if (doc.price === 0) {
       try {
-        await purchaseDocumentMutation.mutateAsync({ paymentMethod: 'free' });
-        showMsg('Đã thêm tài liệu miễn phí vào thư viện!');
+        const purchase = await purchaseDocumentMutation.mutateAsync({ paymentMethod: 'free' });
+        showMsg(purchase?.accessGranted ? 'Đã thêm tài liệu miễn phí vào thư viện!' : 'Yêu cầu mua đã được ghi nhận');
       } catch (err) {
         showMsg(getApiErrorMessage(err, 'Lỗi khi tải tài liệu'), 'error');
       }
@@ -120,8 +124,12 @@ const DocumentDetail = () => {
 
   const confirmPurchase = async () => {
     try {
-      await purchaseDocumentMutation.mutateAsync({ paymentMethod });
-      showMsg('Mua tài liệu thành công!');
+      const purchase = await purchaseDocumentMutation.mutateAsync({ paymentMethod });
+      showMsg(
+        purchase?.accessGranted
+          ? 'Mua tài liệu thành công! Bạn có thể tải ngay trong thư viện.'
+          : 'Yêu cầu mua đã được ghi nhận.'
+      );
       setShowPaymentModal(false);
     } catch (err) {
       showMsg(getApiErrorMessage(err, 'Lỗi khi mua tài liệu'), 'error');
@@ -144,6 +152,29 @@ const DocumentDetail = () => {
       setReviewRating(5);
     } catch (err) {
       showMsg(getApiErrorMessage(err, 'Lỗi khi gửi đánh giá'), 'error');
+    }
+  };
+
+  const handleDownloadFile = async (fileIndex) => {
+    try {
+      setDownloadingFileIndex(fileIndex);
+      const urls = await downloadDocumentMutation.mutateAsync({ documentId: id, fileIndex });
+
+      if (Array.isArray(urls) && urls.length > 0) {
+        urls.forEach((file) => {
+          const url = typeof file === 'string' ? file : file.url;
+          if (url) {
+            window.open(url, '_blank', 'noopener,noreferrer');
+          }
+        });
+        return;
+      }
+
+      showMsg('Không tìm thấy tệp tải về', 'error');
+    } catch (err) {
+      showMsg(getApiErrorMessage(err, 'Lỗi khi tải tài liệu'), 'error');
+    } finally {
+      setDownloadingFileIndex(null);
     }
   };
 
@@ -370,11 +401,11 @@ const DocumentDetail = () => {
                     )}
                   </div>
                   {purchased ? (
-                    <a
-                      href={file.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+                    <button
+                      type="button"
+                      onClick={() => handleDownloadFile(idx)}
+                      disabled={downloading && downloadingFileIndex === idx}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all disabled:opacity-60"
                       style={{ background: 'var(--success)', color: 'white' }}
                     >
                       <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -382,8 +413,8 @@ const DocumentDetail = () => {
                         <polyline points="7 10 12 15 17 10" />
                         <line x1="12" y1="15" x2="12" y2="3" />
                       </svg>
-                      Tải về
-                    </a>
+                      {downloading && downloadingFileIndex === idx ? 'Đang tải...' : 'Tải về'}
+                    </button>
                   ) : (
                     <span className="text-xs font-medium px-3 py-1.5 rounded-lg" style={{ background: 'var(--border-light)', color: 'var(--text-muted)' }}>
                       🔒 Mua để tải
