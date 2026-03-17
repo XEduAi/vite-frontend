@@ -26,6 +26,7 @@ const DocumentMarketplace = lazy(() => import('./pages/student/DocumentMarketpla
 const DocumentDetail = lazy(() => import('./pages/student/DocumentDetail'));
 const MyDocuments = lazy(() => import('./pages/student/MyDocuments'));
 const StudyChat = lazy(() => import('./pages/student/StudyChat'));
+const ChatQuestionSource = lazy(() => import('./pages/student/ChatQuestionSource'));
 const LessonManager = lazy(() => import('./pages/admin/LessonManager'));
 const DocumentManager = lazy(() => import('./pages/admin/DocumentManager'));
 const DocumentAnalytics = lazy(() => import('./pages/admin/DocumentAnalytics'));
@@ -120,6 +121,7 @@ function App() {
         <Route path="/student/documents/:id" element={<ProtectedRoute requiredRole="student"><RoutePage Component={DocumentDetail} /></ProtectedRoute>} />
         <Route path="/student/my-documents" element={<ProtectedRoute requiredRole="student"><RoutePage Component={MyDocuments} /></ProtectedRoute>} />
         <Route path="/student/chat" element={<ProtectedRoute requiredRole="student"><RoutePage Component={StudyChat} /></ProtectedRoute>} />
+        <Route path="/student/chat/sources/questions/:questionId" element={<ProtectedRoute requiredRole="student"><RoutePage Component={ChatQuestionSource} /></ProtectedRoute>} />
 
         {/* Legacy redirect */}
         <Route path="/my-learning" element={<Navigate to="/student/dashboard" replace />} />

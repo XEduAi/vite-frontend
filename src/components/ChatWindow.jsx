@@ -1,4 +1,5 @@
 import { useRef, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
@@ -86,7 +87,7 @@ const CitationList = ({ citations = [] }) => (
       </div>
       {citations.map((citation, index) => (
         <div
-          key={`${citation.label}-${index}`}
+          key={`${citation.sourceType || citation.kind || 'source'}-${citation.sourceId || citation.href || index}`}
           style={{
             border: '1px solid var(--border)',
             borderRadius: '12px',
@@ -100,6 +101,27 @@ const CitationList = ({ citations = [] }) => (
           <div style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
             {citation.excerpt}
           </div>
+          {citation.href ? (
+            <div style={{ marginTop: '8px' }}>
+              <Link
+                to={citation.href}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  color: 'var(--amber)',
+                  textDecoration: 'none',
+                }}
+              >
+                <span>Mở nguồn</span>
+                <svg viewBox="0 0 16 16" fill="none" style={{ width: '12px', height: '12px' }}>
+                  <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </Link>
+            </div>
+          ) : null}
         </div>
       ))}
     </div>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
 import axiosClient from '../../api/axiosClient';
 import StudentLayout from '../../components/StudentLayout';
 
@@ -10,13 +10,24 @@ const TYPE_ICON = {
   link: '🔗',
 };
 
+const buildLessonChatHref = (lesson) => (
+  `/student/chat?${new URLSearchParams({
+    contextType: 'lesson',
+    contextId: lesson._id,
+    contextLabel: lesson.title || 'Bài học',
+  }).toString()}`
+);
+
 const LessonView = () => {
   const { classId } = useParams();
+  const [searchParams] = useSearchParams();
   const [lessons, setLessons] = useState([]);
   const [className, setClassName] = useState('');
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState(null); // lesson _id
   const [saving, setSaving] = useState({}); // { lessonId_itemIdx: true }
+  const citedLessonId = searchParams.get('lessonId') || '';
+  const citedItemIndex = Number(searchParams.get('itemIndex'));
 
   useEffect(() => {
     const fetchData = async () => {
@@ -29,8 +40,12 @@ const LessonView = () => {
         const fetched = lessRes.data.lessons || [];
         setLessons(fetched);
         setClassName(clsRes.data.class?.name || '');
-        // Auto-open first lesson
-        if (fetched.length > 0) setExpanded(fetched[0]._id);
+        if (fetched.length > 0) {
+          const citedLesson = citedLessonId
+            ? fetched.find((lesson) => lesson._id === citedLessonId)
+            : null;
+          setExpanded(citedLesson?._id || fetched[0]._id);
+        }
       } catch (err) {
         console.error(err);
       } finally {
@@ -38,7 +53,18 @@ const LessonView = () => {
       }
     };
     fetchData();
-  }, [classId]);
+  }, [citedLessonId, classId]);
+
+  useEffect(() => {
+    if (loading || !citedLessonId) {
+      return;
+    }
+
+    const target = document.getElementById(`lesson-${citedLessonId}`);
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [citedLessonId, loading, lessons.length]);
 
   const toggleExpand = (lessonId) => {
     setExpanded(e => (e === lessonId ? null : lessonId));
@@ -132,7 +158,12 @@ const LessonView = () => {
             const isOpen = expanded === lesson._id;
 
             return (
-              <div key={lesson._id} className="card rounded-2xl overflow-hidden fade-in-up">
+              <div
+                key={lesson._id}
+                id={`lesson-${lesson._id}`}
+                className="card rounded-2xl overflow-hidden fade-in-up"
+                style={lesson._id === citedLessonId ? { boxShadow: '0 0 0 2px rgba(245,158,11,0.25)' } : undefined}
+              >
                 {/* Lesson header */}
                 <button
                   onClick={() => toggleExpand(lesson._id)}
@@ -172,6 +203,14 @@ const LessonView = () => {
                 {/* Items list */}
                 {isOpen && (
                   <div className="border-t" style={{ borderColor: 'var(--border-light)' }}>
+                    <div className="px-5 pt-4 pb-2 flex justify-end">
+                      <Link
+                        to={buildLessonChatHref(lesson)}
+                        className="btn-secondary py-2 px-4 text-sm"
+                      >
+                        Hỏi EduBot về bài này
+                      </Link>
+                    </div>
                     {lessonItems.length === 0 ? (
                       <p className="text-xs text-center py-4" style={{ color: 'var(--text-muted)' }}>Bài học chưa có nội dung.</p>
                     ) : (
@@ -186,7 +225,14 @@ const LessonView = () => {
                             onClick={() => handleItemClick(lesson, idx, item)}
                             disabled={isSaving}
                             className="w-full flex items-center gap-3 px-5 py-3.5 text-left transition-all hover:opacity-80 border-b last:border-b-0"
-                            style={{ borderColor: 'var(--border-light)', background: isDone ? 'rgba(16,185,129,0.04)' : 'transparent' }}
+                            style={{
+                              borderColor: 'var(--border-light)',
+                              background: isDone
+                                ? 'rgba(16,185,129,0.04)'
+                                : lesson._id === citedLessonId && idx === citedItemIndex
+                                  ? 'var(--amber-soft)'
+                                  : 'transparent'
+                            }}
                           >
                             {/* Type icon */}
                             <span className="text-lg shrink-0 w-6 text-center">{TYPE_ICON[item.type] || '📄'}</span>

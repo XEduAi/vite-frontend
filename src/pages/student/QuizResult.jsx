@@ -5,6 +5,14 @@ import StudentLayout from '../../components/StudentLayout';
 import LatexRenderer from '../../components/LatexRenderer';
 import ShareButtons from '../../components/ShareButtons';
 
+const buildQuizChatHref = (quiz) => (
+  `/student/chat?${new URLSearchParams({
+    contextType: 'quiz',
+    contextId: quiz?._id || '',
+    contextLabel: quiz?.title || 'Bài kiểm tra',
+  }).toString()}`
+);
+
 // Small overlay that auto-dismisses after 4 seconds
 const GamificationOverlay = ({ data, onClose }) => {
   useEffect(() => {
@@ -179,6 +187,14 @@ const QuizResult = () => {
                 url={window.location.href}
               />
             </div>
+
+            {quiz?._id && (
+              <div className="mt-4 flex justify-center">
+                <Link to={buildQuizChatHref(quiz)} className="btn-secondary py-2.5 px-5 text-sm">
+                  Hỏi EduBot về bài này
+                </Link>
+              </div>
+            )}
           </div>
         </div>
 

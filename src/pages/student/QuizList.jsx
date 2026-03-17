@@ -10,6 +10,14 @@ import {
   useWeakTopicsQuery,
 } from '../../features/quiz/hooks';
 
+const buildQuizChatHref = (quiz) => (
+  `/student/chat?${new URLSearchParams({
+    contextType: 'quiz',
+    contextId: quiz._id,
+    contextLabel: quiz.title || 'Bài kiểm tra',
+  }).toString()}`
+);
+
 const QuizList = () => {
   const navigate = useNavigate();
   const [tab, setTab] = useState('official');
@@ -129,13 +137,23 @@ const QuizList = () => {
         </div>
 
         {isSubmitted ? (
-          <Link to={`/student/quiz-result/${attempt._id}`} className="btn-secondary block w-full text-center py-2.5 text-sm">
-            Xem kết quả
-          </Link>
+          <>
+            <Link to={`/student/quiz-result/${attempt._id}`} className="btn-secondary block w-full text-center py-2.5 text-sm">
+              Xem kết quả
+            </Link>
+            <Link to={buildQuizChatHref(quiz)} className="btn-secondary block w-full text-center py-2.5 text-sm mt-2">
+              Hỏi EduBot về quiz này
+            </Link>
+          </>
         ) : (
-          <button onClick={() => handleStartQuiz(quiz._id)} className="btn-primary w-full py-2.5 text-sm">
-            {isInProgress ? 'Tiếp tục làm bài' : 'Bắt đầu làm bài'}
-          </button>
+          <>
+            <button onClick={() => handleStartQuiz(quiz._id)} className="btn-primary w-full py-2.5 text-sm">
+              {isInProgress ? 'Tiếp tục làm bài' : 'Bắt đầu làm bài'}
+            </button>
+            <Link to={buildQuizChatHref(quiz)} className="btn-secondary block w-full text-center py-2.5 text-sm mt-2">
+              Hỏi EduBot về quiz này
+            </Link>
+          </>
         )}
       </div>
     );

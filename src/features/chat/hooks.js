@@ -5,7 +5,12 @@ const getPayload = (responseData) => responseData?.data ?? responseData;
 
 const normalizeMessage = (message) => ({
   ...message,
-  citations: message?.citations || [],
+  citations: (message?.citations || []).map((citation) => ({
+    ...citation,
+    href: citation?.href || '',
+    sourceId: citation?.sourceId || '',
+    sourceType: citation?.sourceType || citation?.kind || '',
+  })),
 });
 
 const normalizeConversation = (conversation) => ({
@@ -98,6 +103,17 @@ export function useMyAiUsageQuery() {
     queryFn: async () => {
       const { data } = await axiosClient.get('/chat/usage');
       return getPayload(data);
+    },
+  });
+}
+
+export function useChatQuestionSourceQuery(questionId) {
+  return useQuery({
+    enabled: Boolean(questionId),
+    queryKey: ['chat', 'question-source', questionId],
+    queryFn: async () => {
+      const { data } = await axiosClient.get(`/chat/sources/questions/${questionId}`);
+      return getPayload(data)?.question || null;
     },
   });
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import StudentLayout from '../../components/StudentLayout';
@@ -227,6 +227,7 @@ const StudyChat = () => {
   const [streamingText,          setStreamingText]          = useState('');
   const [isStreaming,            setIsStreaming]            = useState(false);
   const [modelInfo,              setModelInfo]              = useState('');
+  const appliedContextKeyRef = useRef('');
 
   // Sidebar open on desktop by default, closed on mobile
   const [sidebarOpen,     setSidebarOpen]     = useState(() => typeof window !== 'undefined' && window.innerWidth >= 768);
@@ -235,6 +236,8 @@ const StudyChat = () => {
   const contextType  = searchParams.get('contextType')  || 'general';
   const contextId    = searchParams.get('contextId')    || '';
   const contextLabel = searchParams.get('contextLabel') || '';
+  const hasExplicitContext = contextType !== 'general' || Boolean(contextId) || Boolean(contextLabel);
+  const contextKey = `${contextType}:${contextId}:${contextLabel}`;
 
   const conversationsQuery = useChatConversationsQuery();
   const aiUsageQuery = useMyAiUsageQuery();
@@ -271,17 +274,66 @@ const StudyChat = () => {
   }, [contextId, contextLabel, contextType, createConversationAsync]);
 
   useEffect(() => {
-    if (loadingConversations || activeConversationId) {
+    if (loadingConversations) {
+      return;
+    }
+
+    if (hasExplicitContext) {
+      if (appliedContextKeyRef.current === contextKey) {
+        return;
+      }
+
+      appliedContextKeyRef.current = contextKey;
+
+      const matchingConversation = conversations.find((conversation) => (
+        (conversation.contextType || 'general') === contextType
+        && (conversation.contextId || '') === contextId
+        && (conversation.contextLabel || '') === contextLabel
+      ));
+
+      if (matchingConversation) {
+        setActiveConversationId(matchingConversation._id);
+        setMessages([]);
+        setModelInfo('');
+        setStreamingText('');
+        return;
+      }
+
+      createNewConversation({
+        contextType,
+        contextId,
+        contextLabel,
+      });
+      return;
+    }
+
+    appliedContextKeyRef.current = '';
+
+    if (activeConversationId) {
       return;
     }
 
     if (conversations.length === 0) {
-      createNewConversation();
+      createNewConversation({
+        contextType: 'general',
+        contextId: '',
+        contextLabel: '',
+      });
       return;
     }
 
     setActiveConversationId(conversations[0]._id);
-  }, [activeConversationId, conversations, createNewConversation, loadingConversations]);
+  }, [
+    activeConversationId,
+    contextId,
+    contextKey,
+    contextLabel,
+    contextType,
+    conversations,
+    createNewConversation,
+    hasExplicitContext,
+    loadingConversations,
+  ]);
 
   useEffect(() => {
     if (!activeConversationId) {
