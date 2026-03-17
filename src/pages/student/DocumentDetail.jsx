@@ -158,19 +158,8 @@ const DocumentDetail = () => {
   const handleDownloadFile = async (fileIndex) => {
     try {
       setDownloadingFileIndex(fileIndex);
-      const urls = await downloadDocumentMutation.mutateAsync({ documentId: id, fileIndex });
-
-      if (Array.isArray(urls) && urls.length > 0) {
-        urls.forEach((file) => {
-          const url = typeof file === 'string' ? file : file.url;
-          if (url) {
-            window.open(url, '_blank', 'noopener,noreferrer');
-          }
-        });
-        return;
-      }
-
-      showMsg('Không tìm thấy tệp tải về', 'error');
+      const fallbackName = doc?.files?.[fileIndex]?.fileName || doc?.files?.[fileIndex]?.filename || doc?.title || 'document';
+      await downloadDocumentMutation.mutateAsync({ documentId: id, fileIndex, fallbackName });
     } catch (err) {
       showMsg(getApiErrorMessage(err, 'Lỗi khi tải tài liệu'), 'error');
     } finally {

@@ -31,6 +31,13 @@ export const registerRefreshHandler = (handler) => {
 
 // Interceptor: Tự động gắn access token hiện tại vào header nếu có
 axiosClient.interceptors.request.use((config) => {
+  if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
+    if (config.headers) {
+      delete config.headers['Content-Type'];
+      delete config.headers['content-type'];
+    }
+  }
+
   if (accessToken) {
     config.headers.Authorization = `Bearer ${accessToken}`;
   }

@@ -53,20 +53,22 @@ const MyDocuments = () => {
     setTimeout(() => setMessage({ type: '', content: '' }), 4000);
   };
 
-  const handleDownload = async (docId) => {
+  const handleDownload = async (doc) => {
     try {
-      setDownloadingId(docId);
-      const urls = await downloadDocumentMutation.mutateAsync(docId);
+      setDownloadingId(doc._id);
 
-      if (Array.isArray(urls) && urls.length > 0) {
-        urls.forEach((file) => {
-          const url = typeof file === 'string' ? file : file.url;
-          if (url) {
-            window.open(url, '_blank');
-          }
-        });
-      } else {
+      if (!Array.isArray(doc.files) || doc.files.length === 0) {
         showMsg('Không tìm thấy tệp tải về', 'error');
+        return;
+      }
+
+      for (let index = 0; index < doc.files.length; index += 1) {
+        const file = doc.files[index];
+        await downloadDocumentMutation.mutateAsync({
+          documentId: doc._id,
+          fileIndex: index,
+          fallbackName: file?.fileName || file?.filename || `${doc.title || 'document'}-${index + 1}`,
+        });
       }
     } catch (err) {
       showMsg(getApiErrorMessage(err, 'Lỗi khi tải tài liệu'), 'error');
@@ -259,7 +261,7 @@ const MyDocuments = () => {
 
                     {/* Download button */}
                     <button
-                      onClick={() => handleDownload(doc._id)}
+                      onClick={() => handleDownload(doc)}
                       disabled={downloadingId === doc._id}
                       className="w-full py-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5"
                       style={{

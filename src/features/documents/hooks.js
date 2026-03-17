@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import axiosClient from '../../api/axiosClient';
+import { downloadProtectedFile } from '../../api/protectedFiles';
 
 const getPayload = (responseData) => responseData?.data ?? responseData;
 
@@ -160,23 +161,12 @@ export function useDownloadDocumentMutation() {
       const params = typeof input === 'string' || input?.fileIndex === undefined
         ? undefined
         : { fileIndex: input.fileIndex };
+      const fallbackName = typeof input === 'string' ? undefined : input?.fallbackName;
 
-      const { data } = await axiosClient.get(`/student/my-documents/${documentId}/download`, { params });
-      const payload = getPayload(data);
-
-      if (Array.isArray(payload?.downloadUrls)) {
-        return payload.downloadUrls;
-      }
-
-      if (Array.isArray(payload?.files)) {
-        return payload.files;
-      }
-
-      if (payload?.url) {
-        return [payload.url];
-      }
-
-      return [];
+      return downloadProtectedFile(`/student/my-documents/${documentId}/download`, {
+        fallbackName,
+        params,
+      });
     },
   });
 }

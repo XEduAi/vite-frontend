@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axiosClient from '../../api/axiosClient';
+import { getApiErrorMessage } from '../../api/errors';
+import { createProtectedObjectUrl, downloadProtectedFile } from '../../api/protectedFiles';
 import StudentLayout from '../../components/StudentLayout';
-import { useNavigate } from 'react-router-dom';
 
 const DAYS = ['', 'Chủ nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
 
@@ -34,7 +35,31 @@ const ClassDetail = () => {
   const [cls, setCls] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('all');
+  const [message, setMessage] = useState({ type: '', content: '' });
   const [previewMedia, setPreviewMedia] = useState(null);
+  const [previewLoadingId, setPreviewLoadingId] = useState(null);
+  const [downloadingMediaId, setDownloadingMediaId] = useState(null);
+  const previewObjectUrlRef = useRef('');
+  const messageTimeoutRef = useRef(null);
+
+  const showMessage = (content, type = 'error') => {
+    if (messageTimeoutRef.current) {
+      window.clearTimeout(messageTimeoutRef.current);
+    }
+
+    setMessage({ type, content });
+    messageTimeoutRef.current = window.setTimeout(() => {
+      setMessage({ type: '', content: '' });
+      messageTimeoutRef.current = null;
+    }, 4000);
+  };
+
+  const revokePreviewObjectUrl = () => {
+    if (previewObjectUrlRef.current) {
+      URL.revokeObjectURL(previewObjectUrlRef.current);
+      previewObjectUrlRef.current = '';
+    }
+  };
 
   useEffect(() => {
     const fetchClass = async () => {
@@ -44,12 +69,21 @@ const ClassDetail = () => {
         setCls(res.data.class);
       } catch (error) {
         console.error('Lỗi tải lớp:', error);
+        showMessage(getApiErrorMessage(error, 'Không thể tải lớp học này'), 'error');
       } finally {
         setLoading(false);
       }
     };
     fetchClass();
   }, [id]);
+
+  useEffect(() => () => {
+    if (messageTimeoutRef.current) {
+      window.clearTimeout(messageTimeoutRef.current);
+    }
+
+    revokePreviewObjectUrl();
+  }, []);
 
   if (loading) {
     return (
@@ -125,8 +159,53 @@ const ClassDetail = () => {
     return <span className={`badge ${c.cls}`}>{c.label}</span>;
   };
 
+  const resolveMediaName = (media) => media?.title || media?.filename || media?.r2Key?.split('/').pop() || 'media';
+  const getMediaExtension = (media) => {
+    const candidate = media?.r2Key || media?.objectKey || media?.title || media?.url || '';
+    const cleanValue = String(candidate).split('?')[0].split('#')[0].toLowerCase();
+    const extensionIndex = cleanValue.lastIndexOf('.');
+
+    return extensionIndex >= 0 ? cleanValue.slice(extensionIndex) : '';
+  };
+  const isPdfMedia = (media) => getMediaExtension(media) === '.pdf';
   const isPreviewable = (media) =>
-    media.type === 'video' || media.type === 'image' || media.url?.endsWith('.pdf');
+    media.type === 'video' || media.type === 'image' || isPdfMedia(media);
+  const buildMediaAccessPath = (mediaId) => `/classes/${id}/media/${mediaId}/file`;
+
+  const handlePreviewMedia = async (media) => {
+    try {
+      setPreviewLoadingId(media._id);
+      setPreviewMedia(null);
+      revokePreviewObjectUrl();
+
+      const previewFile = await createProtectedObjectUrl(buildMediaAccessPath(media._id), {
+        fallbackName: resolveMediaName(media),
+        params: { disposition: 'inline' },
+      });
+
+      previewObjectUrlRef.current = previewFile.objectUrl;
+      setPreviewMedia({ ...media, objectUrl: previewFile.objectUrl });
+    } catch (error) {
+      setPreviewMedia(null);
+      showMessage(getApiErrorMessage(error, 'Không thể mở tài nguyên này'), 'error');
+    } finally {
+      setPreviewLoadingId(null);
+    }
+  };
+
+  const handleDownloadMedia = async (media) => {
+    try {
+      setDownloadingMediaId(media._id);
+      await downloadProtectedFile(buildMediaAccessPath(media._id), {
+        fallbackName: resolveMediaName(media),
+        params: { disposition: 'attachment' },
+      });
+    } catch (error) {
+      showMessage(getApiErrorMessage(error, 'Không thể tải tài nguyên này'), 'error');
+    } finally {
+      setDownloadingMediaId(null);
+    }
+  };
 
   const tabs = [
     { key: 'all', label: 'Tất cả' },
@@ -151,6 +230,12 @@ const ClassDetail = () => {
       </div>
 
       {/* Class header */}
+      {message.content && (
+        <div className={`toast mb-5 ${message.type === 'error' ? 'toast-error' : 'toast-success'}`}>
+          {message.type === 'error' ? '⚠' : '✓'} {message.content}
+        </div>
+      )}
+
       <div className="card p-6 md:p-8 mb-5 fade-in">
         <h1 className="font-display text-2xl md:text-3xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>{cls.name}</h1>
         {cls.description && (
@@ -279,20 +364,23 @@ const ClassDetail = () => {
                   <div className="flex gap-1.5 flex-shrink-0">
                     {isPreviewable(media) && (
                       <button
-                        onClick={() => setPreviewMedia(media)}
+                        onClick={() => handlePreviewMedia(media)}
+                        disabled={previewLoadingId === media._id}
                         className="btn-ghost flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-lg"
                         style={{ color: 'var(--amber-warm)', background: 'var(--amber-soft)' }}
                       >
-                        <IconEye /> Xem
+                        <IconEye /> {previewLoadingId === media._id ? 'Đang mở...' : 'Xem'}
                       </button>
                     )}
-                    <a
-                      href={media.url} target="_blank" rel="noreferrer"
+                    <button
+                      type="button"
+                      onClick={() => handleDownloadMedia(media)}
+                      disabled={downloadingMediaId === media._id}
                       className="btn-ghost flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-lg"
                       style={{ color: 'var(--navy)', background: 'rgba(10,22,40,0.06)' }}
                     >
-                      <IconDownload /> Tải
-                    </a>
+                      <IconDownload /> {downloadingMediaId === media._id ? 'Đang tải...' : 'Tải'}
+                    </button>
                   </div>
                 </div>
               ))}
@@ -325,7 +413,7 @@ const ClassDetail = () => {
               </div>
               <div className="flex items-center gap-3 flex-shrink-0">
                 <a
-                  href={previewMedia.url} target="_blank" rel="noreferrer"
+                  href={previewMedia.objectUrl} target="_blank" rel="noreferrer"
                   className="text-xs font-semibold flex items-center gap-1"
                   style={{ color: 'var(--amber-warm)' }}
                 >
@@ -350,17 +438,17 @@ const ClassDetail = () => {
             {/* Modal body */}
             <div className="overflow-auto" style={{ maxHeight: 'calc(90vh - 76px)', background: '#0f172a' }}>
               {previewMedia.type === 'video' && (
-                <video src={previewMedia.url} controls autoPlay className="w-full" style={{ maxHeight: '75vh' }}>
+                <video src={previewMedia.objectUrl} controls autoPlay className="w-full" style={{ maxHeight: '75vh' }}>
                   Trình duyệt không hỗ trợ video.
                 </video>
               )}
               {previewMedia.type === 'image' && (
                 <div className="flex items-center justify-center p-4">
-                  <img src={previewMedia.url} alt={previewMedia.title} className="max-w-full h-auto rounded-lg" style={{ maxHeight: '75vh' }} />
+                  <img src={previewMedia.objectUrl} alt={previewMedia.title} className="max-w-full h-auto rounded-lg" style={{ maxHeight: '75vh' }} />
                 </div>
               )}
-              {previewMedia.type === 'document' && previewMedia.url?.endsWith('.pdf') && (
-                <iframe src={previewMedia.url} title={previewMedia.title} className="w-full" style={{ height: '75vh', border: 'none' }} />
+              {previewMedia.type === 'document' && isPdfMedia(previewMedia) && (
+                <iframe src={previewMedia.objectUrl} title={previewMedia.title} className="w-full" style={{ height: '75vh', border: 'none' }} />
               )}
             </div>
           </div>
