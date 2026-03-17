@@ -68,7 +68,6 @@ const QuizResult = () => {
         setLoading(true);
         const res = await axiosClient.get(`/attempts/${attemptId}/result`);
         setAttempt(res.data.attempt);
-        // Show gamification overlay if present
         if (res.data.gamification) {
           const g = res.data.gamification;
           if (g.xpEarned > 0 || g.newBadges?.length > 0 || g.levelUp || g.streakCount > 1) {

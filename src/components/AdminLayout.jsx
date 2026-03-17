@@ -72,6 +72,11 @@ const IconMegaphone = () => (
     <path d="M3 11l18-5v12L3 13v-2z" /><path d="M11.6 16.8a3 3 0 11-5.8-1.6" />
   </svg>
 );
+const IconInbox = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px]">
+    <path d="M22 12h-6l-2 3H10l-2-3H2" /><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z" />
+  </svg>
+);
 
 const IconDocument = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px]">
@@ -89,6 +94,7 @@ const menuItems = [
   { path: '/admin/documents', label: 'Kho tài liệu', icon: <IconDocument /> },
   { path: '/admin/tuition', label: 'Học phí', icon: <IconTuition /> },
   { path: '/admin/announcements', label: 'Thông báo', icon: <IconMegaphone /> },
+  { path: '/admin/leads', label: 'Leads', icon: <IconInbox /> },
 ];
 
 const AdminLayout = ({ children }) => {

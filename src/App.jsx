@@ -29,6 +29,7 @@ const StudyChat = lazy(() => import('./pages/student/StudyChat'));
 const LessonManager = lazy(() => import('./pages/admin/LessonManager'));
 const DocumentManager = lazy(() => import('./pages/admin/DocumentManager'));
 const DocumentAnalytics = lazy(() => import('./pages/admin/DocumentAnalytics'));
+const LeadManager = lazy(() => import('./pages/admin/LeadManager'));
 
 // Initialize theme on app load
 const initTheme = () => {
@@ -96,6 +97,7 @@ function App() {
         <Route path="/admin/quizzes" element={<ProtectedRoute requiredRole="admin"><RoutePage Component={QuizManager} /></ProtectedRoute>} />
         <Route path="/admin/tuition" element={<ProtectedRoute requiredRole="admin"><RoutePage Component={TuitionManager} /></ProtectedRoute>} />
         <Route path="/admin/announcements" element={<ProtectedRoute requiredRole="admin"><RoutePage Component={AnnouncementManager} /></ProtectedRoute>} />
+        <Route path="/admin/leads" element={<ProtectedRoute requiredRole="admin"><RoutePage Component={LeadManager} /></ProtectedRoute>} />
         <Route path="/admin/classes/:classId/lessons" element={<ProtectedRoute requiredRole="admin"><RoutePage Component={LessonManager} /></ProtectedRoute>} />
         <Route path="/admin/documents" element={<ProtectedRoute requiredRole="admin"><RoutePage Component={DocumentManager} /></ProtectedRoute>} />
         <Route path="/admin/documents/analytics" element={<ProtectedRoute requiredRole="admin"><RoutePage Component={DocumentAnalytics} /></ProtectedRoute>} />
