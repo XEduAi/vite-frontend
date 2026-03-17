@@ -4,6 +4,7 @@ import StudentLayout from '../../components/StudentLayout';
 import ChatWindow from '../../components/ChatWindow';
 import ChatInput from '../../components/ChatInput';
 import axiosClient from '../../api/axiosClient';
+import { useAuth } from '../../auth/useAuth';
 
 // ─── Context labels ────────────────────────────────────────────────────────────
 const CONTEXT_LABELS = {
@@ -203,6 +204,7 @@ const SidebarPanel = ({ conversations, activeConversationId, loadingConversation
 
 // ─── Main page ─────────────────────────────────────────────────────────────────
 const StudyChat = () => {
+  const { accessToken, refreshSession } = useAuth();
   const [searchParams] = useSearchParams();
 
   // ── State ────────────────────────────────────────────────────────────────────
@@ -302,17 +304,28 @@ const StudyChat = () => {
     setStreamingText('');
 
     try {
-      const token   = localStorage.getItem('token');
       const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+      let token = accessToken;
 
-      const response = await fetch(
+      const openStream = async (bearerToken) => fetch(
         `${baseUrl}/chat/conversations/${activeConversationId}/messages`,
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${bearerToken}` },
           body: JSON.stringify({ message }),
         }
       );
+
+      if (!token) {
+        token = await refreshSession();
+      }
+
+      let response = await openStream(token);
+
+      if (response.status === 401) {
+        token = await refreshSession();
+        response = await openStream(token);
+      }
 
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
 

@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axiosClient from '../api/axiosClient';
+import { useAuth } from '../auth/useAuth';
 
 const SunIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
@@ -16,6 +16,7 @@ const MoonIcon = () => (
 );
 
 export default function Login() {
+  const { initializing, isAuthenticated, login, user } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -25,6 +26,12 @@ export default function Login() {
     return localStorage.getItem('theme') || 'light';
   });
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!initializing && isAuthenticated) {
+      navigate(user?.role === 'admin' ? '/admin/dashboard' : '/student/dashboard', { replace: true });
+    }
+  }, [initializing, isAuthenticated, navigate, user]);
 
   const toggleTheme = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark';
@@ -38,11 +45,8 @@ export default function Login() {
     setError('');
     setLoading(true);
     try {
-      const { data } = await axiosClient.post('/login', { username, password });
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('role', data.role);
-      localStorage.setItem('fullName', data.fullName || '');
-      if (data.role === 'admin') {
+      const data = await login({ username, password });
+      if (data.user?.role === 'admin') {
         navigate('/admin/dashboard');
       } else {
         navigate('/student/dashboard');

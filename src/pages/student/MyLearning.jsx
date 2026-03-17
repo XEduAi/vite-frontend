@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import axiosClient from '../../api/axiosClient';
 import StudentLayout from '../../components/StudentLayout';
+import { useAuth } from '../../auth/useAuth';
 
 const DAYS = ['', 'CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
 
@@ -72,13 +73,14 @@ const timeAgo = (date) => {
 };
 
 const MyLearning = () => {
+  const { user } = useAuth();
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dashboard, setDashboard] = useState(null);
   const [dashLoading, setDashLoading] = useState(true);
   const [announcements, setAnnouncements] = useState([]);
   const [gamification, setGamification] = useState(null);
-  const fullName = localStorage.getItem('fullName') || 'Học viên';
+  const fullName = user?.fullName || 'Học viên';
 
   useEffect(() => {
     const fetchClasses = async () => {

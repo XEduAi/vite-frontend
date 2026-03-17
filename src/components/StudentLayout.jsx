@@ -1,5 +1,6 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
+import { useAuth } from '../auth/useAuth';
 
 const IconHome = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
@@ -84,7 +85,8 @@ const IconAIChat = () => (
 const StudentLayout = ({ children, fullHeight = false }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const fullName = localStorage.getItem('fullName') || 'Học viên';
+  const { logout, user } = useAuth();
+  const fullName = user?.fullName || 'Học viên';
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -95,9 +97,9 @@ const StudentLayout = ({ children, fullHeight = false }) => {
     localStorage.setItem('theme', next);
   };
 
-  const handleLogout = () => {
-    localStorage.clear();
-    navigate('/login');
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login', { replace: true });
   };
 
   const menuItems = [
