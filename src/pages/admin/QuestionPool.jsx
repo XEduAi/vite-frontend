@@ -1,6 +1,8 @@
 import { useDeferredValue, useState, useRef } from 'react';
 import { getApiErrorMessage } from '../../api/errors';
+import AdminQueryErrors from '../../components/AdminQueryErrors';
 import AdminLayout from '../../components/AdminLayout';
+import AdminToast from '../../components/AdminToast';
 import LatexRenderer from '../../components/LatexRenderer';
 import { useQuestionFiltersQuery } from '../../features/quiz/hooks';
 import {
@@ -186,8 +188,20 @@ const QuestionPool = () => {
   const getDiffBadge = (difficulty) => DIFFICULTIES.find((item) => item.value === difficulty) || DIFFICULTIES[1];
 
   const queryErrors = [
-    questionPoolQuery.isError ? { key: 'questions', message: getApiErrorMessage(questionPoolQuery.error, 'Không thể tải danh sách câu hỏi') } : null,
-    questionFiltersQuery.isError ? { key: 'filters', message: getApiErrorMessage(questionFiltersQuery.error, 'Không thể tải bộ lọc câu hỏi') } : null,
+    questionPoolQuery.isError
+      ? {
+          key: 'questions',
+          message: getApiErrorMessage(questionPoolQuery.error, 'Không thể tải danh sách câu hỏi'),
+          onRetry: () => questionPoolQuery.refetch(),
+        }
+      : null,
+    questionFiltersQuery.isError
+      ? {
+          key: 'filters',
+          message: getApiErrorMessage(questionFiltersQuery.error, 'Không thể tải bộ lọc câu hỏi'),
+          onRetry: () => questionFiltersQuery.refetch(),
+        }
+      : null,
   ].filter(Boolean);
 
   return (
@@ -202,32 +216,9 @@ const QuestionPool = () => {
         </button>
       </div>
 
-      {msg.text && (
-        <div className={`toast mb-4 ${msg.type === 'error' ? 'toast-error' : 'toast-success'}`}>
-          {msg.type === 'error' ? '⚠' : '✓'} {msg.text}
-        </div>
-      )}
+      <AdminToast className="mb-4" message={msg.text} type={msg.type} />
 
-      {queryErrors.length > 0 && (
-        <div className="card p-4 mb-4">
-          <div className="space-y-3">
-            {queryErrors.map((error) => (
-              <div key={error.key} className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{error.message}</p>
-                <button
-                  onClick={() => {
-                    if (error.key === 'questions') questionPoolQuery.refetch();
-                    if (error.key === 'filters') questionFiltersQuery.refetch();
-                  }}
-                  className="btn-secondary text-sm"
-                >
-                  Thử lại
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      <AdminQueryErrors errors={queryErrors} />
 
       <div className="card p-4 mb-6 flex flex-wrap gap-3">
         <select value={filters.topic} onChange={(e) => handleFilterChange('topic', e.target.value)} className="input w-auto">

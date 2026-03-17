@@ -1,130 +1,138 @@
-import { useState, useEffect, useRef } from 'react';
-import axiosClient from '../../api/axiosClient';
+import { useRef, useState } from 'react';
+import { getApiErrorMessage } from '../../api/errors';
+import AdminQueryErrors from '../../components/AdminQueryErrors';
+import AdminToast from '../../components/AdminToast';
 import AdminLayout from '../../components/AdminLayout';
+import { useAdminMediaQuery } from '../../features/admin/lookups';
+import { useDeleteMediaMutation, useUploadMediaMutation } from '../../features/media/hooks';
 
 const MediaManager = () => {
   const [file, setFile] = useState(null);
-  const [medias, setMedias] = useState([]);
-  const [message, setMessage] = useState('');
-  const [messageType, setMessageType] = useState('success');
-  const [uploading, setUploading] = useState(false);
+  const [message, setMessage] = useState({ text: '', type: 'success' });
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [loading, setLoading] = useState(true);
   const [dragOver, setDragOver] = useState(false);
-  const fileInputRef = useRef();
-  const formRef = useRef();
+  const fileInputRef = useRef(null);
+  const formRef = useRef(null);
 
-  useEffect(() => { fetchMedias(); }, []);
+  const mediaQuery = useAdminMediaQuery();
+  const uploadMediaMutation = useUploadMediaMutation();
+  const deleteMediaMutation = useDeleteMediaMutation();
 
-  const fetchMedias = async () => {
-    try {
-      setLoading(true);
-      const res = await axiosClient.get('/media');
-      setMedias(res.data.medias || []);
-    } catch (error) {
-      console.error('Lỗi khi tải danh sách media:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const medias = mediaQuery.data || [];
+  const loading = mediaQuery.isPending;
+  const uploading = uploadMediaMutation.isPending;
 
   const showMessage = (text, type = 'success') => {
-    setMessage(text);
-    setMessageType(type);
-    setTimeout(() => setMessage(''), 4000);
+    setMessage({ text, type });
+    setTimeout(() => setMessage({ text: '', type: 'success' }), 4000);
   };
 
   const handleUpload = async (e) => {
     e.preventDefault();
-    if (!file) { showMessage('Vui lòng chọn file để upload', 'error'); return; }
-    const formData = new FormData();
-    formData.append('file', file);
+
+    if (!file) {
+      showMessage('Vui lòng chọn file để upload', 'error');
+      return;
+    }
+
     try {
-      setUploading(true);
       setUploadProgress(0);
-      const res = await axiosClient.post('/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+
+      await uploadMediaMutation.mutateAsync({
+        file,
         onUploadProgress: (progressEvent) => {
+          if (!progressEvent.total) {
+            return;
+          }
+
           const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
           setUploadProgress(percent);
         },
       });
-      setMedias([res.data.media, ...medias]);
+
       setFile(null);
-      if (formRef.current) formRef.current.reset();
+      if (formRef.current) {
+        formRef.current.reset();
+      }
       showMessage('Upload thành công!');
     } catch (error) {
-      console.error(error);
-      showMessage('Lỗi upload file', 'error');
+      showMessage(getApiErrorMessage(error, 'Lỗi upload file'), 'error');
     } finally {
-      setUploading(false);
       setUploadProgress(0);
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Bạn có chắc muốn xóa file này?')) return;
+  const handleDelete = async (mediaId) => {
+    if (!window.confirm('Bạn có chắc muốn xóa file này?')) {
+      return;
+    }
+
     try {
-      await axiosClient.delete(`/media/${id}`);
-      setMedias(medias.filter((m) => m._id !== id));
+      await deleteMediaMutation.mutateAsync(mediaId);
       showMessage('Đã xóa file thành công!');
     } catch (error) {
-      console.error(error);
-      showMessage('Lỗi khi xóa file', 'error');
+      showMessage(getApiErrorMessage(error, 'Lỗi khi xóa file'), 'error');
     }
   };
 
   const handleDrop = (e) => {
     e.preventDefault();
     setDragOver(false);
-    const dropped = e.dataTransfer.files[0];
-    if (dropped) setFile(dropped);
+    const droppedFile = e.dataTransfer.files[0];
+    if (droppedFile) {
+      setFile(droppedFile);
+    }
   };
+
+  const queryErrors = mediaQuery.isError
+    ? [
+        {
+          key: 'media',
+          message: getApiErrorMessage(mediaQuery.error, 'Không thể tải danh sách media'),
+          onRetry: () => mediaQuery.refetch(),
+        },
+      ]
+    : [];
 
   const getTypeBadge = (type) => {
     const badgeMap = { image: 'badge-green', video: 'badge-purple', document: 'badge-amber' };
-    return (
-      <span className={`badge ${badgeMap[type] || 'badge-gray'}`}>
-        {type}
-      </span>
-    );
+    return <span className={`badge ${badgeMap[type] || 'badge-gray'}`}>{type}</span>;
   };
 
   const getTypeIcon = (type) => {
     switch (type) {
-      case 'video': return '📺';
-      case 'image': return '🖼️';
-      default: return '📄';
+      case 'video':
+        return '📺';
+      case 'image':
+        return '🖼️';
+      default:
+        return '📄';
     }
   };
 
   return (
     <AdminLayout>
-      {/* Header */}
       <div className="mb-6">
         <h1 className="font-display text-2xl font-semibold" style={{ color: 'var(--text-primary)' }}>Quản lý Tài nguyên</h1>
         <p className="text-sm mt-0.5" style={{ color: 'var(--text-muted)' }}>{medias.length} file trong kho lưu trữ</p>
       </div>
 
-      {/* Toast */}
-      {message && (
-        <div className={`toast mb-5 ${messageType === 'error' ? 'toast-error' : 'toast-success'}`}>
-          {messageType === 'error' ? '⚠' : '✓'} {message}
-        </div>
-      )}
+      <AdminToast message={message.text} type={message.type} />
+      <AdminQueryErrors errors={queryErrors} />
 
-      {/* Upload area */}
       <div className="card p-6 mb-6">
         <h2 className="font-semibold text-sm mb-4" style={{ color: 'var(--text-primary)' }}>Upload File Mới</h2>
         <form ref={formRef} onSubmit={handleUpload}>
-          {/* Drop zone */}
           <div
             className="border-2 border-dashed rounded-xl p-8 text-center mb-4 cursor-pointer transition-all"
             style={{
               borderColor: dragOver ? 'var(--amber-warm)' : (file ? 'var(--amber-warm)' : 'var(--border)'),
               background: dragOver ? 'var(--amber-soft)' : (file ? 'var(--amber-soft)' : 'var(--cream-warm)'),
             }}
-            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragOver(true);
+            }}
             onDragLeave={() => setDragOver(false)}
             onDrop={handleDrop}
             onClick={() => fileInputRef.current?.click()}
@@ -146,13 +154,12 @@ const MediaManager = () => {
             <input
               ref={fileInputRef}
               type="file"
-              onChange={(e) => setFile(e.target.files[0])}
+              onChange={(e) => setFile(e.target.files[0] || null)}
               disabled={uploading}
               className="hidden"
             />
           </div>
 
-          {/* Progress bar */}
           {uploading && (
             <div className="mb-4">
               <div className="flex items-center justify-between text-xs mb-1" style={{ color: 'var(--text-secondary)' }}>
@@ -165,7 +172,7 @@ const MediaManager = () => {
             </div>
           )}
 
-          <button type="submit" disabled={uploading || !file} className="btn-primary">
+          <button type="submit" disabled={uploading || !file} className="btn-primary disabled:opacity-60">
             {uploading ? (
               <>
                 <svg className="animate-spin h-4 w-4 inline mr-2" viewBox="0 0 24 24" fill="none">
@@ -179,7 +186,6 @@ const MediaManager = () => {
         </form>
       </div>
 
-      {/* Media list */}
       <div className="card overflow-hidden">
         <div className="px-5 py-3.5 border-b" style={{ borderColor: 'var(--border-light)', background: 'var(--cream-warm)' }}>
           <h2 className="text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>DANH SÁCH FILE</h2>
@@ -192,20 +198,16 @@ const MediaManager = () => {
             <table className="min-w-full text-sm">
               <thead>
                 <tr style={{ background: 'var(--cream-warm)', borderBottom: '1px solid var(--border-light)' }}>
-                  {['Tên file', 'Loại', 'Media ID', 'Ngày upload', 'Hành động'].map(h => (
-                    <th key={h} className="px-5 py-3 text-left text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>
-                      {h.toUpperCase()}
+                  {['Tên file', 'Loại', 'Media ID', 'Ngày upload', 'Hành động'].map((header) => (
+                    <th key={header} className="px-5 py-3 text-left text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>
+                      {header.toUpperCase()}
                     </th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {medias.map((media) => (
-                  <tr
-                    key={media._id}
-                    className="border-b table-row"
-                    style={{ borderColor: 'var(--border-light)' }}
-                  >
+                  <tr key={media._id} className="border-b table-row" style={{ borderColor: 'var(--border-light)' }}>
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-2">
                         <span className="text-lg">{getTypeIcon(media.type)}</span>
@@ -226,15 +228,13 @@ const MediaManager = () => {
                     </td>
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-2">
-                        <a
-                          href={media.url} target="_blank" rel="noreferrer"
-                          className="badge badge-blue"
-                        >
+                        <a href={media.url} target="_blank" rel="noreferrer" className="badge badge-blue">
                           Xem ↗
                         </a>
                         <button
                           onClick={() => handleDelete(media._id)}
-                          className="badge badge-red cursor-pointer transition-opacity hover:opacity-80"
+                          disabled={deleteMediaMutation.isPending}
+                          className="badge badge-red cursor-pointer transition-opacity hover:opacity-80 disabled:opacity-60"
                         >
                           Xóa
                         </button>

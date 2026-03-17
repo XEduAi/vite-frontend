@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { getApiErrorMessage } from '../../api/errors';
+import AdminQueryErrors from '../../components/AdminQueryErrors';
 import AdminLayout from '../../components/AdminLayout';
+import AdminToast from '../../components/AdminToast';
 import { useAdminClassesQuery, useAdminStudentsQuery } from '../../features/admin/lookups';
 import {
   useAdminPendingPaymentsQuery,
@@ -207,11 +209,11 @@ const TuitionManager = () => {
   };
 
   const queryErrors = [
-    feesQuery.isError ? { key: 'fees', message: getApiErrorMessage(feesQuery.error, 'Không thể tải danh sách học phí') } : null,
-    semestersQuery.isError ? { key: 'semesters', message: getApiErrorMessage(semestersQuery.error, 'Không thể tải danh sách học kỳ') } : null,
-    classesQuery.isError ? { key: 'classes', message: getApiErrorMessage(classesQuery.error, 'Không thể tải danh sách lớp') } : null,
-    studentsQuery.isError ? { key: 'students', message: getApiErrorMessage(studentsQuery.error, 'Không thể tải danh sách học viên') } : null,
-    pendingPaymentsQuery.isError ? { key: 'pending', message: getApiErrorMessage(pendingPaymentsQuery.error, 'Không thể tải yêu cầu thanh toán') } : null,
+    feesQuery.isError ? { key: 'fees', message: getApiErrorMessage(feesQuery.error, 'Không thể tải danh sách học phí'), onRetry: () => feesQuery.refetch() } : null,
+    semestersQuery.isError ? { key: 'semesters', message: getApiErrorMessage(semestersQuery.error, 'Không thể tải danh sách học kỳ'), onRetry: () => semestersQuery.refetch() } : null,
+    classesQuery.isError ? { key: 'classes', message: getApiErrorMessage(classesQuery.error, 'Không thể tải danh sách lớp'), onRetry: () => classesQuery.refetch() } : null,
+    studentsQuery.isError ? { key: 'students', message: getApiErrorMessage(studentsQuery.error, 'Không thể tải danh sách học viên'), onRetry: () => studentsQuery.refetch() } : null,
+    pendingPaymentsQuery.isError ? { key: 'pending', message: getApiErrorMessage(pendingPaymentsQuery.error, 'Không thể tải yêu cầu thanh toán'), onRetry: () => pendingPaymentsQuery.refetch() } : null,
   ].filter(Boolean);
 
   return (
@@ -271,35 +273,8 @@ const TuitionManager = () => {
         </div>
       )}
 
-      {message.content && (
-        <div className={`toast mb-5 ${message.type === 'error' ? 'toast-error' : 'toast-success'}`}>
-          {message.type === 'error' ? '⚠' : '✓'} {message.content}
-        </div>
-      )}
-
-      {queryErrors.length > 0 && (
-        <div className="card p-4 mb-5">
-          <div className="space-y-3">
-            {queryErrors.map((error) => (
-              <div key={error.key} className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{error.message}</p>
-                <button
-                  onClick={() => {
-                    if (error.key === 'fees') feesQuery.refetch();
-                    if (error.key === 'semesters') semestersQuery.refetch();
-                    if (error.key === 'classes') classesQuery.refetch();
-                    if (error.key === 'students') studentsQuery.refetch();
-                    if (error.key === 'pending') pendingPaymentsQuery.refetch();
-                  }}
-                  className="btn-secondary text-sm"
-                >
-                  Thử lại
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      <AdminToast message={message.content} type={message.type} />
+      <AdminQueryErrors errors={queryErrors} />
 
       <div className="flex gap-2 mb-5">
         <button

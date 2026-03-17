@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { getApiErrorMessage } from '../../api/errors';
 import AdminLayout from '../../components/AdminLayout';
+import AdminToast from '../../components/AdminToast';
 import {
   useAdminDocumentsQuery,
   useDeleteDocumentMutation,
@@ -233,11 +234,7 @@ const DocumentManager = () => {
       </div>
 
       {/* Toast */}
-      {msg.text && (
-        <div className={`toast mb-5 ${msg.type === 'error' ? 'toast-error' : 'toast-success'}`}>
-          {msg.type === 'error' ? '⚠' : '✓'} {msg.text}
-        </div>
-      )}
+      <AdminToast message={msg.text} type={msg.type} />
 
       {(documentsErrorMessage || analyticsErrorMessage) && (
         <div className="card p-4 mb-6">
