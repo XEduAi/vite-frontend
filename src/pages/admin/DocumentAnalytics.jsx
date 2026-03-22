@@ -17,6 +17,43 @@ const CATEGORY_MAP = {
   'khác': 'Khác',
 };
 
+const formatCompactVnd = (value) => {
+  if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
+  if (value >= 1000) return `${(value / 1000).toFixed(0)}K`;
+  return value.toLocaleString('vi-VN');
+};
+
+const AnalyticsTooltipContent = ({ active, payload, label }) => {
+  if (!active || !payload?.length) {
+    return null;
+  }
+
+  return (
+    <div className="card p-3 shadow-lg" style={{ background: 'var(--cream)', border: '1px solid var(--border-light)' }}>
+      <p className="text-xs font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>{label}</p>
+      {payload.map((entry, index) => (
+        <p key={index} className="text-xs" style={{ color: entry.color }}>
+          {entry.name}: {typeof entry.value === 'number' ? entry.value.toLocaleString('vi-VN') : entry.value}
+          {entry.name === 'Doanh thu' ? 'đ' : ''}
+        </p>
+      ))}
+    </div>
+  );
+};
+
+const PieLabelRenderer = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
+  if (percent < 0.05) return null;
+  const RADIAN = Math.PI / 180;
+  const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+  return (
+    <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" fontSize={12} fontWeight="bold">
+      {`${(percent * 100).toFixed(0)}%`}
+    </text>
+  );
+};
+
 const IconArrowLeft = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
     <line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" />
@@ -27,40 +64,6 @@ const DocumentAnalytics = () => {
   const analyticsQuery = useDocumentAnalyticsQuery();
   const data = analyticsQuery.data || null;
   const loading = analyticsQuery.isPending;
-
-  const formatVND = (value) => {
-    if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
-    if (value >= 1000) return `${(value / 1000).toFixed(0)}K`;
-    return value.toLocaleString('vi-VN');
-  };
-
-  const CustomTooltip = ({ active, payload, label }) => {
-    if (!active || !payload?.length) return null;
-    return (
-      <div className="card p-3 shadow-lg" style={{ background: 'var(--cream)', border: '1px solid var(--border-light)' }}>
-        <p className="text-xs font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>{label}</p>
-        {payload.map((entry, i) => (
-          <p key={i} className="text-xs" style={{ color: entry.color }}>
-            {entry.name}: {typeof entry.value === 'number' ? entry.value.toLocaleString('vi-VN') : entry.value}
-            {entry.name === 'Doanh thu' ? 'đ' : ''}
-          </p>
-        ))}
-      </div>
-    );
-  };
-
-  const PieLabelRenderer = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
-    if (percent < 0.05) return null;
-    const RADIAN = Math.PI / 180;
-    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-    const x = cx + radius * Math.cos(-midAngle * RADIAN);
-    const y = cy + radius * Math.sin(-midAngle * RADIAN);
-    return (
-      <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" fontSize={12} fontWeight="bold">
-        {`${(percent * 100).toFixed(0)}%`}
-      </text>
-    );
-  };
 
   if (loading) {
     return (
@@ -102,6 +105,7 @@ const DocumentAnalytics = () => {
   }));
 
   const topDocs = (data.topDocuments || []).slice(0, 5);
+  const reconciliation = data.reconciliation || {};
 
   return (
     <AdminLayout>
@@ -172,8 +176,8 @@ const DocumentAnalytics = () => {
               <LineChart data={data.monthlyRevenue}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border-light)" />
                 <XAxis dataKey="month" tick={{ fontSize: 11 }} stroke="var(--text-muted)" />
-                <YAxis tick={{ fontSize: 11 }} stroke="var(--text-muted)" tickFormatter={formatVND} />
-                <Tooltip content={<CustomTooltip />} />
+                <YAxis tick={{ fontSize: 11 }} stroke="var(--text-muted)" tickFormatter={formatCompactVnd} />
+                <Tooltip content={<AnalyticsTooltipContent />} />
                 <Line
                   type="monotone"
                   dataKey="revenue"
@@ -239,6 +243,55 @@ const DocumentAnalytics = () => {
         </div>
       </div>
 
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="card p-5">
+          <div className="text-xs font-semibold mb-2" style={{ color: 'var(--text-muted)' }}>ĐỐI SOÁT DOANH THU</div>
+          <div className="font-display text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
+            {(reconciliation.combinedCollectedRevenue || 0).toLocaleString('vi-VN')}đ
+          </div>
+          <div className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+            Tài liệu + học phí đã thu
+          </div>
+        </div>
+        <div className="card p-5">
+          <div className="text-xs font-semibold mb-2" style={{ color: 'var(--text-muted)' }}>HỌC PHÍ CÒN MỞ</div>
+          <div className="font-display text-xl font-bold" style={{ color: 'var(--danger)' }}>
+            {(reconciliation.tuitionOutstanding || 0).toLocaleString('vi-VN')}đ
+          </div>
+          <div className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+            {reconciliation.unresolvedPaymentsCount || 0} yêu cầu thanh toán chờ xử lý
+          </div>
+        </div>
+        <div className="card p-5">
+          <div className="text-xs font-semibold mb-2" style={{ color: 'var(--text-muted)' }}>DOANH THU TÀI LIỆU ĐANG CHỜ</div>
+          <div className="font-display text-xl font-bold" style={{ color: 'var(--amber-warm)' }}>
+            {(reconciliation.documentPendingRevenue || 0).toLocaleString('vi-VN')}đ
+          </div>
+          <div className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+            Dùng để theo dõi backlog vận hành
+          </div>
+        </div>
+      </div>
+
+      {(reconciliation.monthlyRevenueMix || []).length > 0 && (
+        <div className="card p-5 mb-6 fade-in">
+          <h3 className="font-display font-bold text-sm mb-4" style={{ color: 'var(--text-primary)' }}>
+            Đối soát học phí và tài liệu theo tháng
+          </h3>
+          <ResponsiveContainer width="100%" height={260}>
+            <BarChart data={reconciliation.monthlyRevenueMix}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border-light)" />
+              <XAxis dataKey="month" tick={{ fontSize: 11 }} stroke="var(--text-muted)" />
+              <YAxis tick={{ fontSize: 11 }} stroke="var(--text-muted)" tickFormatter={formatCompactVnd} />
+              <Tooltip content={<AnalyticsTooltipContent />} />
+              <Legend wrapperStyle={{ fontSize: '12px' }} />
+              <Bar dataKey="tuitionRevenue" fill="#3b82f6" radius={[6, 6, 0, 0]} name="Học phí" />
+              <Bar dataKey="documentRevenue" fill="#f59e0b" radius={[6, 6, 0, 0]} name="Tài liệu" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
       {/* Top Documents by Downloads */}
       {topDocs.length > 0 && (
         <div className="card p-5 mb-6 fade-in" style={{ animationDelay: '0.2s' }}>
@@ -269,6 +322,31 @@ const DocumentAnalytics = () => {
               <Bar dataKey="downloads" fill="#f59e0b" radius={[0, 6, 6, 0]} barSize={28} name="Lượt tải" />
             </BarChart>
           </ResponsiveContainer>
+        </div>
+      )}
+
+      {data.highValuePurchases && data.highValuePurchases.length > 0 && (
+        <div className="card overflow-hidden mb-6 fade-in" style={{ animationDelay: '0.25s' }}>
+          <div className="px-5 py-3.5 border-b" style={{ borderColor: 'var(--border-light)', background: 'var(--cream-warm)' }}>
+            <h2 className="text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>GIAO DỊCH GIÁ TRỊ CAO</h2>
+          </div>
+          <div className="divide-y" style={{ borderColor: 'var(--border-light)' }}>
+            {data.highValuePurchases.map((purchase) => (
+              <div key={purchase._id} className="px-5 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                <div>
+                  <div className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                    {purchase.document?.title || 'Tài liệu'}
+                  </div>
+                  <div className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+                    {purchase.buyer?.fullName || purchase.buyer?.username || 'Không rõ người mua'} · {new Date(purchase.createdAt).toLocaleString('vi-VN')}
+                  </div>
+                </div>
+                <div className="text-sm font-bold" style={{ color: 'var(--success)' }}>
+                  {(purchase.price || 0).toLocaleString('vi-VN')}đ
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

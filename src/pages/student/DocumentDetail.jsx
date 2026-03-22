@@ -9,6 +9,7 @@ import {
   useDocumentDetailQuery,
   useDocumentReviewsQuery,
   useMyDocumentsQuery,
+  usePurchaseDocumentBundleMutation,
   usePurchaseDocumentMutation,
   useSubmitDocumentReviewMutation,
 } from '../../features/documents/hooks';
@@ -80,6 +81,7 @@ const DocumentDetail = () => {
   const myDocumentsQuery = useMyDocumentsQuery();
   const gamificationQuery = useStudentGamificationQuery();
   const purchaseDocumentMutation = usePurchaseDocumentMutation(id);
+  const purchaseDocumentBundleMutation = usePurchaseDocumentBundleMutation(id);
   const downloadDocumentMutation = useDownloadDocumentMutation();
   const submitDocumentReviewMutation = useSubmitDocumentReviewMutation(id);
 
@@ -93,11 +95,14 @@ const DocumentDetail = () => {
   const userXp = gamificationQuery.data?.xp || 0;
   const loading = documentQuery.isPending || myDocumentsQuery.isPending;
   const purchasing = purchaseDocumentMutation.isPending;
+  const bundlePurchasing = purchaseDocumentBundleMutation.isPending;
   const downloading = downloadDocumentMutation.isPending;
   const submittingReview = submitDocumentReviewMutation.isPending;
   const reviewsErrorMessage = reviewsQuery.isError
     ? getApiErrorMessage(reviewsQuery.error, 'Không thể tải đánh giá')
     : '';
+  const bundleOffer = doc?.bundleOffer || null;
+  const recommendedDocuments = doc?.recommendedDocuments || [];
 
   const showMsg = (content, type = 'success') => {
     setMessage({ type, content });
@@ -111,7 +116,11 @@ const DocumentDetail = () => {
     if (doc.price === 0) {
       try {
         const purchase = await purchaseDocumentMutation.mutateAsync({ paymentMethod: 'free' });
-        showMsg(purchase?.accessGranted ? 'Đã thêm tài liệu miễn phí vào thư viện!' : 'Yêu cầu mua đã được ghi nhận');
+        showMsg(
+          purchase?.accessGranted
+            ? purchase?.followUp?.note || 'Đã thêm tài liệu miễn phí vào thư viện!'
+            : 'Yêu cầu mua đã được ghi nhận'
+        );
       } catch (err) {
         showMsg(getApiErrorMessage(err, 'Lỗi khi tải tài liệu'), 'error');
       }
@@ -127,12 +136,23 @@ const DocumentDetail = () => {
       const purchase = await purchaseDocumentMutation.mutateAsync({ paymentMethod });
       showMsg(
         purchase?.accessGranted
-          ? 'Mua tài liệu thành công! Bạn có thể tải ngay trong thư viện.'
+          ? purchase?.followUp?.note || 'Mua tài liệu thành công! Bạn có thể tải ngay trong thư viện.'
           : 'Yêu cầu mua đã được ghi nhận.'
       );
       setShowPaymentModal(false);
     } catch (err) {
       showMsg(getApiErrorMessage(err, 'Lỗi khi mua tài liệu'), 'error');
+    }
+  };
+
+  const handleBundlePurchase = async () => {
+    if (!bundleOffer) return;
+
+    try {
+      const result = await purchaseDocumentBundleMutation.mutateAsync({ paymentMethod: 'bank_transfer' });
+      showMsg(result?.followUp?.note || 'Đã mua trọn bộ tài liệu liên quan');
+    } catch (err) {
+      showMsg(getApiErrorMessage(err, 'Lỗi khi mua bundle tài liệu'), 'error');
     }
   };
 
@@ -353,6 +373,54 @@ const DocumentDetail = () => {
                   </button>
                 )}
               </div>
+
+              {!purchased && bundleOffer && bundleOffer.documents?.length > 1 && (
+                <div
+                  className="mt-4 rounded-2xl p-4"
+                  style={{ background: 'var(--amber-soft)', border: '1px solid rgba(245, 158, 11, 0.2)' }}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <div className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: 'var(--amber-warm)' }}>
+                        Bundle gợi ý
+                      </div>
+                      <div className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                        {bundleOffer.documents.length} tài liệu liên quan
+                      </div>
+                      <div className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+                        Tổng lẻ {formatPrice(bundleOffer.originalPrice)} · giảm {bundleOffer.discountPercent}% · còn {formatPrice(bundleOffer.finalPrice)}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleBundlePurchase}
+                      disabled={bundlePurchasing}
+                      className="btn-primary py-2.5 px-4 rounded-xl text-xs"
+                      style={{ opacity: bundlePurchasing ? 0.7 : 1 }}
+                    >
+                      {bundlePurchasing ? 'Đang xử lý...' : 'Mua trọn bộ'}
+                    </button>
+                  </div>
+
+                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                    {bundleOffer.documents.map((item) => (
+                      <Link
+                        key={item._id}
+                        to={`/student/documents/${item._id}`}
+                        className="rounded-xl px-3 py-2 transition-all"
+                        style={{ background: 'rgba(255,255,255,0.55)', border: '1px solid rgba(255,255,255,0.6)' }}
+                      >
+                        <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                          {item.title}
+                        </div>
+                        <div className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+                          {formatPrice(item.price)}
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -410,6 +478,51 @@ const DocumentDetail = () => {
                     </span>
                   )}
                 </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {recommendedDocuments.length > 0 && (
+          <div className="card rounded-2xl p-6 mb-6 fade-in-up">
+            <div className="flex items-center justify-between gap-3 mb-4">
+              <div>
+                <h3 className="font-display font-bold text-base" style={{ color: 'var(--text-primary)' }}>
+                  Tài liệu nên xem tiếp
+                </h3>
+                <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+                  Cùng môn học hoặc chủ đề liên quan để tiếp nối việc ôn tập
+                </p>
+              </div>
+              <Link to="/student/documents" className="text-xs font-semibold" style={{ color: 'var(--amber-warm)' }}>
+                Xem tất cả
+              </Link>
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-2">
+              {recommendedDocuments.map((item) => (
+                <Link
+                  key={item._id}
+                  to={`/student/documents/${item._id}`}
+                  className="rounded-2xl p-4 transition-all hover:shadow-md"
+                  style={{ border: '1px solid var(--border-light)', background: 'rgba(255,255,255,0.6)' }}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                        {item.title}
+                      </div>
+                      <div className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+                        {[item.subject, item.grade ? `Lớp ${item.grade}` : '', CATEGORY_MAP[item.category] || 'Tài liệu']
+                          .filter(Boolean)
+                          .join(' · ')}
+                      </div>
+                    </div>
+                    <div className="text-xs font-semibold" style={{ color: item.price === 0 ? 'var(--success)' : 'var(--amber-warm)' }}>
+                      {formatPrice(item.price)}
+                    </div>
+                  </div>
+                </Link>
               ))}
             </div>
           </div>

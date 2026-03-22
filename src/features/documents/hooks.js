@@ -22,6 +22,17 @@ export const normalizeDocument = (doc) => {
     ratingCount: doc.ratingCount ?? doc.reviewCount ?? 0,
     thumbnailUrl: doc.thumbnailUrl || doc.thumbnail || '',
     uploadedBy: doc.uploadedBy || doc.seller || null,
+    recommendedDocuments: Array.isArray(doc.recommendedDocuments)
+      ? doc.recommendedDocuments.map((item) => normalizeDocument(item))
+      : [],
+    bundleOffer: doc.bundleOffer
+      ? {
+          ...doc.bundleOffer,
+          documents: Array.isArray(doc.bundleOffer.documents)
+            ? doc.bundleOffer.documents.map((item) => normalizeDocument(item))
+            : [],
+        }
+      : null,
   };
 };
 
@@ -33,6 +44,12 @@ const normalizeDocumentReview = (review) => ({
 const normalizeDocumentPurchase = (purchase) => ({
   ...purchase,
   document: normalizeDocument(purchase?.document || null),
+  followUp: purchase?.followUp
+    ? {
+        ...purchase.followUp,
+        recommendedDocuments: (purchase.followUp.recommendedDocuments || []).map((item) => normalizeDocument(item)),
+      }
+    : null,
   purchasedAt: purchase?.purchasedAt || purchase?.createdAt || null,
 });
 
@@ -134,6 +151,25 @@ export function usePurchaseDocumentMutation(documentId) {
       queryClient.invalidateQueries({ queryKey: ['documents'] });
       queryClient.invalidateQueries({ queryKey: ['documents', 'detail', documentId] });
       queryClient.invalidateQueries({ queryKey: ['student', 'my-documents'] });
+    },
+  });
+}
+
+export function usePurchaseDocumentBundleMutation(documentId) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (payload) => {
+      const { data } = await axiosClient.post(`/documents/${documentId}/purchase-bundle`, payload);
+      return getPayload(data);
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['documents'] }),
+        queryClient.invalidateQueries({ queryKey: ['documents', 'detail', documentId] }),
+        queryClient.invalidateQueries({ queryKey: ['student', 'my-documents'] }),
+        queryClient.invalidateQueries({ queryKey: ['admin', 'documents', 'analytics'] }),
+      ]);
     },
   });
 }

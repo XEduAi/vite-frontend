@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { getApiErrorMessage } from '../../api/errors';
 import AdminLayout from '../../components/AdminLayout';
@@ -192,9 +192,6 @@ const DocumentManager = () => {
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
   const paginated = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
-  // Reset page when filters change
-  useEffect(() => { setCurrentPage(1); }, [search, filterCategory]);
-
   const renderStars = (rating) => {
     const stars = [];
     const r = Math.round((rating || 0) * 2) / 2;
@@ -319,7 +316,10 @@ const DocumentManager = () => {
             <input
               type="text"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setCurrentPage(1);
+              }}
               placeholder="Tìm kiếm tài liệu..."
               className="w-full border rounded-xl pl-10 pr-4 py-2.5 text-sm"
               style={{ borderColor: 'var(--border-light)', color: 'var(--text-primary)', background: 'var(--cream-warm)' }}
@@ -327,7 +327,10 @@ const DocumentManager = () => {
           </div>
           <select
             value={filterCategory}
-            onChange={(e) => setFilterCategory(e.target.value)}
+            onChange={(e) => {
+              setFilterCategory(e.target.value);
+              setCurrentPage(1);
+            }}
             className="border rounded-xl px-4 py-2.5 text-sm"
             style={{ borderColor: 'var(--border-light)', color: 'var(--text-primary)', background: 'var(--cream-warm)' }}
           >

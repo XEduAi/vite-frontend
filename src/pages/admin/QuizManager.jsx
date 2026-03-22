@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { getApiErrorMessage } from '../../api/errors';
 import AdminLayout from '../../components/AdminLayout';
 import { useAdminClassesQuery } from '../../features/admin/lookups';
@@ -36,14 +36,17 @@ const QuizManager = () => {
   const adminQuizzesQuery = useAdminQuizListQuery();
   const adminClassesQuery = useAdminClassesQuery();
   const questionFiltersQuery = useQuestionFiltersQuery();
-  const quizAttemptsQuery = useAdminQuizAttemptsQuery(selectedQuizId);
+  const resolvedSelectedQuizId = adminQuizzesQuery.data?.some((quiz) => quiz._id === selectedQuizId)
+    ? selectedQuizId
+    : null;
+  const quizAttemptsQuery = useAdminQuizAttemptsQuery(resolvedSelectedQuizId);
   const saveQuizMutation = useSaveQuizMutation();
   const deleteQuizMutation = useDeleteQuizMutation();
 
   const quizzes = adminQuizzesQuery.data || [];
   const classes = adminClassesQuery.data || [];
   const filterOptions = questionFiltersQuery.data || { subjects: [], topics: [], grades: [] };
-  const selectedQuiz = quizzes.find((quiz) => quiz._id === selectedQuizId) || null;
+  const selectedQuiz = quizzes.find((quiz) => quiz._id === resolvedSelectedQuizId) || null;
   const attempts = quizAttemptsQuery.data || [];
   const loading = adminQuizzesQuery.isPending || adminClassesQuery.isPending || questionFiltersQuery.isPending;
 
@@ -51,12 +54,6 @@ const QuizManager = () => {
     setMsg({ text, type });
     setTimeout(() => setMsg({ text: '', type: '' }), 3000);
   };
-
-  useEffect(() => {
-    if (selectedQuizId && !selectedQuiz) {
-      setSelectedQuizId(null);
-    }
-  }, [selectedQuiz, selectedQuizId]);
 
   const openCreateForm = () => {
     setEditingId(null);

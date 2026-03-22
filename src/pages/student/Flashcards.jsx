@@ -48,7 +48,7 @@ const Flashcards = () => {
       setResults({});
       setDone(false);
       setStarted(true);
-    } catch (err) {
+    } catch {
       alert('Lỗi tải flashcard');
     } finally {
       setLoading(false);

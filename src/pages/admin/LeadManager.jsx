@@ -1,4 +1,4 @@
-import { useDeferredValue, useEffect, useMemo, useState } from 'react';
+import { useDeferredValue, useMemo, useState } from 'react';
 import { getApiErrorMessage } from '../../api/errors';
 import { useAdminStudentsQuery } from '../../features/admin/lookups';
 import { useAdminLeadsQuery, useLeadDashboardQuery, useUpdateLeadMutation } from '../../features/leads/hooks';
@@ -54,6 +54,18 @@ const EMPTY_EDIT_FORM = {
   handoffChecklist: HANDOFF_FIELDS.reduce((result, item) => ({ ...result, [item.key]: false }), {}),
 };
 
+const EMPTY_LEAD_SUMMARY = {
+  total: 0,
+  new: 0,
+  contacted: 0,
+  qualified: 0,
+  converted: 0,
+  lost: 0,
+  overdue: 0,
+  dueToday: 0,
+  conversionRate: 0,
+};
+
 const formatDateTimeInput = (value) => {
   if (!value) {
     return '';
@@ -101,23 +113,9 @@ const LeadManager = () => {
   const studentsQuery = useAdminStudentsQuery({ enabled: Boolean(editingLead) });
   const updateLeadMutation = useUpdateLeadMutation();
 
-  useEffect(() => {
-    setPage(1);
-  }, [filterOwner, filterSource, filterStatus, deferredSearch, showOverdueOnly]);
-
   const leads = leadsQuery.data?.leads || [];
   const pagination = leadsQuery.data?.pagination || { page: 1, limit: 20, total: 0, totalPages: 1 };
-  const summary = dashboardQuery.data?.summary || {
-    total: 0,
-    new: 0,
-    contacted: 0,
-    qualified: 0,
-    converted: 0,
-    lost: 0,
-    overdue: 0,
-    dueToday: 0,
-    conversionRate: 0,
-  };
+  const summary = dashboardQuery.data?.summary || EMPTY_LEAD_SUMMARY;
   const owners = dashboardQuery.data?.owners || [];
   const ownerBreakdown = dashboardQuery.data?.ownerBreakdown || [];
   const sourceBreakdown = dashboardQuery.data?.sources || [];
@@ -294,14 +292,20 @@ const LeadManager = () => {
             <label className="block text-xs mb-1.5" style={{ color: 'var(--text-muted)' }}>Tìm kiếm</label>
             <input
               value={search}
-              onChange={(event) => setSearch(event.target.value)}
+              onChange={(event) => {
+                setSearch(event.target.value);
+                setPage(1);
+              }}
               className="input"
               placeholder="Tên, SĐT, mục tiêu, ghi chú..."
             />
           </div>
           <div>
             <label className="block text-xs mb-1.5" style={{ color: 'var(--text-muted)' }}>Pipeline</label>
-            <select value={filterStatus} onChange={(event) => setFilterStatus(event.target.value)} className="input">
+            <select value={filterStatus} onChange={(event) => {
+              setFilterStatus(event.target.value);
+              setPage(1);
+            }} className="input">
               {STATUS_OPTIONS.map((option) => (
                 <option key={option.value || 'all-status'} value={option.value}>{option.label}</option>
               ))}
@@ -309,7 +313,10 @@ const LeadManager = () => {
           </div>
           <div>
             <label className="block text-xs mb-1.5" style={{ color: 'var(--text-muted)' }}>Nguồn</label>
-            <select value={filterSource} onChange={(event) => setFilterSource(event.target.value)} className="input">
+            <select value={filterSource} onChange={(event) => {
+              setFilterSource(event.target.value);
+              setPage(1);
+            }} className="input">
               {SOURCE_OPTIONS.map((option) => (
                 <option key={option.value || 'all-source'} value={option.value}>{option.label}</option>
               ))}
@@ -317,7 +324,10 @@ const LeadManager = () => {
           </div>
           <div>
             <label className="block text-xs mb-1.5" style={{ color: 'var(--text-muted)' }}>Owner</label>
-            <select value={filterOwner} onChange={(event) => setFilterOwner(event.target.value)} className="input">
+            <select value={filterOwner} onChange={(event) => {
+              setFilterOwner(event.target.value);
+              setPage(1);
+            }} className="input">
               <option value="">Tất cả owner</option>
               <option value="unassigned">Chưa phân công</option>
               {owners.map((owner) => (
@@ -329,7 +339,10 @@ const LeadManager = () => {
             <input
               type="checkbox"
               checked={showOverdueOnly}
-              onChange={(event) => setShowOverdueOnly(event.target.checked)}
+              onChange={(event) => {
+                setShowOverdueOnly(event.target.checked);
+                setPage(1);
+              }}
             />
             <span className="text-sm" style={{ color: 'var(--text-primary)' }}>Chỉ lead quá hạn</span>
           </label>

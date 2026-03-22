@@ -84,10 +84,6 @@ const SkeletonCard = () => (
 
 const DocumentMarketplace = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [documents, setDocuments] = useState([]);
-  const [total, setTotal] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
-  const [loading, setLoading] = useState(true);
 
   // Filters
   const [search, setSearch] = useState(searchParams.get('search') || '');
@@ -118,19 +114,12 @@ const DocumentMarketplace = () => {
     subject: subject || undefined,
   });
 
-  useEffect(() => {
-    setLoading(documentsQuery.isPending);
-  }, [documentsQuery.isPending]);
-
-  useEffect(() => {
-    const data = documentsQuery.data;
-    setDocuments(data?.documents || []);
-    setTotal(data?.total || 0);
-    setTotalPages(data?.totalPages || 0);
-  }, [documentsQuery.data]);
-
   const subjects = documentFiltersQuery.data?.subjects || [];
   const grades = documentFiltersQuery.data?.grades || [];
+  const documents = documentsQuery.data?.documents || [];
+  const total = documentsQuery.data?.total || 0;
+  const totalPages = documentsQuery.data?.totalPages || 0;
+  const loading = documentsQuery.isPending;
   const documentsErrorMessage = documentsQuery.isError
     ? getApiErrorMessage(documentsQuery.error, 'Không thể tải kho tài liệu')
     : '';

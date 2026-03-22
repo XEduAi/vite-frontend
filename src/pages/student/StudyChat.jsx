@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import StudentLayout from '../../components/StudentLayout';
@@ -245,7 +245,7 @@ const StudyChat = () => {
   const { mutateAsync: deleteConversationAsync } = useDeleteConversationMutation();
   const activeConversationQuery = useChatConversationQuery(activeConversationId);
 
-  const conversations = conversationsQuery.data || [];
+  const conversations = useMemo(() => conversationsQuery.data || [], [conversationsQuery.data]);
   const aiUsage = aiUsageQuery.data || null;
   const activeConversation = activeConversationQuery.data || null;
   const loadingConversations = conversationsQuery.isPending;

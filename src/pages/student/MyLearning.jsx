@@ -100,6 +100,8 @@ const MyLearning = () => {
 
   const importantAnnouncements = announcements.filter(a => a.priority === 'important').slice(0, 2);
   const hasAnnouncements = importantAnnouncements.length > 0;
+  const recommendedNextAction = dashboard?.recommendedNextAction || null;
+  const masteryHighlights = dashboard?.masteryHighlights || null;
 
   return (
     <StudentLayout>
@@ -168,9 +170,39 @@ const MyLearning = () => {
         </div>
       )}
 
+      {recommendedNextAction && (
+        <div className="mb-6 fade-in-up">
+          <Link
+            to={recommendedNextAction.href || '/student/performance'}
+            className="block rounded-2xl p-5 transition-all hover:shadow-lg"
+            style={{
+              background: 'linear-gradient(135deg, #fff7ed, #fffbeb)',
+              border: '1px solid rgba(245,158,11,0.18)',
+            }}
+          >
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: 'var(--amber-warm)' }}>
+                  Bước tiếp theo được đề xuất
+                </div>
+                <div className="font-display text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
+                  {recommendedNextAction.title}
+                </div>
+                <p className="text-sm mt-1.5" style={{ color: 'var(--text-secondary)' }}>
+                  {recommendedNextAction.description}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 text-sm font-semibold" style={{ color: 'var(--amber-warm)' }}>
+                Tiếp tục <IconArrow />
+              </div>
+            </div>
+          </Link>
+        </div>
+      )}
+
       {/* === DASHBOARD WIDGETS === */}
       {!dashLoading && dashboard && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 stagger-children">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-8 stagger-children">
 
           {/* Today's Tasks */}
           <div className="card rounded-2xl overflow-hidden">
@@ -322,6 +354,43 @@ const MyLearning = () => {
                       </Link>
                     </div>
                   ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Mastery snapshot */}
+          <div className="card rounded-2xl overflow-hidden">
+            <div className="px-5 py-3.5 border-b flex items-center gap-2" style={{ borderColor: 'var(--border-light)' }}>
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center"
+                style={{ background: '#ede9fe', color: '#8b5cf6' }}>
+                <IconTarget />
+              </div>
+              <h3 className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>Mastery hiện tại</h3>
+            </div>
+            <div className="p-5">
+              <div className="font-display text-3xl font-bold" style={{ color: 'var(--text-primary)' }}>
+                {masteryHighlights?.overallScore || 0}%
+              </div>
+              <div className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+                Mức nắm vững tổng quát
+              </div>
+              {masteryHighlights?.weakTopics?.length > 0 && (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {masteryHighlights.weakTopics.slice(0, 3).map((topic) => (
+                    <span
+                      key={topic.topic}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold"
+                      style={{ background: 'var(--danger-light)', color: 'var(--danger)' }}
+                    >
+                      {topic.topic} · {topic.masteryScore}%
+                    </span>
+                  ))}
+                </div>
+              )}
+              {(masteryHighlights?.overdueFlashcards || 0) > 0 && (
+                <div className="mt-4 text-xs font-medium" style={{ color: 'var(--amber-warm)' }}>
+                  {masteryHighlights.overdueFlashcards} flashcard đang đến hạn ôn lại
                 </div>
               )}
             </div>

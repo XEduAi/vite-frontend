@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getApiErrorMessage } from '../../api/errors';
 import AdminQueryErrors from '../../components/AdminQueryErrors';
@@ -39,7 +39,10 @@ const ClassManager = () => {
   const classesQuery = useAdminClassesQuery();
   const studentsQuery = useAdminStudentsQuery();
   const mediaQuery = useAdminMediaQuery();
-  const classDetailQuery = useAdminClassDetailQuery(selectedClassId);
+  const resolvedSelectedClassId = classesQuery.data?.some((item) => item._id === selectedClassId)
+    ? selectedClassId
+    : null;
+  const classDetailQuery = useAdminClassDetailQuery(resolvedSelectedClassId);
   const saveClassMutation = useSaveClassMutation();
   const deleteClassMutation = useDeleteClassMutation();
   const assignStudentMutation = useAssignStudentToClassMutation();
@@ -50,15 +53,9 @@ const ClassManager = () => {
   const classes = classesQuery.data || [];
   const students = studentsQuery.data || [];
   const medias = mediaQuery.data || [];
-  const selectedClassPreview = classes.find((item) => item._id === selectedClassId) || null;
+  const selectedClassPreview = classes.find((item) => item._id === resolvedSelectedClassId) || null;
   const selectedClass = classDetailQuery.data || selectedClassPreview;
   const loading = classesQuery.isPending || studentsQuery.isPending || mediaQuery.isPending;
-
-  useEffect(() => {
-    if (selectedClassId && !classes.some((item) => item._id === selectedClassId)) {
-      setSelectedClassId(null);
-    }
-  }, [classes, selectedClassId]);
 
   const showMsg = (content, type = 'success') => {
     setMessage({ type, content });
@@ -238,7 +235,7 @@ const ClassManager = () => {
           onRetry: () => mediaQuery.refetch(),
         }
       : null,
-    selectedClassId && classDetailQuery.isError
+    resolvedSelectedClassId && classDetailQuery.isError
       ? {
           key: 'class-detail',
           message: getApiErrorMessage(classDetailQuery.error, 'Không thể tải chi tiết lớp học'),
@@ -248,7 +245,7 @@ const ClassManager = () => {
   ].filter(Boolean);
 
   const renderClassDetail = () => {
-    if (selectedClassId && !selectedClass && classDetailQuery.isPending) {
+    if (resolvedSelectedClassId && !selectedClass && classDetailQuery.isPending) {
       return (
         <div className="card flex flex-col items-center justify-center" style={{ minHeight: 300 }}>
           <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Đang tải chi tiết lớp...</p>

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { getApiErrorMessage } from '../../api/errors';
 import AdminQueryErrors from '../../components/AdminQueryErrors';
 import AdminLayout from '../../components/AdminLayout';
@@ -103,7 +103,7 @@ const StudentManager = () => {
     enabled: Boolean(parentReportStudent),
   });
 
-  const students = studentsQuery.data || [];
+  const students = useMemo(() => studentsQuery.data || [], [studentsQuery.data]);
   const classes = classesQuery.data || [];
   const loading = studentsQuery.isPending;
   const importing = importStudentsMutation.isPending;

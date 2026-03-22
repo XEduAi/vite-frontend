@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axiosClient from '../../api/axiosClient';
 
@@ -17,9 +17,7 @@ const LessonManager = () => {
   const [editing, setEditing] = useState(null); // lesson object or null
   const [form, setForm] = useState(emptyLesson());
   const [saving, setSaving] = useState(false);
-  const [deleteId, setDeleteId] = useState(null);
-
-  const fetchLessons = async () => {
+  const fetchLessons = useCallback(async () => {
     try {
       setLoading(true);
       const [lessRes, clsRes] = await Promise.all([
@@ -33,9 +31,9 @@ const LessonManager = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [classId]);
 
-  useEffect(() => { fetchLessons(); }, [classId]);
+  useEffect(() => { fetchLessons(); }, [fetchLessons]);
 
   const openCreate = () => {
     setEditing(null);

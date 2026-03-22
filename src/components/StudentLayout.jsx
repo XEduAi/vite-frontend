@@ -82,6 +82,136 @@ const IconAIChat = () => (
   </svg>
 );
 
+const SidebarContent = ({
+  fullName,
+  handleLogout,
+  locationPath,
+  menuItems,
+  onNav,
+  theme,
+  toggleTheme,
+}) => (
+  <div className="flex flex-col h-full">
+    <Link
+      to="/student/dashboard"
+      onClick={onNav}
+      className="flex items-center gap-3 px-5 py-5 shrink-0"
+    >
+      <div
+        className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+        style={{ background: 'var(--grad-amber)', boxShadow: '0 4px 12px rgba(245,158,11,0.4)' }}
+      >
+        <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4 text-white">
+          <path d="M12 14l9-5-9-5-9 5 9 5z" fill="currentColor" />
+          <path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" fill="currentColor" opacity="0.7" />
+        </svg>
+      </div>
+      <span className="font-display font-bold text-lg text-white tracking-tight">EduVN</span>
+    </Link>
+
+    <div className="mx-3 mb-4 px-3 py-3 rounded-xl shrink-0" style={{ background: 'rgba(255,255,255,0.07)' }}>
+      <div className="flex items-center gap-2.5">
+        <div
+          className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
+          style={{ background: 'var(--grad-amber)', color: 'white' }}
+        >
+          {fullName.charAt(0).toUpperCase()}
+        </div>
+        <div className="min-w-0">
+          <div className="text-sm font-semibold truncate text-white">{fullName}</div>
+          <div className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>Học viên</div>
+        </div>
+      </div>
+    </div>
+
+    <div className="px-5 mb-2">
+      <span className="text-[10px] font-bold tracking-widest uppercase" style={{ color: 'rgba(255,255,255,0.3)' }}>
+        Menu
+      </span>
+    </div>
+
+    <nav className="flex-1 px-3 space-y-0.5 overflow-y-auto">
+      {menuItems.map((item) => {
+        const isActive = locationPath.startsWith(item.path);
+        return (
+          <Link
+            key={item.path}
+            to={item.path}
+            onClick={onNav}
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+            style={{
+              color: isActive ? 'white' : 'rgba(255,255,255,0.55)',
+              background: isActive
+                ? 'linear-gradient(135deg, rgba(245,158,11,0.25), rgba(234,88,12,0.18))'
+                : 'transparent',
+              borderLeft: isActive ? '2px solid var(--amber)' : '2px solid transparent',
+            }}
+            onMouseEnter={(event) => {
+              if (!isActive) event.currentTarget.style.background = 'rgba(255,255,255,0.07)';
+              event.currentTarget.style.color = 'rgba(255,255,255,0.9)';
+            }}
+            onMouseLeave={(event) => {
+              if (!isActive) {
+                event.currentTarget.style.background = 'transparent';
+                event.currentTarget.style.color = 'rgba(255,255,255,0.55)';
+              }
+            }}
+          >
+            <span style={{ color: isActive ? 'var(--amber-glow)' : 'inherit' }}>{item.icon}</span>
+            {item.label}
+            {item.highlight && !isActive && (
+              <span
+                className="ml-auto px-1.5 py-0.5 rounded-md text-[10px] font-bold"
+                style={{ background: 'var(--amber)', color: '#fff' }}
+              >
+                AI
+              </span>
+            )}
+            {isActive && (
+              <span className="ml-auto w-1.5 h-1.5 rounded-full shrink-0" style={{ background: 'var(--amber)' }} />
+            )}
+          </Link>
+        );
+      })}
+    </nav>
+
+    <div className="px-3 pb-4 pt-3 shrink-0" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+      <button
+        onClick={toggleTheme}
+        className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium transition-all mb-1"
+        style={{ color: 'rgba(255,255,255,0.55)' }}
+        onMouseEnter={(event) => {
+          event.currentTarget.style.background = 'rgba(255,255,255,0.07)';
+          event.currentTarget.style.color = 'rgba(255,255,255,0.9)';
+        }}
+        onMouseLeave={(event) => {
+          event.currentTarget.style.background = 'transparent';
+          event.currentTarget.style.color = 'rgba(255,255,255,0.55)';
+        }}
+      >
+        {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
+        {theme === 'dark' ? 'Chế độ sáng' : 'Chế độ tối'}
+      </button>
+      <button
+        onClick={handleLogout}
+        className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+        style={{ color: 'rgba(255,255,255,0.55)' }}
+        onMouseEnter={(event) => {
+          event.currentTarget.style.background = 'rgba(239,68,68,0.15)';
+          event.currentTarget.style.color = '#fca5a5';
+        }}
+        onMouseLeave={(event) => {
+          event.currentTarget.style.background = 'transparent';
+          event.currentTarget.style.color = 'rgba(255,255,255,0.55)';
+        }}
+      >
+        <IconLogout />
+        Đăng xuất
+      </button>
+    </div>
+  </div>
+);
+
 const StudentLayout = ({ children, fullHeight = false }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -114,115 +244,6 @@ const StudentLayout = ({ children, fullHeight = false }) => {
     { path: '/student/profile',      label: 'Tài khoản',   icon: <IconUser /> },
   ];
 
-  // ── Sidebar content shared between desktop fixed + mobile drawer ──
-  const SidebarContent = ({ onNav }) => (
-    <div className="flex flex-col h-full">
-
-      {/* Brand */}
-      <Link
-        to="/student/dashboard"
-        onClick={onNav}
-        className="flex items-center gap-3 px-5 py-5 shrink-0"
-      >
-        <div
-          className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
-          style={{ background: 'var(--grad-amber)', boxShadow: '0 4px 12px rgba(245,158,11,0.4)' }}
-        >
-          <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4 text-white">
-            <path d="M12 14l9-5-9-5-9 5 9 5z" fill="currentColor" />
-            <path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" fill="currentColor" opacity="0.7" />
-          </svg>
-        </div>
-        <span className="font-display font-bold text-lg text-white tracking-tight">EduVN</span>
-      </Link>
-
-      {/* User card */}
-      <div className="mx-3 mb-4 px-3 py-3 rounded-xl shrink-0" style={{ background: 'rgba(255,255,255,0.07)' }}>
-        <div className="flex items-center gap-2.5">
-          <div
-            className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
-            style={{ background: 'var(--grad-amber)', color: 'white' }}
-          >
-            {fullName.charAt(0).toUpperCase()}
-          </div>
-          <div className="min-w-0">
-            <div className="text-sm font-semibold truncate text-white">{fullName}</div>
-            <div className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>Học viên</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Nav label */}
-      <div className="px-5 mb-2">
-        <span className="text-[10px] font-bold tracking-widest uppercase" style={{ color: 'rgba(255,255,255,0.3)' }}>
-          Menu
-        </span>
-      </div>
-
-      {/* Nav items */}
-      <nav className="flex-1 px-3 space-y-0.5 overflow-y-auto">
-        {menuItems.map((item) => {
-          const isActive = location.pathname.startsWith(item.path);
-          return (
-            <Link
-              key={item.path}
-              to={item.path}
-              onClick={onNav}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
-              style={{
-                color: isActive ? 'white' : 'rgba(255,255,255,0.55)',
-                background: isActive
-                  ? 'linear-gradient(135deg, rgba(245,158,11,0.25), rgba(234,88,12,0.18))'
-                  : 'transparent',
-                borderLeft: isActive ? '2px solid var(--amber)' : '2px solid transparent',
-              }}
-              onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; e.currentTarget.style.color = 'rgba(255,255,255,0.9)'; }}
-              onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(255,255,255,0.55)'; }}}
-            >
-              <span style={{ color: isActive ? 'var(--amber-glow)' : 'inherit' }}>{item.icon}</span>
-              {item.label}
-              {item.highlight && !isActive && (
-                <span
-                  className="ml-auto px-1.5 py-0.5 rounded-md text-[10px] font-bold"
-                  style={{ background: 'var(--amber)', color: '#fff' }}
-                >
-                  AI
-                </span>
-              )}
-              {isActive && (
-                <span className="ml-auto w-1.5 h-1.5 rounded-full shrink-0" style={{ background: 'var(--amber)' }} />
-              )}
-            </Link>
-          );
-        })}
-      </nav>
-
-      {/* Bottom controls */}
-      <div className="px-3 pb-4 pt-3 shrink-0" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-        <button
-          onClick={toggleTheme}
-          className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium transition-all mb-1"
-          style={{ color: 'rgba(255,255,255,0.55)' }}
-          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; e.currentTarget.style.color = 'rgba(255,255,255,0.9)'; }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(255,255,255,0.55)'; }}
-        >
-          {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
-          {theme === 'dark' ? 'Chế độ sáng' : 'Chế độ tối'}
-        </button>
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
-          style={{ color: 'rgba(255,255,255,0.55)' }}
-          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.15)'; e.currentTarget.style.color = '#fca5a5'; }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(255,255,255,0.55)'; }}
-        >
-          <IconLogout />
-          Đăng xuất
-        </button>
-      </div>
-    </div>
-  );
-
   return (
     <div className="min-h-screen flex" style={{ background: 'var(--cream)' }}>
 
@@ -231,7 +252,15 @@ const StudentLayout = ({ children, fullHeight = false }) => {
         className="hidden md:flex flex-col fixed top-0 left-0 h-screen z-30 w-56"
         style={{ background: 'var(--navy)', boxShadow: '4px 0 24px rgba(0,0,0,0.15)' }}
       >
-        <SidebarContent onNav={() => {}} />
+        <SidebarContent
+          fullName={fullName}
+          handleLogout={handleLogout}
+          locationPath={location.pathname}
+          menuItems={menuItems}
+          onNav={() => {}}
+          theme={theme}
+          toggleTheme={toggleTheme}
+        />
       </aside>
 
       {/* ===== MOBILE HEADER ===== */}
@@ -279,7 +308,15 @@ const StudentLayout = ({ children, fullHeight = false }) => {
             className="md:hidden fixed top-0 left-0 h-screen z-50 w-64 slide-in-left"
             style={{ background: 'var(--navy)' }}
           >
-            <SidebarContent onNav={() => setMobileOpen(false)} />
+            <SidebarContent
+              fullName={fullName}
+              handleLogout={handleLogout}
+              locationPath={location.pathname}
+              menuItems={menuItems}
+              onNav={() => setMobileOpen(false)}
+              theme={theme}
+              toggleTheme={toggleTheme}
+            />
           </aside>
         </>
       )}

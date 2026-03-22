@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axiosClient from '../../api/axiosClient';
 import StudentLayout from '../../components/StudentLayout';
@@ -82,7 +82,7 @@ const MyPerformance = () => {
     );
   }
 
-  const { summary, topicStats, difficultyStats, scoreHistory, recentAttempts } = data;
+  const { summary, topicStats, difficultyStats, scoreHistory, recentAttempts, mastery, recommendations } = data;
   const maxBarValue = Math.max(...scoreHistory.map(s => s.percentage), 1);
 
   return (
@@ -323,6 +323,59 @@ const MyPerformance = () => {
             <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Chưa có dữ liệu</p>
           )}
         </div>
+
+        {mastery && (
+          <div className="card p-5 mb-6 fade-in-up">
+            <div className="flex items-start justify-between gap-4 flex-wrap">
+              <div>
+                <h2 className="font-display font-bold text-sm" style={{ color: 'var(--text-primary)' }}>
+                  Mastery tổng quát
+                </h2>
+                <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+                  Kết hợp kết quả quiz, flashcard và tiến độ bài học
+                </p>
+              </div>
+              <div className="font-display text-3xl font-bold" style={{ color: 'var(--amber-warm)' }}>
+                {mastery.summary?.overallMasteryScore || 0}%
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
+              <div className="rounded-2xl p-4" style={{ background: 'var(--cream-warm)' }}>
+                <div className="text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>Flashcard đến hạn</div>
+                <div className="font-display text-xl font-bold mt-1" style={{ color: 'var(--text-primary)' }}>
+                  {mastery.summary?.overdueFlashcards || 0}
+                </div>
+              </div>
+              <div className="rounded-2xl p-4" style={{ background: 'var(--cream-warm)' }}>
+                <div className="text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>Bài học đã xong</div>
+                <div className="font-display text-xl font-bold mt-1" style={{ color: 'var(--text-primary)' }}>
+                  {mastery.summary?.completedLessons || 0}/{mastery.summary?.trackedLessons || 0}
+                </div>
+              </div>
+              <div className="rounded-2xl p-4" style={{ background: 'var(--cream-warm)' }}>
+                <div className="text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>Lần học gần nhất</div>
+                <div className="text-sm font-semibold mt-1" style={{ color: 'var(--text-primary)' }}>
+                  {mastery.summary?.lastStudyAt ? new Date(mastery.summary.lastStudyAt).toLocaleDateString('vi-VN') : 'Chưa có'}
+                </div>
+              </div>
+            </div>
+
+            {recommendations?.nextAction && (
+              <div className="mt-4 rounded-2xl p-4" style={{ background: 'var(--amber-soft)' }}>
+                <div className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--amber-warm)' }}>
+                  Hành động tiếp theo
+                </div>
+                <div className="font-medium text-sm mt-1" style={{ color: 'var(--text-primary)' }}>
+                  {recommendations.nextAction.title}
+                </div>
+                <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
+                  {recommendations.nextAction.description}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Recent attempts */}
         <div className="card p-5 fade-in-up">
