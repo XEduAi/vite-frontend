@@ -161,12 +161,15 @@ const QuizList = () => {
 
   return (
     <StudentLayout>
-      <div className="mb-7 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="mb-7 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl md:text-3xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>Bài kiểm tra</h1>
-          <p className="text-sm mt-1.5" style={{ color: 'var(--text-secondary)' }}>Làm bài kiểm tra hoặc tự luyện tập</p>
+          <div className="bento-label" style={{ color: 'var(--amber-warm)' }}>Thử sức</div>
+          <h1 className="bento-hero-title mt-2" style={{ color: 'var(--text-primary)' }}>Bài kiểm tra</h1>
+          <p className="text-sm md:text-base mt-2" style={{ color: 'var(--text-secondary)' }}>
+            Làm bài kiểm tra do giáo viên giao, hoặc tự tạo bài luyện tập từ ngân hàng câu hỏi.
+          </p>
         </div>
-        <button onClick={() => setShowBuilder(true)} className="btn-primary flex items-center gap-2 py-2.5 px-5">
+        <button onClick={() => setShowBuilder(true)} className="btn-primary flex items-center gap-2 py-2.5 px-5 shrink-0">
           <svg viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4"><path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" /></svg>
           Tạo bài luyện tập
         </button>
@@ -223,23 +226,20 @@ const QuizList = () => {
             <>
               {/* Smart Practice suggestion card */}
               {weakTopics.length > 0 && (
-                <div className="card rounded-2xl p-5 mb-4 fade-in-up"
-                  style={{ background: 'linear-gradient(135deg, #fef3c7, #fffbeb)', border: '1.5px solid #fbbf24' }}>
-                  <div className="flex items-start justify-between gap-3">
+                <div className="bento-tile bento-tile-hero p-5 mb-4 fade-in-up noise"
+                  style={{ border: '1px solid var(--amber)' }}>
+                  <div className="flex items-start justify-between gap-3 relative">
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-base">🎯</span>
-                        <span className="text-sm font-bold" style={{ color: '#92400e' }}>Luyện tập điểm yếu</span>
-                      </div>
-                      <p className="text-xs mb-3" style={{ color: '#78350f' }}>
-                        Dựa trên lịch sử học tập, hệ thống phát hiện bạn cần ôn tập:
-                      </p>
-                      <div className="flex flex-wrap gap-1.5 mb-3">
+                      <div className="bento-label" style={{ color: 'var(--amber-warm)' }}>Luyện tập điểm yếu</div>
+                      <h3 className="font-display font-bold text-lg mt-1" style={{ color: 'var(--text-primary)' }}>
+                        Hệ thống phát hiện bạn cần ôn
+                      </h3>
+                      <div className="flex flex-wrap gap-1.5 mt-3">
                         {weakTopics.map(t => (
-                          <span key={t.topic} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold"
-                            style={{ background: '#fde68a', color: '#92400e' }}>
+                          <span key={t.topic} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold"
+                            style={{ background: 'var(--terracotta-soft)', color: 'var(--terracotta)' }}>
                             {t.topic}
-                            <span style={{ color: '#b45309' }}>({t.percentage}%)</span>
+                            <span style={{ opacity: 0.7 }}>· {t.percentage}%</span>
                           </span>
                         ))}
                       </div>
@@ -247,8 +247,7 @@ const QuizList = () => {
                     <button
                       onClick={handleSmartPractice}
                       disabled={smartLoading}
-                      className="shrink-0 flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-bold text-white transition-all"
-                      style={{ background: smartLoading ? '#d97706' : 'linear-gradient(135deg,#f59e0b,#d97706)', opacity: smartLoading ? 0.8 : 1 }}>
+                      className="btn-primary shrink-0 flex items-center gap-1.5 py-2.5 px-4">
                       {smartLoading ? (
                         <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />

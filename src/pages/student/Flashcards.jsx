@@ -5,7 +5,16 @@ import LatexRenderer from '../../components/LatexRenderer';
 
 const DIFFICULTIES = ['', 'easy', 'medium', 'hard'];
 const DIFF_LABEL = { '': 'Tất cả', easy: 'Dễ', medium: 'Trung bình', hard: 'Khó' };
-const DIFF_COLOR = { easy: '#059669', medium: '#d97706', hard: '#dc2626' };
+const DIFF_COLOR = {
+  easy: 'var(--olive)',
+  medium: 'var(--amber-warm)',
+  hard: 'var(--terracotta)',
+};
+const DIFF_SOFT = {
+  easy: 'var(--olive-soft)',
+  medium: 'var(--amber-soft)',
+  hard: 'var(--terracotta-soft)',
+};
 
 const Flashcards = () => {
   const [cards, setCards] = useState([]);
@@ -82,9 +91,10 @@ const Flashcards = () => {
       <StudentLayout>
         <div className="max-w-md mx-auto fade-in-up">
           <div className="mb-6">
-            <h1 className="font-display text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>🃏 Flashcards</h1>
-            <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
-              Ôn tập nhanh kiến thức với thẻ lật
+            <div className="bento-label" style={{ color: 'var(--amber-warm)' }}>Ôn tập nhanh</div>
+            <h1 className="bento-hero-title mt-2" style={{ color: 'var(--text-primary)' }}>Flashcards</h1>
+            <p className="text-sm md:text-base mt-2" style={{ color: 'var(--text-secondary)' }}>
+              Lật thẻ, nhớ câu trả lời, đánh giá mức nhớ của bạn. Hệ thống ưu tiên thẻ cần ôn lại.
             </p>
           </div>
 
@@ -109,7 +119,7 @@ const Flashcards = () => {
                     className="px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all"
                     style={{
                       borderColor: difficulty === d ? (DIFF_COLOR[d] || 'var(--amber-warm)') : 'var(--border)',
-                      background: difficulty === d ? (d ? `${DIFF_COLOR[d]}15` : 'var(--amber-soft)') : 'transparent',
+                      background: difficulty === d ? (DIFF_SOFT[d] || 'var(--amber-soft)') : 'transparent',
                       color: difficulty === d ? (DIFF_COLOR[d] || 'var(--amber-warm)') : 'var(--text-secondary)',
                     }}>
                     {DIFF_LABEL[d]}
@@ -131,9 +141,7 @@ const Flashcards = () => {
               </div>
             </div>
 
-            <button onClick={startSession} disabled={loading}
-              className="w-full py-3 rounded-xl font-bold text-white transition-all"
-              style={{ background: 'linear-gradient(135deg,#f59e0b,#d97706)', opacity: loading ? 0.7 : 1 }}>
+            <button onClick={startSession} disabled={loading} className="btn-primary w-full py-3">
               {loading ? 'Đang tải...' : '🚀 Bắt đầu học'}
             </button>
           </div>
@@ -156,28 +164,25 @@ const Flashcards = () => {
             </h2>
             <div className="flex justify-center gap-8 mt-6">
               <div>
-                <div className="font-display text-3xl font-bold" style={{ color: '#059669' }}>{gotItCount}</div>
+                <div className="bento-metric" style={{ color: 'var(--olive)' }}>{gotItCount}</div>
                 <div className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>✅ Biết rồi</div>
               </div>
               <div>
-                <div className="font-display text-3xl font-bold" style={{ color: '#d97706' }}>{needReviewCount}</div>
+                <div className="bento-metric" style={{ color: 'var(--amber-warm)' }}>{needReviewCount}</div>
                 <div className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>🔄 Cần ôn lại</div>
               </div>
             </div>
             {needReviewCount > 0 && (
-              <p className="text-sm mt-4 rounded-xl px-4 py-3" style={{ background: '#fef3c7', color: '#92400e' }}>
+              <p className="text-sm mt-4 rounded-xl px-4 py-3"
+                 style={{ background: 'var(--amber-soft)', color: 'var(--amber-warm)' }}>
                 Hệ thống sẽ ưu tiên {needReviewCount} thẻ cần ôn lại trong phiên tiếp theo.
               </p>
             )}
             <div className="flex gap-3 mt-6">
-              <button onClick={() => setStarted(false)}
-                className="flex-1 py-2.5 rounded-xl text-sm font-semibold border"
-                style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)' }}>
+              <button onClick={() => setStarted(false)} className="btn-secondary flex-1 py-2.5">
                 Thay đổi bộ lọc
               </button>
-              <button onClick={startSession}
-                className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white"
-                style={{ background: 'linear-gradient(135deg,#f59e0b,#d97706)' }}>
+              <button onClick={startSession} className="btn-primary flex-1 py-2.5">
                 Học lại
               </button>
             </div>
@@ -206,11 +211,11 @@ const Flashcards = () => {
           </div>
           <div className="h-2 rounded-full overflow-hidden" style={{ background: 'var(--border)' }}>
             <div className="h-full rounded-full transition-all duration-300"
-              style={{ width: `${((current) / cards.length) * 100}%`, background: 'linear-gradient(90deg,#f59e0b,#d97706)' }} />
+              style={{ width: `${((current) / cards.length) * 100}%`, background: 'var(--grad-amber)' }} />
           </div>
           <div className="flex gap-3 mt-1.5 text-[11px]">
-            <span style={{ color: '#059669' }}>✅ {gotItCount}</span>
-            <span style={{ color: '#d97706' }}>🔄 {needReviewCount}</span>
+            <span style={{ color: 'var(--olive)' }}>✅ {gotItCount}</span>
+            <span style={{ color: 'var(--amber-warm)' }}>🔄 {needReviewCount}</span>
           </div>
         </div>
 
@@ -233,7 +238,7 @@ const Flashcards = () => {
                 {card.subject && <span className="badge badge-blue">{card.subject}</span>}
                 {card.topic && <span className="badge badge-purple">{card.topic}</span>}
                 {card.difficulty && (
-                  <span className="badge" style={{ background: `${DIFF_COLOR[card.difficulty]}15`, color: DIFF_COLOR[card.difficulty] }}>
+                  <span className="badge" style={{ background: DIFF_SOFT[card.difficulty], color: DIFF_COLOR[card.difficulty] }}>
                     {DIFF_LABEL[card.difficulty]}
                   </span>
                 )}
@@ -257,12 +262,15 @@ const Flashcards = () => {
                   {card.options.map((opt, i) => (
                     <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm"
                       style={{
-                        background: opt.isCorrect ? '#d1fae5' : 'transparent',
-                        border: `1px solid ${opt.isCorrect ? '#a7f3d0' : 'var(--border)'}`,
-                        color: opt.isCorrect ? '#065f46' : 'var(--text-secondary)',
+                        background: opt.isCorrect ? 'var(--olive-soft)' : 'transparent',
+                        border: `1px solid ${opt.isCorrect ? 'var(--olive)' : 'var(--border)'}`,
+                        color: opt.isCorrect ? 'var(--olive)' : 'var(--text-secondary)',
                       }}>
                       <span className="w-5 h-5 flex items-center justify-center rounded-full text-[10px] font-bold shrink-0"
-                        style={{ background: opt.isCorrect ? '#a7f3d0' : '#e2e8f0', color: opt.isCorrect ? '#065f46' : '#94a3b8' }}>
+                        style={{
+                          background: opt.isCorrect ? 'var(--olive)' : 'var(--border)',
+                          color: opt.isCorrect ? 'white' : 'var(--text-muted)',
+                        }}>
                         {String.fromCharCode(65 + i)}
                       </span>
                       <LatexRenderer text={opt.text} />
@@ -276,7 +284,8 @@ const Flashcards = () => {
                 </div>
               )}
               {card.explanation && (
-                <div className="mt-4 rounded-xl px-4 py-3 text-sm text-left w-full" style={{ background: 'var(--info-light)', color: '#1e40af' }}>
+                <div className="mt-4 rounded-xl px-4 py-3 text-sm text-left w-full"
+                     style={{ background: 'var(--amber-soft)', color: 'var(--amber-warm)' }}>
                   <strong>Giải thích: </strong><LatexRenderer text={card.explanation} />
                 </div>
               )}
@@ -288,12 +297,12 @@ const Flashcards = () => {
         <div className={`mt-5 flex gap-3 transition-all duration-300 ${flipped ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
           <button onClick={() => rate('need_review')}
             className="flex-1 py-3 rounded-xl font-bold text-sm transition-all border-2"
-            style={{ borderColor: '#d97706', color: '#d97706', background: '#fef3c7' }}>
+            style={{ borderColor: 'var(--amber-warm)', color: 'var(--amber-warm)', background: 'var(--amber-soft)' }}>
             🔄 Cần ôn lại
           </button>
           <button onClick={() => rate('got_it')}
             className="flex-1 py-3 rounded-xl font-bold text-sm text-white transition-all"
-            style={{ background: 'linear-gradient(135deg,#10b981,#059669)' }}>
+            style={{ background: 'linear-gradient(135deg, var(--olive-glow), var(--olive))' }}>
             ✅ Biết rồi
           </button>
         </div>

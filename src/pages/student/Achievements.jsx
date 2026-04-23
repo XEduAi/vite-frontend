@@ -50,53 +50,52 @@ const Achievements = () => {
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="font-display text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Thành tích</h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>Hành trình học tập của bạn</p>
+          <div className="bento-label" style={{ color: 'var(--amber-warm)' }}>Hành trình học tập</div>
+          <h1 className="bento-hero-title mt-2" style={{ color: 'var(--text-primary)' }}>Thành tích</h1>
         </div>
 
-        {/* Profile card */}
-        <div className="card rounded-2xl p-6 mb-6 fade-in-up"
-          style={{ background: 'linear-gradient(135deg, #0a1628 0%, #1e3a5f 100%)' }}>
-          <div className="flex items-center gap-4 mb-5">
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-bold text-white"
-              style={{ background: 'rgba(245,158,11,0.3)', border: '2px solid rgba(245,158,11,0.5)' }}>
+        {/* Profile card — dark bento tile */}
+        <div className="bento-tile bento-tile-ink p-6 mb-6 fade-in-up dot-pattern relative overflow-hidden">
+          <div className="flex items-center gap-4 mb-5 relative">
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-bold text-white shrink-0"
+              style={{ background: 'var(--amber-soft)', border: '2px solid var(--amber)' }}>
               {stats?.fullName?.charAt(0)?.toUpperCase() || '?'}
             </div>
-            <div>
-              <div className="font-display text-xl font-bold text-white">{stats?.fullName || 'Học viên'}</div>
-              <div className="flex items-center gap-2 mt-1">
-                <span className="text-xs font-bold px-2 py-0.5 rounded-full"
-                  style={{ background: 'rgba(245,158,11,0.25)', color: '#fbbf24' }}>
+            <div className="min-w-0">
+              <div className="font-display text-xl font-bold text-white truncate">{stats?.fullName || 'Học viên'}</div>
+              <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                <span className="text-xs font-bold px-2 py-0.5 rounded-md"
+                  style={{ background: 'var(--amber-soft)', color: 'var(--amber-glow)' }}>
                   ⭐ Cấp {stats?.level || 1}
                 </span>
                 {stats?.streak > 0 && (
-                  <span className="text-xs font-bold px-2 py-0.5 rounded-full"
-                    style={{ background: 'rgba(239,68,68,0.25)', color: '#fca5a5' }}>
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-md"
+                    style={{ background: 'var(--terracotta-soft)', color: 'var(--terracotta-glow)' }}>
                     🔥 {stats.streak} ngày
                   </span>
                 )}
               </div>
             </div>
-            <div className="ml-auto text-right">
-              <div className="font-display text-2xl font-bold" style={{ color: '#fbbf24' }}>{stats?.xp || 0}</div>
+            <div className="ml-auto text-right shrink-0">
+              <div className="bento-metric" style={{ color: 'var(--amber-glow)' }}>{(stats?.xp || 0).toLocaleString('vi-VN')}</div>
               <div className="text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>XP</div>
             </div>
           </div>
 
           {/* XP progress bar */}
-          <div>
+          <div className="relative">
             <div className="flex justify-between text-xs mb-1.5" style={{ color: 'rgba(255,255,255,0.6)' }}>
               <span>Tiến độ lên cấp {(stats?.level || 1) + 1}</span>
-              <span>{stats?.xpInCurrentLevel || 0} / 100 XP</span>
+              <span className="tabular-nums">{stats?.xpInCurrentLevel || 0} / 100 XP</span>
             </div>
             <div className="h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.1)' }}>
               <div className="h-full rounded-full transition-all duration-500"
-                style={{ width: `${xpProgress}%`, background: 'linear-gradient(90deg, #f59e0b, #fbbf24)' }} />
+                style={{ width: `${xpProgress}%`, background: 'var(--grad-amber)' }} />
             </div>
           </div>
 
           {/* Share achievements */}
-          <div className="mt-4 pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+          <div className="mt-4 pt-4 relative" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>
             <ShareButtons
               title="Thành tích EduVN"
               text={`🎓 Tôi đã đạt cấp ${stats?.level || 1} với ${stats?.xp || 0} XP và ${earnedIds.size} huy hiệu trên EduVN! 🏆`}
@@ -107,28 +106,36 @@ const Achievements = () => {
 
         {/* Badge grid */}
         <div className="mb-4">
-          <h2 className="font-display text-lg font-bold mb-4" style={{ color: 'var(--text-primary)' }}>
-            Huy hiệu ({earnedIds.size}/{ALL_BADGES.length})
-          </h2>
+          <div className="flex items-baseline justify-between mb-4">
+            <div>
+              <div className="bento-label">Bộ sưu tập</div>
+              <h2 className="font-display text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
+                Huy hiệu
+              </h2>
+            </div>
+            <span className="text-sm font-bold tabular-nums" style={{ color: 'var(--amber-warm)' }}>
+              {earnedIds.size}<span className="opacity-50">/{ALL_BADGES.length}</span>
+            </span>
+          </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {ALL_BADGES.map(badge => {
               const earned = earnedIds.has(badge.id);
               const earnedData = stats?.badges?.find(b => b.id === badge.id);
               return (
                 <div key={badge.id}
-                  className="card rounded-2xl p-4 text-center transition-all duration-200"
+                  className="bento-tile bento-tile-surface p-4 text-center transition-all duration-200"
                   style={{
-                    opacity: earned ? 1 : 0.45,
-                    filter: earned ? 'none' : 'grayscale(0.8)',
-                    border: earned ? '1.5px solid rgba(245,158,11,0.4)' : undefined,
-                    boxShadow: earned ? '0 0 16px rgba(245,158,11,0.15)' : undefined,
+                    opacity: earned ? 1 : 0.55,
+                    filter: earned ? 'none' : 'grayscale(0.7)',
+                    border: earned ? '1.5px solid var(--amber)' : undefined,
+                    boxShadow: earned ? '0 0 20px var(--amber-soft)' : undefined,
                   }}>
                   <div className="text-3xl mb-2">{badge.icon}</div>
                   <div className="text-xs font-bold leading-tight mb-1" style={{ color: 'var(--text-primary)' }}>
                     {badge.name}
                   </div>
                   {earned && earnedData?.earnedAt ? (
-                    <div className="text-[10px]" style={{ color: 'var(--success)' }}>
+                    <div className="text-[10px] font-semibold" style={{ color: 'var(--olive)' }}>
                       ✓ {new Date(earnedData.earnedAt).toLocaleDateString('vi-VN')}
                     </div>
                   ) : (
