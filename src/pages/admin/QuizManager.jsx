@@ -26,6 +26,12 @@ const EMPTY_FORM = {
   randomConfig: [{ subject: '', topic: '', grade: '', difficulty: '', count: 10 }],
 };
 
+const scoreColor = (pct) => {
+  if (pct >= 80) return 'var(--olive)';
+  if (pct >= 50) return 'var(--amber-warm)';
+  return 'var(--terracotta)';
+};
+
 const QuizManager = () => {
   const [selectedQuizId, setSelectedQuizId] = useState(null);
   const [showForm, setShowForm] = useState(false);
@@ -186,37 +192,43 @@ const QuizManager = () => {
     <AdminLayout>
       <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: '#1c1917' }}>Quản lý Quiz</h1>
-          <p className="text-sm mt-1" style={{ color: '#78716c' }}>{quizzes.length} bài kiểm tra</p>
+          <div className="bento-label" style={{ color: 'var(--amber-warm)' }}>Kiểm tra</div>
+          <h1 className="bento-hero-title mt-1" style={{ color: 'var(--text-primary)' }}>Quản lý Quiz</h1>
+          <p className="text-sm mt-2" style={{ color: 'var(--text-muted)' }}>{quizzes.length} bài kiểm tra</p>
         </div>
-        <button
-          onClick={openCreateForm}
-          className="px-5 py-2.5 rounded-lg text-sm font-semibold text-white transition-all hover:shadow-lg"
-          style={{ background: '#e8850a' }}
-        >
+        <button onClick={openCreateForm} className="btn-primary px-5 py-2.5">
           + Tạo quiz mới
         </button>
       </div>
 
       {msg.text && (
-        <div className={`mb-4 px-4 py-3 rounded-lg text-sm font-medium ${msg.type === 'error' ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-green-50 text-green-700 border border-green-200'}`}>
+        <div
+          className="mb-4 px-4 py-3 rounded-lg text-sm font-medium"
+          style={{
+            background: msg.type === 'error' ? 'var(--terracotta-soft)' : 'var(--olive-soft)',
+            color: msg.type === 'error' ? 'var(--terracotta)' : 'var(--olive)',
+          }}
+        >
           {msg.text}
         </div>
       )}
 
       {queryErrors.length > 0 && (
-        <div className="mb-4 px-4 py-3 rounded-lg border bg-amber-50 border-amber-200">
+        <div
+          className="mb-4 px-4 py-3 rounded-lg border"
+          style={{ background: 'var(--amber-soft)', borderColor: 'var(--border)' }}
+        >
           <div className="space-y-2">
             {queryErrors.map((error) => (
               <div key={error.key} className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                <p className="text-sm font-medium text-amber-900">{error.message}</p>
+                <p className="text-sm font-medium" style={{ color: 'var(--amber-warm)' }}>{error.message}</p>
                 <button
                   onClick={() => {
                     if (error.key === 'quizzes') adminQuizzesQuery.refetch();
                     if (error.key === 'classes') adminClassesQuery.refetch();
                     if (error.key === 'filters') questionFiltersQuery.refetch();
                   }}
-                  className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white border border-amber-300 text-amber-800"
+                  className="btn-secondary px-3 py-1.5 text-xs"
                 >
                   Thử lại
                 </button>
@@ -227,158 +239,168 @@ const QuizManager = () => {
       )}
 
       {loading ? (
-        <div className="text-center py-16 text-gray-400">Đang tải...</div>
+        <div className="text-center py-16" style={{ color: 'var(--text-muted)' }}>Đang tải...</div>
       ) : (
         <div className="flex gap-6 flex-col lg:flex-row">
           <div className="lg:w-1/2 space-y-3">
             {quizzes.length === 0 ? (
-              <div className="text-center py-16 bg-white rounded-xl border" style={{ borderColor: '#e5ddd0' }}>
+              <div className="bento-tile bento-tile-surface py-16 text-center">
                 <div className="text-5xl mb-4">📋</div>
-                <h3 className="text-lg font-medium text-gray-600">Chưa có quiz nào</h3>
+                <h3 className="text-lg font-medium" style={{ color: 'var(--text-secondary)' }}>Chưa có quiz nào</h3>
               </div>
-            ) : quizzes.map((quiz) => (
-              <div
-                key={quiz._id}
-                onClick={() => setSelectedQuizId(quiz._id)}
-                className={`bg-white rounded-xl border p-4 cursor-pointer transition-all hover:shadow-sm ${selectedQuizId === quiz._id ? 'ring-2' : ''}`}
-                style={{ borderColor: '#e5ddd0', ringColor: '#e8850a' }}
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-sm" style={{ color: '#1c1917' }}>{quiz.title}</h3>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">
-                        ⏱ {quiz.duration} phút
-                      </span>
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-purple-50 text-purple-700">
-                        📝 {totalQuestions(quiz)} câu
-                      </span>
-                      {quiz.isActive ? (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-green-50 text-green-700">Đang mở</span>
-                      ) : (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">Đã đóng</span>
+            ) : quizzes.map((quiz) => {
+              const isSelected = selectedQuizId === quiz._id;
+              return (
+                <div
+                  key={quiz._id}
+                  onClick={() => setSelectedQuizId(quiz._id)}
+                  className="bento-tile bento-tile-surface p-4 cursor-pointer transition-all hover:opacity-90"
+                  style={isSelected ? { boxShadow: '0 0 0 2px var(--amber-warm)' } : undefined}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>{quiz.title}</h3>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ background: 'var(--amber-soft)', color: 'var(--amber-warm)' }}>
+                          ⏱ {quiz.duration} phút
+                        </span>
+                        <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ background: 'var(--olive-soft)', color: 'var(--olive)' }}>
+                          📝 {totalQuestions(quiz)} câu
+                        </span>
+                        {quiz.isActive ? (
+                          <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ background: 'var(--olive-soft)', color: 'var(--olive)' }}>Đang mở</span>
+                        ) : (
+                          <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ background: 'var(--border-light)', color: 'var(--text-muted)' }}>Đã đóng</span>
+                        )}
+                      </div>
+                      {quiz.classIds?.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {quiz.classIds.map((item) => (
+                            <span key={item._id || item} className="text-xs px-2 py-0.5 rounded font-semibold" style={{ background: 'var(--amber-soft)', color: 'var(--amber-warm)' }}>
+                              {item.name || item}
+                            </span>
+                          ))}
+                        </div>
                       )}
                     </div>
-                    {quiz.classIds?.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {quiz.classIds.map((item) => (
-                          <span key={item._id || item} className="text-xs px-2 py-0.5 rounded bg-amber-50 text-amber-700">
-                            {item.name || item}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex gap-1 shrink-0 ml-2">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openEditForm(quiz);
-                      }}
-                      className="p-1.5 rounded-lg hover:bg-amber-50 text-amber-600 transition-colors text-sm"
-                    >
-                      ✏️
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDelete(quiz._id);
-                      }}
-                      className="p-1.5 rounded-lg hover:bg-red-50 text-red-500 transition-colors text-sm"
-                    >
-                      🗑️
-                    </button>
+                    <div className="flex gap-1 shrink-0 ml-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openEditForm(quiz);
+                        }}
+                        className="p-1.5 rounded-lg transition-colors text-sm"
+                        style={{ color: 'var(--amber-warm)' }}
+                      >
+                        ✏️
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(quiz._id);
+                        }}
+                        className="p-1.5 rounded-lg transition-colors text-sm"
+                        style={{ color: 'var(--terracotta)' }}
+                      >
+                        🗑️
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="lg:w-1/2">
             {selectedQuiz ? (
-              <div className="bg-white rounded-xl border p-5" style={{ borderColor: '#e5ddd0' }}>
-                <h2 className="text-lg font-bold mb-4" style={{ color: '#1c1917' }}>{selectedQuiz.title}</h2>
+              <div className="bento-tile bento-tile-surface p-5">
+                <h2 className="text-lg font-bold mb-4" style={{ color: 'var(--text-primary)' }}>{selectedQuiz.title}</h2>
 
                 <div className="grid grid-cols-3 gap-3 mb-5">
-                  <div className="text-center p-3 rounded-lg" style={{ background: '#fef8ee' }}>
-                    <div className="text-2xl font-bold" style={{ color: '#e8850a' }}>{totalQuestions(selectedQuiz)}</div>
-                    <div className="text-xs mt-0.5" style={{ color: '#78716c' }}>Câu hỏi</div>
+                  <div className="text-center p-3 rounded-lg" style={{ background: 'var(--amber-soft)' }}>
+                    <div className="text-2xl font-bold tabular-nums" style={{ color: 'var(--amber-warm)' }}>{totalQuestions(selectedQuiz)}</div>
+                    <div className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>Câu hỏi</div>
                   </div>
-                  <div className="text-center p-3 rounded-lg" style={{ background: '#f0fdf4' }}>
-                    <div className="text-2xl font-bold text-green-600">{attempts.filter((attempt) => attempt.status === 'submitted').length}</div>
-                    <div className="text-xs mt-0.5" style={{ color: '#78716c' }}>Đã nộp</div>
+                  <div className="text-center p-3 rounded-lg" style={{ background: 'var(--olive-soft)' }}>
+                    <div className="text-2xl font-bold tabular-nums" style={{ color: 'var(--olive)' }}>
+                      {attempts.filter((attempt) => attempt.status === 'submitted').length}
+                    </div>
+                    <div className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>Đã nộp</div>
                   </div>
-                  <div className="text-center p-3 rounded-lg" style={{ background: '#eff6ff' }}>
-                    <div className="text-2xl font-bold text-blue-600">{averageScore}%</div>
-                    <div className="text-xs mt-0.5" style={{ color: '#78716c' }}>TB điểm</div>
+                  <div className="text-center p-3 rounded-lg" style={{ background: 'var(--amber-soft)' }}>
+                    <div className="text-2xl font-bold tabular-nums" style={{ color: scoreColor(averageScore) }}>{averageScore}%</div>
+                    <div className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>TB điểm</div>
                   </div>
                 </div>
 
                 {selectedQuiz.randomConfig?.length > 0 && (
                   <div className="mb-4">
-                    <h4 className="text-xs font-semibold text-gray-500 mb-2">CẤU HÌNH RANDOM:</h4>
+                    <h4 className="text-xs font-semibold mb-2 uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Cấu hình random</h4>
                     <div className="space-y-1">
                       {selectedQuiz.randomConfig.map((item, index) => (
-                        <div key={index} className="text-sm bg-gray-50 rounded-lg px-3 py-2 flex flex-wrap gap-2">
-                          {item.subject && <span className="text-blue-700">{item.subject}</span>}
-                          {item.topic && <span className="text-purple-700">• {item.topic}</span>}
-                          {item.grade && <span className="text-gray-600">• Lớp {item.grade}</span>}
-                          {item.difficulty && <span className="text-amber-700">• {DIFFICULTIES.find((difficulty) => difficulty.value === item.difficulty)?.label || item.difficulty}</span>}
-                          <span className="ml-auto font-semibold">{item.count} câu</span>
+                        <div
+                          key={index}
+                          className="text-sm rounded-lg px-3 py-2 flex flex-wrap gap-2"
+                          style={{ background: 'var(--cream-warm)', color: 'var(--text-secondary)' }}
+                        >
+                          {item.subject && <span style={{ color: 'var(--text-primary)' }}>{item.subject}</span>}
+                          {item.topic && <span>• {item.topic}</span>}
+                          {item.grade && <span>• Lớp {item.grade}</span>}
+                          {item.difficulty && <span style={{ color: 'var(--amber-warm)' }}>• {DIFFICULTIES.find((d) => d.value === item.difficulty)?.label || item.difficulty}</span>}
+                          <span className="ml-auto font-semibold" style={{ color: 'var(--text-primary)' }}>{item.count} câu</span>
                         </div>
                       ))}
                     </div>
                   </div>
                 )}
 
-                <h4 className="text-xs font-semibold text-gray-500 mb-2">KẾT QUẢ HỌC VIÊN:</h4>
+                <h4 className="text-xs font-semibold mb-2 uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Kết quả học viên</h4>
                 {quizAttemptsQuery.isPending ? (
-                  <p className="text-sm text-gray-400 text-center py-4">Đang tải kết quả...</p>
+                  <p className="text-sm text-center py-4" style={{ color: 'var(--text-muted)' }}>Đang tải kết quả...</p>
                 ) : quizAttemptsQuery.isError ? (
-                  <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+                  <div className="rounded-lg border px-4 py-3" style={{ background: 'var(--amber-soft)', borderColor: 'var(--border)' }}>
                     <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                      <p className="text-sm font-medium text-amber-900">
+                      <p className="text-sm font-medium" style={{ color: 'var(--amber-warm)' }}>
                         {getApiErrorMessage(quizAttemptsQuery.error, 'Không thể tải kết quả học viên')}
                       </p>
-                      <button
-                        onClick={() => quizAttemptsQuery.refetch()}
-                        className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white border border-amber-300 text-amber-800"
-                      >
+                      <button onClick={() => quizAttemptsQuery.refetch()} className="btn-secondary px-3 py-1.5 text-xs">
                         Thử lại
                       </button>
                     </div>
                   </div>
                 ) : attempts.length === 0 ? (
-                  <p className="text-sm text-gray-400 text-center py-4">Chưa có ai làm bài</p>
+                  <p className="text-sm text-center py-4" style={{ color: 'var(--text-muted)' }}>Chưa có ai làm bài</p>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="border-b" style={{ borderColor: '#e5ddd0' }}>
-                          <th className="text-left py-2 font-semibold text-gray-500">Học viên</th>
-                          <th className="text-center py-2 font-semibold text-gray-500">Điểm</th>
-                          <th className="text-center py-2 font-semibold text-gray-500">%</th>
-                          <th className="text-center py-2 font-semibold text-gray-500">Trạng thái</th>
+                        <tr className="border-b" style={{ borderColor: 'var(--border)' }}>
+                          <th className="text-left py-2 font-semibold" style={{ color: 'var(--text-muted)' }}>Học viên</th>
+                          <th className="text-center py-2 font-semibold" style={{ color: 'var(--text-muted)' }}>Điểm</th>
+                          <th className="text-center py-2 font-semibold" style={{ color: 'var(--text-muted)' }}>%</th>
+                          <th className="text-center py-2 font-semibold" style={{ color: 'var(--text-muted)' }}>Trạng thái</th>
                         </tr>
                       </thead>
                       <tbody>
                         {attempts.map((attempt) => (
-                          <tr key={attempt._id} className="border-b" style={{ borderColor: '#f5f0eb' }}>
+                          <tr key={attempt._id} className="border-b" style={{ borderColor: 'var(--border-light)' }}>
                             <td className="py-2">
-                              <span className="font-medium text-gray-800">{attempt.student?.fullName}</span>
-                              {attempt.student?.grade && <span className="text-xs text-gray-400 ml-1">({attempt.student.grade})</span>}
+                              <span className="font-medium" style={{ color: 'var(--text-primary)' }}>{attempt.student?.fullName}</span>
+                              {attempt.student?.grade && (
+                                <span className="text-xs ml-1" style={{ color: 'var(--text-muted)' }}>({attempt.student.grade})</span>
+                              )}
                             </td>
-                            <td className="text-center">{attempt.score}/{attempt.totalQuestions}</td>
+                            <td className="text-center tabular-nums" style={{ color: 'var(--text-secondary)' }}>{attempt.score}/{attempt.totalQuestions}</td>
                             <td className="text-center">
-                              <span className={`font-semibold ${attempt.percentage >= 80 ? 'text-green-600' : attempt.percentage >= 50 ? 'text-amber-600' : 'text-red-600'}`}>
+                              <span className="font-semibold tabular-nums" style={{ color: scoreColor(attempt.percentage) }}>
                                 {attempt.percentage}%
                               </span>
                             </td>
                             <td className="text-center">
                               {attempt.status === 'submitted' ? (
-                                <span className="text-xs px-2 py-0.5 rounded-full bg-green-50 text-green-700">Đã nộp</span>
+                                <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ background: 'var(--olive-soft)', color: 'var(--olive)' }}>Đã nộp</span>
                               ) : (
-                                <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-50 text-yellow-700">Đang làm</span>
+                                <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ background: 'var(--amber-soft)', color: 'var(--amber-warm)' }}>Đang làm</span>
                               )}
                             </td>
                           </tr>
@@ -389,9 +411,9 @@ const QuizManager = () => {
                 )}
               </div>
             ) : (
-              <div className="bg-white rounded-xl border p-8 text-center" style={{ borderColor: '#e5ddd0' }}>
+              <div className="bento-tile bento-tile-surface p-8 text-center">
                 <div className="text-4xl mb-3">👈</div>
-                <p className="text-sm text-gray-400">Chọn một quiz để xem chi tiết</p>
+                <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Chọn một quiz để xem chi tiết</p>
               </div>
             )}
           </div>
@@ -399,94 +421,109 @@ const QuizManager = () => {
       )}
 
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center pt-8 px-4" style={{ background: 'rgba(0,0,0,0.5)' }}>
-          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[88vh] overflow-y-auto shadow-2xl">
-            <div className="sticky top-0 bg-white px-6 py-4 border-b flex items-center justify-between z-10" style={{ borderColor: '#e5ddd0' }}>
-              <h2 className="text-lg font-bold" style={{ color: '#1c1917' }}>
+        <div className="fixed inset-0 z-50 flex items-start justify-center pt-8 px-4 modal-overlay">
+          <div
+            className="rounded-2xl w-full max-w-2xl max-h-[88vh] overflow-y-auto shadow-2xl"
+            style={{ background: 'var(--white)', border: '1px solid var(--border)' }}
+          >
+            <div
+              className="sticky top-0 px-6 py-4 border-b flex items-center justify-between z-10"
+              style={{ background: 'var(--white)', borderColor: 'var(--border)' }}
+            >
+              <h2 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
                 {editingId ? 'Sửa quiz' : 'Tạo quiz mới'}
               </h2>
-              <button onClick={() => setShowForm(false)} className="text-gray-400 hover:text-gray-600 text-xl">✕</button>
+              <button
+                onClick={() => setShowForm(false)}
+                className="text-xl"
+                style={{ color: 'var(--text-muted)' }}
+              >
+                ✕
+              </button>
             </div>
 
             <form onSubmit={handleSubmit} className="p-6 space-y-5">
               <div className="grid grid-cols-3 gap-4">
                 <div className="col-span-2">
-                  <label className="block text-sm font-semibold mb-1.5" style={{ color: '#44403c' }}>Tên quiz *</label>
+                  <label className="block text-sm font-semibold mb-1.5" style={{ color: 'var(--text-secondary)' }}>Tên quiz *</label>
                   <input
                     value={form.title}
                     onChange={(e) => setForm({ ...form, title: e.target.value })}
-                    className="w-full border rounded-lg px-3 py-2 text-sm"
-                    style={{ borderColor: '#d6ccc0' }}
+                    className="input"
                     placeholder="VD: Kiểm tra Toán chương 1"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold mb-1.5" style={{ color: '#44403c' }}>Thời gian (phút)</label>
+                  <label className="block text-sm font-semibold mb-1.5" style={{ color: 'var(--text-secondary)' }}>Thời gian (phút)</label>
                   <input
                     type="number"
                     value={form.duration}
                     onChange={(e) => setForm({ ...form, duration: e.target.value })}
-                    className="w-full border rounded-lg px-3 py-2 text-sm"
-                    style={{ borderColor: '#d6ccc0' }}
+                    className="input"
                     min={1}
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-semibold mb-2" style={{ color: '#44403c' }}>Giao cho lớp</label>
+                <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--text-secondary)' }}>Giao cho lớp</label>
                 <div className="flex flex-wrap gap-2">
-                  {classes.map((item) => (
-                    <button
-                      key={item._id}
-                      type="button"
-                      onClick={() => toggleClassId(item._id)}
-                      className={`text-sm px-3 py-1.5 rounded-lg border transition-colors ${form.classIds.includes(item._id) ? 'border-amber-400 bg-amber-50 text-amber-700 font-medium' : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}
-                    >
-                      {item.name}
-                    </button>
-                  ))}
+                  {classes.map((item) => {
+                    const selected = form.classIds.includes(item._id);
+                    return (
+                      <button
+                        key={item._id}
+                        type="button"
+                        onClick={() => toggleClassId(item._id)}
+                        className="text-sm px-3 py-1.5 rounded-lg border font-medium transition-colors"
+                        style={selected
+                          ? { borderColor: 'var(--amber-warm)', background: 'var(--amber-soft)', color: 'var(--amber-warm)' }
+                          : { borderColor: 'var(--border)', color: 'var(--text-muted)' }}
+                      >
+                        {item.name}
+                      </button>
+                    );
+                  })}
                 </div>
-                {classes.length === 0 && <p className="text-xs text-gray-400">Chưa có lớp nào</p>}
+                {classes.length === 0 && <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Chưa có lớp nào</p>}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold mb-1.5" style={{ color: '#44403c' }}>Bắt đầu (tùy chọn)</label>
+                  <label className="block text-sm font-semibold mb-1.5" style={{ color: 'var(--text-secondary)' }}>Bắt đầu (tùy chọn)</label>
                   <input
                     type="datetime-local"
                     value={form.startTime}
                     onChange={(e) => setForm({ ...form, startTime: e.target.value })}
-                    className="w-full border rounded-lg px-3 py-2 text-sm"
-                    style={{ borderColor: '#d6ccc0' }}
+                    className="input"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold mb-1.5" style={{ color: '#44403c' }}>Kết thúc (tùy chọn)</label>
+                  <label className="block text-sm font-semibold mb-1.5" style={{ color: 'var(--text-secondary)' }}>Kết thúc (tùy chọn)</label>
                   <input
                     type="datetime-local"
                     value={form.endTime}
                     onChange={(e) => setForm({ ...form, endTime: e.target.value })}
-                    className="w-full border rounded-lg px-3 py-2 text-sm"
-                    style={{ borderColor: '#d6ccc0' }}
+                    className="input"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-semibold mb-2" style={{ color: '#44403c' }}>
+                <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--text-secondary)' }}>
                   Cấu hình random câu hỏi
                 </label>
                 <div className="space-y-3">
                   {form.randomConfig.map((item, index) => (
-                    <div key={index} className="border rounded-xl p-3 space-y-2" style={{ borderColor: '#e5ddd0' }}>
+                    <div key={index} className="border rounded-xl p-3 space-y-2" style={{ borderColor: 'var(--border)' }}>
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold text-gray-400">Tiêu chí #{index + 1}</span>
+                        <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Tiêu chí #{index + 1}</span>
                         {form.randomConfig.length > 1 && (
                           <button
                             type="button"
                             onClick={() => removeRandomCriteria(index)}
-                            className="text-red-400 hover:text-red-600 text-xs px-2"
+                            className="text-xs px-2"
+                            style={{ color: 'var(--terracotta)' }}
                           >
                             ✕ Xóa
                           </button>
@@ -496,8 +533,7 @@ const QuizManager = () => {
                         <input
                           value={item.topic}
                           onChange={(e) => updateRandomConfig(index, 'topic', e.target.value)}
-                          className="border rounded-lg px-2 py-1.5 text-sm"
-                          style={{ borderColor: '#d6ccc0' }}
+                          className="input text-sm py-1.5"
                           placeholder="Chủ đề"
                           list={`topic-rc-${index}`}
                         />
@@ -507,8 +543,7 @@ const QuizManager = () => {
                         <select
                           value={item.grade}
                           onChange={(e) => updateRandomConfig(index, 'grade', e.target.value)}
-                          className="border rounded-lg px-2 py-1.5 text-sm"
-                          style={{ borderColor: '#d6ccc0' }}
+                          className="input text-sm py-1.5"
                         >
                           <option value="">Lớp</option>
                           {filterOptions.grades.map((grade) => <option key={grade} value={grade}>Lớp {grade}</option>)}
@@ -516,21 +551,19 @@ const QuizManager = () => {
                         <select
                           value={item.difficulty}
                           onChange={(e) => updateRandomConfig(index, 'difficulty', e.target.value)}
-                          className="border rounded-lg px-2 py-1.5 text-sm"
-                          style={{ borderColor: '#d6ccc0' }}
+                          className="input text-sm py-1.5"
                         >
                           <option value="">Độ khó</option>
                           {DIFFICULTIES.map((difficulty) => <option key={difficulty.value} value={difficulty.value}>{difficulty.label}</option>)}
                         </select>
                       </div>
-                      <div>
-                        <label className="text-xs text-gray-500">Số câu:</label>
+                      <div className="flex items-center gap-2">
+                        <label className="text-xs" style={{ color: 'var(--text-muted)' }}>Số câu:</label>
                         <input
                           type="number"
                           value={item.count}
                           onChange={(e) => updateRandomConfig(index, 'count', e.target.value)}
-                          className="ml-2 w-20 border rounded-lg px-2 py-1 text-sm"
-                          style={{ borderColor: '#d6ccc0' }}
+                          className="input w-20 text-sm py-1"
                           min={1}
                         />
                       </div>
@@ -540,8 +573,8 @@ const QuizManager = () => {
                 <button
                   type="button"
                   onClick={addRandomCriteria}
-                  className="mt-2 text-sm font-medium px-3 py-1.5 rounded-lg border border-dashed hover:bg-gray-50"
-                  style={{ borderColor: '#d6ccc0', color: '#78716c' }}
+                  className="mt-2 text-sm font-medium px-3 py-1.5 rounded-lg border border-dashed"
+                  style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}
                 >
                   + Thêm tiêu chí
                 </button>
@@ -551,16 +584,14 @@ const QuizManager = () => {
                 <button
                   type="submit"
                   disabled={saveQuizMutation.isPending}
-                  className="px-6 py-2.5 rounded-lg text-sm font-semibold text-white hover:shadow-lg transition-all disabled:opacity-60"
-                  style={{ background: '#e8850a' }}
+                  className="btn-primary px-6 py-2.5"
                 >
                   {saveQuizMutation.isPending ? 'Đang lưu...' : editingId ? 'Cập nhật' : 'Tạo quiz'}
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowForm(false)}
-                  className="px-6 py-2.5 rounded-lg text-sm font-medium border hover:bg-gray-50"
-                  style={{ borderColor: '#d6ccc0', color: '#78716c' }}
+                  className="btn-secondary px-6 py-2.5"
                 >
                   Hủy
                 </button>
