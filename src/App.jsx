@@ -4,6 +4,8 @@ import { useAuth } from './auth/useAuth';
 import ErrorBoundary from './components/ErrorBoundary';
 
 const Login = lazy(() => import('./pages/Login'));
+const SignupPage = lazy(() => import('./pages/SignupPage'));
+const OAuthCallback = lazy(() => import('./pages/OAuthCallback'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const StudentManager = lazy(() => import('./pages/admin/StudentManager'));
 const MediaManager = lazy(() => import('./pages/admin/MediaManager'));
@@ -29,6 +31,7 @@ const MyDocuments = lazy(() => import('./pages/student/MyDocuments'));
 const StudyChat = lazy(() => import('./pages/student/StudyChat'));
 const ChatQuestionSource = lazy(() => import('./pages/student/ChatQuestionSource'));
 const LessonManager = lazy(() => import('./pages/admin/LessonManager'));
+const InviteCodeManager = lazy(() => import('./pages/admin/InviteCodeManager'));
 const DocumentManager = lazy(() => import('./pages/admin/DocumentManager'));
 const DocumentAnalytics = lazy(() => import('./pages/admin/DocumentAnalytics'));
 const LeadManager = lazy(() => import('./pages/admin/LeadManager'));
@@ -95,6 +98,8 @@ function App() {
       <BrowserRouter>
         <Routes>
         <Route path="/login" element={<PublicOnlyRoute><RoutePage Page={Login} /></PublicOnlyRoute>} />
+        <Route path="/signup" element={<PublicOnlyRoute><RoutePage Page={SignupPage} /></PublicOnlyRoute>} />
+        <Route path="/oauth/callback" element={<RoutePage Page={OAuthCallback} />} />
 
         {/* Admin */}
         <Route path="/admin/dashboard" element={<ProtectedRoute requiredRole="admin"><RoutePage Page={AdminDashboard} /></ProtectedRoute>} />
@@ -108,6 +113,7 @@ function App() {
         <Route path="/admin/leads" element={<ProtectedRoute requiredRole="admin"><RoutePage Page={LeadManager} /></ProtectedRoute>} />
         <Route path="/admin/audit" element={<ProtectedRoute requiredRole="admin"><RoutePage Page={AuditLog} /></ProtectedRoute>} />
         <Route path="/admin/classes/:classId/lessons" element={<ProtectedRoute requiredRole="admin"><RoutePage Page={LessonManager} /></ProtectedRoute>} />
+        <Route path="/admin/classes/:classId/invite-codes" element={<ProtectedRoute requiredRole="admin"><RoutePage Page={InviteCodeManager} /></ProtectedRoute>} />
         <Route path="/admin/documents" element={<ProtectedRoute requiredRole="admin"><RoutePage Page={DocumentManager} /></ProtectedRoute>} />
         <Route path="/admin/documents/analytics" element={<ProtectedRoute requiredRole="admin"><RoutePage Page={DocumentAnalytics} /></ProtectedRoute>} />
 

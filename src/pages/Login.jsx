@@ -1,6 +1,17 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL;
+
+const GoogleGlyph = () => (
+  <svg viewBox="0 0 20 20" className="w-5 h-5" aria-hidden="true">
+    <path d="M19.6 10.23c0-.69-.06-1.35-.18-1.98H10v3.75h5.38a4.6 4.6 0 01-2 3.02v2.51h3.23c1.89-1.74 2.99-4.3 2.99-7.3z" fill="#4285F4"/>
+    <path d="M10 20c2.7 0 4.96-.9 6.61-2.44l-3.23-2.51c-.9.6-2.05.95-3.38.95-2.6 0-4.8-1.76-5.58-4.12H1.08v2.59A9.99 9.99 0 0010 20z" fill="#34A853"/>
+    <path d="M4.42 11.88A6 6 0 014.1 10c0-.65.11-1.29.32-1.88V5.53H1.08a10 10 0 000 8.94l3.34-2.59z" fill="#FBBC05"/>
+    <path d="M10 3.98c1.47 0 2.78.5 3.82 1.5l2.86-2.86A9.93 9.93 0 0010 0a10 10 0 00-8.92 5.53l3.34 2.59C5.2 5.74 7.4 3.98 10 3.98z" fill="#EA4335"/>
+  </svg>
+);
 
 const SunIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
@@ -333,8 +344,32 @@ export default function Login() {
             </button>
           </form>
 
+          {/* Divider */}
+          <div className="flex items-center gap-3 my-5 fade-in" style={{ animationDelay: '0.3s' }}>
+            <div className="flex-1 rule-line" />
+            <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>hoặc</span>
+            <div className="flex-1 rule-line" />
+          </div>
+
+          {/* Google button */}
+          <button
+            type="button"
+            onClick={() => { window.location.href = `${API_BASE}/auth/google/login`; }}
+            className="btn-secondary w-full py-3 flex items-center justify-center gap-3 fade-in"
+            style={{ animationDelay: '0.35s', background: 'var(--white)', border: '1px solid var(--border)' }}
+          >
+            <GoogleGlyph />
+            <span className="font-semibold text-sm">Tiếp tục với Google</span>
+          </button>
+
           {/* Bottom info */}
           <div className="mt-8 text-center fade-in" style={{ animationDelay: '0.4s' }}>
+            <p className="text-sm mb-2" style={{ color: 'var(--text-secondary)' }}>
+              Chưa có tài khoản?{' '}
+              <Link to="/signup" className="font-semibold" style={{ color: 'var(--amber-warm)' }}>
+                Đăng ký bằng mã mời
+              </Link>
+            </p>
             <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
               Liên hệ giáo viên nếu bạn quên mật khẩu
             </p>

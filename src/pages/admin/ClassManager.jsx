@@ -278,13 +278,20 @@ const ClassManager = () => {
               </span>
             ))}
           </div>
-          <div className="mt-4 pt-4 border-t" style={{ borderColor: 'var(--border-light)' }}>
+          <div className="mt-4 pt-4 border-t flex flex-wrap gap-2" style={{ borderColor: 'var(--border-light)' }}>
             <Link
               to={`/admin/classes/${selectedClass._id}/lessons`}
               className="inline-flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-xl transition-all"
               style={{ background: 'var(--amber-soft)', color: 'var(--amber-warm)' }}
             >
               📚 Quản lý bài học
+            </Link>
+            <Link
+              to={`/admin/classes/${selectedClass._id}/invite-codes`}
+              className="inline-flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-xl transition-all"
+              style={{ background: 'var(--olive-soft)', color: 'var(--olive)' }}
+            >
+              🎫 Mã mời đăng ký
             </Link>
           </div>
         </div>
