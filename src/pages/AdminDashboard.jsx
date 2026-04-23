@@ -3,28 +3,23 @@ import AdminLayout from '../components/AdminLayout';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useAdminDashboardStatsQuery, useAdminOverviewQuery } from '../features/admin-dashboard/hooks';
 
-const IconUsers = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
-    <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" />
-    <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
-  </svg>
-);
-const IconBook = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
-    <path d="M4 19.5A2.5 2.5 0 016.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" />
-  </svg>
-);
-const IconPhoto = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
-    <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" />
-    <polyline points="21 15 16 10 5 21" />
-  </svg>
-);
-const IconArrow = () => (
-  <svg viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+const ArrowIcon = () => (
+  <svg viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
     <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
   </svg>
 );
+
+const formatDate = () => {
+  const today = new Date();
+  return today.toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+};
+
+const formatCurrency = (value) => {
+  const num = Number(value) || 0;
+  if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(1)}M`;
+  if (num >= 1_000) return `${(num / 1_000).toFixed(0)}k`;
+  return num.toLocaleString('vi-VN');
+};
 
 const AdminDashboard = () => {
   const statsQuery = useAdminDashboardStatsQuery();
@@ -36,194 +31,229 @@ const AdminDashboard = () => {
   const analytics = overviewQuery.data;
   const analyticsLoading = overviewQuery.isPending;
 
-  const cards = [
+  const avgScore = analytics?.quizStats?.averageScore || 0;
+  const completionRate = analytics?.quizStats?.completionRate || 0;
+  const activeStudents = analytics?.students?.active || 0;
+  const revenue = analytics?.revenue?.total || 0;
+
+  const quickActions = [
+    { label: 'Thêm học viên mới', to: '/admin/students', section: 'Học tập' },
+    { label: 'Cập nhật học phí', to: '/admin/tuition', section: 'Vận hành' },
+    { label: 'Tạo quiz mới', to: '/admin/quizzes', section: 'Nội dung' },
+    { label: 'Xem leads mới', to: '/admin/leads', section: 'Vận hành' },
+  ];
+
+  const metrics = [
     {
       label: 'Học viên',
       value: stats.students,
+      subtitle: 'tổng trên hệ thống',
+      accent: 'var(--amber-warm)',
+      loading,
       link: '/admin/students',
-      icon: <IconUsers />,
-      gradient: 'linear-gradient(135deg, #0a1628 0%, #1e3a5f 100%)',
-      iconBg: 'rgba(245,158,11,0.15)',
-      iconColor: '#f59e0b',
     },
     {
-      label: 'Lớp học',
+      label: 'Lớp đang mở',
       value: stats.classes,
+      subtitle: 'lớp hoạt động',
+      accent: 'var(--olive)',
+      loading,
       link: '/admin/classes',
-      icon: <IconBook />,
-      gradient: 'linear-gradient(135deg, #f59e0b 0%, #ea580c 100%)',
-      iconBg: 'rgba(255,255,255,0.2)',
-      iconColor: '#ffffff',
-      isLight: true,
     },
     {
-      label: 'Tài nguyên',
-      value: stats.medias,
-      link: '/admin/upload',
-      icon: <IconPhoto />,
-      gradient: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
-      iconBg: 'rgba(255,255,255,0.2)',
-      iconColor: '#ffffff',
-      isLight: true,
+      label: 'Điểm TB quiz',
+      value: `${avgScore}%`,
+      subtitle: `tỉ lệ hoàn thành ${completionRate}%`,
+      accent: avgScore >= 80 ? 'var(--olive)' : avgScore >= 50 ? 'var(--amber-warm)' : 'var(--terracotta)',
+      loading: analyticsLoading,
+      link: '/admin/quizzes',
+    },
+    {
+      label: 'HV hoạt động',
+      value: activeStudents,
+      subtitle: 'trong 7 ngày qua',
+      accent: 'var(--amber-warm)',
+      loading: analyticsLoading,
+      link: '/admin/students',
     },
   ];
 
   return (
     <AdminLayout>
-      {/* Page header */}
-      <div className="mb-8">
-        <h1 className="font-display text-2xl md:text-3xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>Tổng quan</h1>
-        <p className="text-sm mt-1.5" style={{ color: 'var(--text-secondary)' }}>Xem thống kê và hoạt động gần đây</p>
+      {/* Hero */}
+      <div className="mb-10">
+        <div className="bento-label" style={{ color: 'var(--amber-warm)' }}>Bảng điều hành</div>
+        <h1 className="bento-hero-title mt-2" style={{ color: 'var(--text-primary)' }}>
+          Xin chào, Thầy Long
+        </h1>
+        <p className="text-sm mt-3" style={{ color: 'var(--text-secondary)' }}>
+          {formatDate()}
+          <span className="mx-2" style={{ color: 'var(--border)' }}>•</span>
+          Doanh thu tháng này: <span className="font-semibold tabular-nums" style={{ color: 'var(--text-primary)' }}>{formatCurrency(revenue)}đ</span>
+        </p>
       </div>
 
-      {/* Stat cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8 stagger-children">
-        {cards.map((card) => (
-          <Link
-            key={card.label}
-            to={card.link}
-            className="stat-card group relative rounded-2xl p-6 flex items-center justify-between overflow-hidden"
-            style={{ background: card.gradient, boxShadow: 'var(--shadow-lg)' }}
-          >
-            {/* Decorative elements */}
-            <div className="absolute -right-8 -bottom-8 w-24 h-24 rounded-full" style={{ background: 'rgba(255,255,255,0.06)' }} />
-            <div className="absolute -right-2 -top-2 w-16 h-16 rounded-full" style={{ background: 'rgba(255,255,255,0.04)' }} />
-
-            <div className="relative z-10">
-              <p className="text-sm font-medium" style={{ color: card.isLight ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.6)' }}>{card.label}</p>
-              <p className="font-display text-3xl font-bold mt-1 text-white">
-                {loading ? (
-                  <span className="inline-block w-12 h-8 skeleton rounded-lg" style={{ background: 'rgba(255,255,255,0.15)' }} />
-                ) : card.value}
-              </p>
-              <div className="flex items-center gap-1 text-xs font-semibold mt-3 group-hover:gap-2 transition-all" style={{ color: card.isLight ? 'rgba(255,255,255,0.85)' : '#f59e0b' }}>
-                Xem chi tiết <IconArrow />
-              </div>
-            </div>
-            <div
-              className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 relative z-10"
-              style={{ background: card.iconBg, color: card.iconColor }}
+      {/* Pulse strip — Swiss editorial */}
+      <div className="mb-10">
+        <div className="flex items-end justify-between mb-4">
+          <div className="bento-label" style={{ color: 'var(--text-muted)' }}>Chỉ số</div>
+          <div className="rule-line flex-1 mx-4 mb-1.5" />
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-px" style={{ background: 'var(--border-light)' }}>
+          {metrics.map((m) => (
+            <Link
+              key={m.label}
+              to={m.link}
+              className="group p-5 transition-all"
+              style={{ background: 'var(--white)' }}
             >
-              {card.icon}
-            </div>
-          </Link>
-        ))}
-      </div>
-
-      {/* Recent students */}
-      <div className="card overflow-hidden fade-in" style={{ animationDelay: '0.2s' }}>
-        <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: 'var(--border-light)' }}>
-          <h2 className="font-display font-bold text-sm" style={{ color: 'var(--text-primary)' }}>Học viên gần đây</h2>
-          <Link to="/admin/students" className="flex items-center gap-1 text-xs font-semibold transition-colors" style={{ color: 'var(--amber-warm)' }}>
-            Xem tất cả <IconArrow />
-          </Link>
-        </div>
-
-        <div className="divide-y" style={{ borderColor: 'var(--border-light)' }}>
-          {loading ? (
-            <div className="p-6 space-y-4">
-              {[1, 2, 3].map(i => (
-                <div key={i} className="flex items-center gap-3">
-                  <div className="skeleton w-9 h-9 rounded-full" />
-                  <div className="flex-1 space-y-2">
-                    <div className="skeleton h-3 w-1/3" />
-                    <div className="skeleton h-2.5 w-1/4" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : recentStudents.length === 0 ? (
-            <div className="py-12 text-center">
-              <div className="w-12 h-12 mx-auto rounded-xl flex items-center justify-center mb-3" style={{ background: '#f1f5f9' }}>
-                <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5" style={{ color: 'var(--text-muted)' }}>
-                  <path d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+              <div className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
+                {m.label}
               </div>
-              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Chưa có học viên</p>
-            </div>
-          ) : (
-            recentStudents.map((s) => (
-              <div key={s._id} className="flex items-center justify-between px-6 py-3.5 table-row">
-                <div className="flex items-center gap-3">
-                  <div
-                    className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
-                    style={{ background: 'var(--amber-soft)', color: 'var(--amber-warm)' }}
-                  >
-                    {s.fullName?.charAt(0)?.toUpperCase()}
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{s.fullName}</p>
-                    <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                      @{s.username}{s.grade ? ` · Lớp ${s.grade}` : ''}
-                    </p>
-                  </div>
-                </div>
-                <span className={`badge ${s.status === 'active' ? 'badge-green' : 'badge-red'}`}>
-                  {s.status === 'active' ? 'Đang học' : 'Đã khóa'}
-                </span>
+              <div className="bento-metric mt-2" style={{ color: m.accent }}>
+                {m.loading ? <span className="skeleton inline-block w-16 h-8 rounded" /> : m.value}
               </div>
-            ))
-          )}
+              <div className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+                {m.subtitle}
+              </div>
+              <div className="flex items-center gap-1 mt-3 text-[11px] font-semibold opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: m.accent }}>
+                Xem chi tiết <ArrowIcon />
+              </div>
+            </Link>
+          ))}
         </div>
       </div>
 
-      {/* Analytics Section */}
+      {/* Two-column: Recent students + Quick actions */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
+        {/* Recent students — col-span-2 */}
+        <div className="lg:col-span-2">
+          <div className="flex items-center justify-between mb-4">
+            <div className="bento-label" style={{ color: 'var(--text-muted)' }}>Học viên gần đây</div>
+            <Link to="/admin/students" className="flex items-center gap-1 text-xs font-semibold" style={{ color: 'var(--amber-warm)' }}>
+              Xem tất cả <ArrowIcon />
+            </Link>
+          </div>
+          <div className="bento-tile bento-tile-surface">
+            {loading ? (
+              <div className="p-5 space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <div className="skeleton w-9 h-9 rounded-full" />
+                    <div className="flex-1 space-y-2">
+                      <div className="skeleton h-3 w-1/3" />
+                      <div className="skeleton h-2.5 w-1/4" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : recentStudents.length === 0 ? (
+              <div className="py-12 text-center">
+                <div className="text-3xl mb-2">👥</div>
+                <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Chưa có học viên</p>
+              </div>
+            ) : (
+              <div className="divide-y" style={{ borderColor: 'var(--border-light)' }}>
+                {recentStudents.map((s) => (
+                  <div key={s._id} className="flex items-center justify-between px-5 py-3.5">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div
+                        className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+                        style={{ background: 'var(--amber-soft)', color: 'var(--amber-warm)' }}
+                      >
+                        {s.fullName?.charAt(0)?.toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{s.fullName}</p>
+                        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                          @{s.username}{s.grade ? ` · Lớp ${s.grade}` : ''}
+                        </p>
+                      </div>
+                    </div>
+                    <span
+                      className="text-[11px] px-2 py-0.5 rounded-md font-semibold shrink-0"
+                      style={{
+                        background: s.status === 'active' ? 'var(--olive-soft)' : 'var(--terracotta-soft)',
+                        color: s.status === 'active' ? 'var(--olive)' : 'var(--terracotta)',
+                      }}
+                    >
+                      {s.status === 'active' ? 'Đang học' : 'Đã khóa'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Quick actions */}
+        <div>
+          <div className="bento-label mb-4" style={{ color: 'var(--text-muted)' }}>Lối tắt nhanh</div>
+          <div className="bento-tile bento-tile-surface p-1">
+            {quickActions.map((a, i) => (
+              <Link
+                key={a.to}
+                to={a.to}
+                className={`group flex items-center justify-between px-4 py-3 rounded-xl transition-all hover:opacity-70 ${i < quickActions.length - 1 ? 'border-b' : ''}`}
+                style={{ borderColor: 'var(--border-light)' }}
+              >
+                <div>
+                  <div className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
+                    {a.section}
+                  </div>
+                  <div className="text-sm font-semibold mt-0.5" style={{ color: 'var(--text-primary)' }}>
+                    {a.label}
+                  </div>
+                </div>
+                <ArrowIcon />
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Analytics — editorial block */}
       {!analyticsLoading && analytics && (
-        <div className="mt-8 space-y-6 fade-in">
-          {/* Additional stat cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="card p-4 text-center">
-              <div className="text-2xl font-bold font-display" style={{ color: 'var(--text-primary)' }}>
-                {analytics.quizStats?.averageScore || 0}%
-              </div>
-              <div className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>Điểm TB</div>
+        <div>
+          <div className="flex items-end justify-between mb-4">
+            <div>
+              <div className="bento-label" style={{ color: 'var(--text-muted)' }}>Phân tích</div>
+              <h2 className="font-display font-bold text-lg mt-1" style={{ color: 'var(--text-primary)' }}>
+                Tăng trưởng & doanh thu
+              </h2>
             </div>
-            <div className="card p-4 text-center">
-              <div className="text-2xl font-bold font-display" style={{ color: 'var(--text-primary)' }}>
-                {analytics.quizStats?.completionRate || 0}%
-              </div>
-              <div className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>Tỉ lệ hoàn thành</div>
-            </div>
-            <div className="card p-4 text-center">
-              <div className="text-2xl font-bold font-display" style={{ color: 'var(--text-primary)' }}>
-                {analytics.students?.active || 0}
-              </div>
-              <div className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>HV hoạt động (7 ngày)</div>
-            </div>
-            <div className="card p-4 text-center">
-              <div className="text-2xl font-bold font-display" style={{ color: 'var(--text-primary)' }}>
-                {(analytics.revenue?.total || 0).toLocaleString('vi-VN')}đ
-              </div>
-              <div className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>Doanh thu</div>
-            </div>
+            <div className="rule-line flex-1 ml-6 mb-1" />
           </div>
 
-          {/* Charts */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Student Growth Chart */}
-            <div className="card p-5">
-              <h3 className="font-display font-bold text-sm mb-4" style={{ color: 'var(--text-primary)' }}>Học viên mới theo tháng</h3>
+            <div className="bento-tile bento-tile-surface p-5">
+              <div className="flex items-baseline justify-between mb-3">
+                <h3 className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>Học viên mới theo tháng</h3>
+                <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>6 tháng qua</span>
+              </div>
               <ResponsiveContainer width="100%" height={220}>
                 <LineChart data={analytics.studentGrowth || []}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border-light)" />
                   <XAxis dataKey="month" tick={{ fontSize: 11 }} stroke="var(--text-muted)" />
                   <YAxis tick={{ fontSize: 11 }} stroke="var(--text-muted)" />
                   <Tooltip />
-                  <Line type="monotone" dataKey="count" stroke="#f59e0b" strokeWidth={2} dot={{ r: 4 }} name="Học viên" />
+                  <Line type="monotone" dataKey="count" stroke="var(--amber-warm)" strokeWidth={2} dot={{ r: 3 }} name="Học viên" />
                 </LineChart>
               </ResponsiveContainer>
             </div>
 
-            {/* Revenue Chart */}
-            <div className="card p-5">
-              <h3 className="font-display font-bold text-sm mb-4" style={{ color: 'var(--text-primary)' }}>Doanh thu theo tháng</h3>
+            <div className="bento-tile bento-tile-surface p-5">
+              <div className="flex items-baseline justify-between mb-3">
+                <h3 className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>Doanh thu theo tháng</h3>
+                <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>6 tháng qua</span>
+              </div>
               <ResponsiveContainer width="100%" height={220}>
                 <BarChart data={analytics.revenue?.monthly || []}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border-light)" />
                   <XAxis dataKey="month" tick={{ fontSize: 11 }} stroke="var(--text-muted)" />
                   <YAxis tick={{ fontSize: 11 }} stroke="var(--text-muted)" />
-                  <Tooltip formatter={(value) => value.toLocaleString('vi-VN') + 'đ'} />
-                  <Bar dataKey="revenue" fill="#f59e0b" radius={[4, 4, 0, 0]} name="Doanh thu" />
+                  <Tooltip formatter={(value) => `${Number(value).toLocaleString('vi-VN')}đ`} />
+                  <Bar dataKey="revenue" fill="var(--olive)" radius={[4, 4, 0, 0]} name="Doanh thu" />
                 </BarChart>
               </ResponsiveContainer>
             </div>

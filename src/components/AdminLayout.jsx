@@ -89,18 +89,38 @@ const IconDocument = () => (
   </svg>
 );
 
-const menuItems = [
-  { path: '/admin/dashboard', label: 'Tổng quan', icon: <IconGrid /> },
-  { path: '/admin/students', label: 'Học viên', icon: <IconUsers /> },
-  { path: '/admin/classes', label: 'Lớp học', icon: <IconBook /> },
-  { path: '/admin/upload', label: 'Tài nguyên', icon: <IconPhoto /> },
-  { path: '/admin/questions', label: 'Ngân hàng CH', icon: <IconDatabase /> },
-  { path: '/admin/quizzes', label: 'Quiz', icon: <IconQuiz /> },
-  { path: '/admin/documents', label: 'Kho tài liệu', icon: <IconDocument /> },
-  { path: '/admin/tuition', label: 'Học phí', icon: <IconTuition /> },
-  { path: '/admin/announcements', label: 'Thông báo', icon: <IconMegaphone /> },
-  { path: '/admin/leads', label: 'Leads', icon: <IconInbox /> },
-  { path: '/admin/audit', label: 'Audit Log', icon: <IconHistory /> },
+const menuSections = [
+  {
+    label: 'Học tập',
+    items: [
+      { path: '/admin/dashboard', label: 'Tổng quan', icon: <IconGrid /> },
+      { path: '/admin/students', label: 'Học viên', icon: <IconUsers /> },
+      { path: '/admin/classes', label: 'Lớp học', icon: <IconBook /> },
+    ],
+  },
+  {
+    label: 'Nội dung',
+    items: [
+      { path: '/admin/questions', label: 'Ngân hàng CH', icon: <IconDatabase /> },
+      { path: '/admin/quizzes', label: 'Quiz', icon: <IconQuiz /> },
+      { path: '/admin/documents', label: 'Kho tài liệu', icon: <IconDocument /> },
+      { path: '/admin/upload', label: 'Tài nguyên', icon: <IconPhoto /> },
+    ],
+  },
+  {
+    label: 'Vận hành',
+    items: [
+      { path: '/admin/tuition', label: 'Học phí', icon: <IconTuition /> },
+      { path: '/admin/announcements', label: 'Thông báo', icon: <IconMegaphone /> },
+      { path: '/admin/leads', label: 'Leads', icon: <IconInbox /> },
+    ],
+  },
+  {
+    label: 'Hệ thống',
+    items: [
+      { path: '/admin/audit', label: 'Audit Log', icon: <IconHistory /> },
+    ],
+  },
 ];
 
 const AdminLayout = ({ children }) => {
@@ -168,42 +188,45 @@ const AdminLayout = ({ children }) => {
           </button>
         </div>
 
-        {/* Section label */}
-        <div className="px-5 pt-5 pb-2">
-          <span className="text-[10px] font-bold tracking-widest uppercase" style={{ color: 'rgba(255,255,255,0.2)' }}>
-            Menu
-          </span>
-        </div>
-
         {/* Navigation */}
-        <nav className="flex-1 px-3 pb-4 space-y-0.5 overflow-y-auto">
-          {menuItems.map((item) => {
-            const isActive = location.pathname === item.path;
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                onClick={closeSidebar}
-                className={`sidebar-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium ${isActive ? 'sidebar-active' : ''
-                  }`}
-                style={{
-                  color: isActive ? 'var(--amber-glow)' : 'rgba(255,255,255,0.55)',
-                  paddingLeft: isActive ? '9px' : '12px',
-                }}
-              >
-                <span
-                  className="flex items-center justify-center w-8 h-8 rounded-lg transition-colors"
-                  style={{
-                    background: isActive ? 'rgba(245,158,11,0.15)' : 'rgba(255,255,255,0.04)',
-                    color: isActive ? 'var(--amber-glow)' : 'rgba(255,255,255,0.4)',
-                  }}
-                >
-                  {item.icon}
+        <nav className="flex-1 px-3 pt-3 pb-4 overflow-y-auto">
+          {menuSections.map((section, sectionIdx) => (
+            <div key={section.label} className={sectionIdx === 0 ? 'mt-2' : 'mt-5'}>
+              <div className="px-3 pb-1.5">
+                <span className="text-[10px] font-bold tracking-[0.18em] uppercase" style={{ color: 'rgba(255,255,255,0.25)' }}>
+                  {section.label}
                 </span>
-                {item.label}
-              </Link>
-            );
-          })}
+              </div>
+              <div className="space-y-0.5">
+                {section.items.map((item) => {
+                  const isActive = location.pathname === item.path;
+                  return (
+                    <Link
+                      key={item.path}
+                      to={item.path}
+                      onClick={closeSidebar}
+                      className={`sidebar-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium ${isActive ? 'sidebar-active' : ''}`}
+                      style={{
+                        color: isActive ? 'var(--amber-glow)' : 'rgba(255,255,255,0.55)',
+                        paddingLeft: isActive ? '9px' : '12px',
+                      }}
+                    >
+                      <span
+                        className="flex items-center justify-center w-8 h-8 rounded-lg transition-colors"
+                        style={{
+                          background: isActive ? 'rgba(245,158,11,0.15)' : 'rgba(255,255,255,0.04)',
+                          color: isActive ? 'var(--amber-glow)' : 'rgba(255,255,255,0.4)',
+                        }}
+                      >
+                        {item.icon}
+                      </span>
+                      {item.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </nav>
 
         {/* Theme Toggle */}
