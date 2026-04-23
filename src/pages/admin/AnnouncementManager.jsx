@@ -116,12 +116,13 @@ const AnnouncementManager = () => {
 
   return (
     <AdminLayout>
-      <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="mb-8 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Thông báo</h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>{announcements.length} thông báo</p>
+          <div className="bento-label" style={{ color: 'var(--amber-warm)' }}>Vận hành</div>
+          <h1 className="bento-hero-title mt-1" style={{ color: 'var(--text-primary)' }}>Thông báo</h1>
+          <p className="text-sm mt-2" style={{ color: 'var(--text-muted)' }}>{announcements.length} thông báo</p>
         </div>
-        <button onClick={() => setShowForm(true)} className="btn-primary">
+        <button onClick={() => setShowForm(true)} className="btn-primary px-5 py-2.5">
           + Tạo thông báo
         </button>
       </div>

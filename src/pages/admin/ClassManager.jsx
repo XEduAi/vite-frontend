@@ -414,10 +414,11 @@ const ClassManager = () => {
 
   return (
     <AdminLayout>
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+      <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
         <div>
-          <h1 className="font-display text-2xl font-semibold" style={{ color: 'var(--text-primary)' }}>Quản lý Lớp học</h1>
-          <p className="text-sm mt-0.5" style={{ color: 'var(--text-muted)' }}>{classes.length} lớp đang hoạt động</p>
+          <div className="bento-label" style={{ color: 'var(--amber-warm)' }}>Học tập</div>
+          <h1 className="bento-hero-title mt-1" style={{ color: 'var(--text-primary)' }}>Quản lý Lớp học</h1>
+          <p className="text-sm mt-2" style={{ color: 'var(--text-muted)' }}>{classes.length} lớp đang hoạt động</p>
         </div>
         <button
           onClick={() => {
@@ -428,7 +429,7 @@ const ClassManager = () => {
             resetForm();
             setShowForm(true);
           }}
-          className="btn-primary"
+          className="btn-primary px-5 py-2.5"
         >
           {showForm && !editingClass ? '✕ Đóng' : '+ Tạo lớp mới'}
         </button>
@@ -552,9 +553,9 @@ const ClassManager = () => {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-        <div className="lg:col-span-2 card overflow-hidden">
-          <div className="px-5 py-3.5 border-b" style={{ borderColor: 'var(--border-light)', background: 'var(--cream-warm)' }}>
-            <h3 className="text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>DANH SÁCH LỚP ({classes.length})</h3>
+        <div className="lg:col-span-2 bento-tile bento-tile-surface overflow-hidden">
+          <div className="px-5 py-3.5 border-b" style={{ borderColor: 'var(--border-light)' }}>
+            <div className="bento-label" style={{ color: 'var(--text-muted)' }}>Danh sách lớp · {classes.length}</div>
           </div>
 
           {loading ? (

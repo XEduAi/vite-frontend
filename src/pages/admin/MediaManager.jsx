@@ -112,9 +112,10 @@ const MediaManager = () => {
 
   return (
     <AdminLayout>
-      <div className="mb-6">
-        <h1 className="font-display text-2xl font-semibold" style={{ color: 'var(--text-primary)' }}>Quản lý Tài nguyên</h1>
-        <p className="text-sm mt-0.5" style={{ color: 'var(--text-muted)' }}>{medias.length} file trong kho lưu trữ</p>
+      <div className="mb-8">
+        <div className="bento-label" style={{ color: 'var(--amber-warm)' }}>Nội dung</div>
+        <h1 className="bento-hero-title mt-1" style={{ color: 'var(--text-primary)' }}>Quản lý Tài nguyên</h1>
+        <p className="text-sm mt-2" style={{ color: 'var(--text-muted)' }}>{medias.length} file trong kho lưu trữ</p>
       </div>
 
       <AdminToast message={message.text} type={message.type} />

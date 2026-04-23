@@ -119,13 +119,12 @@ const LessonManager = () => {
             <Link to="/admin/classes" className="text-sm" style={{ color: 'var(--text-muted)' }}>
               ← Quản lý lớp
             </Link>
-            <h1 className="font-display text-2xl font-bold mt-1" style={{ color: 'var(--text-primary)' }}>
+            <div className="bento-label mt-1" style={{ color: 'var(--amber-warm)' }}>Nội dung</div>
+            <h1 className="bento-hero-title mt-1" style={{ color: 'var(--text-primary)' }}>
               Bài học — {className}
             </h1>
           </div>
-          <button onClick={openCreate}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white"
-            style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)' }}>
+          <button onClick={openCreate} className="btn-primary px-5 py-2.5">
             + Thêm bài học
           </button>
         </div>

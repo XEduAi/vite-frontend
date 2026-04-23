@@ -119,10 +119,11 @@ const DocumentAnalytics = () => {
           >
             <IconArrowLeft /> Quay lại Kho Tài Liệu
           </Link>
-          <h1 className="font-display text-2xl md:text-3xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+          <div className="bento-label" style={{ color: 'var(--amber-warm)' }}>Nội dung</div>
+          <h1 className="bento-hero-title mt-1" style={{ color: 'var(--text-primary)' }}>
             Phân tích Kho Tài Liệu
           </h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
+          <p className="text-sm mt-2" style={{ color: 'var(--text-secondary)' }}>
             Thống kê doanh thu, lượt tải và xu hướng
           </p>
         </div>

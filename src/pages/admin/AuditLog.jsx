@@ -30,12 +30,13 @@ const AuditLog = () => {
 
   return (
     <AdminLayout>
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-6 fade-in">
+      <div className="flex flex-wrap items-end justify-between gap-4 mb-8 fade-in">
         <div>
-          <h1 className="font-display text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+          <div className="bento-label" style={{ color: 'var(--amber-warm)' }}>Hệ thống</div>
+          <h1 className="bento-hero-title mt-1" style={{ color: 'var(--text-primary)' }}>
             Audit Log
           </h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
+          <p className="text-sm mt-2" style={{ color: 'var(--text-muted)' }}>
             {pagination.total || 0} sự kiện quản trị đã được ghi nhận
           </p>
         </div>

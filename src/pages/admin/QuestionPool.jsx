@@ -206,12 +206,13 @@ const QuestionPool = () => {
 
   return (
     <AdminLayout>
-      <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="mb-8 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Ngân hàng câu hỏi</h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>{total} câu hỏi</p>
+          <div className="bento-label" style={{ color: 'var(--amber-warm)' }}>Nội dung</div>
+          <h1 className="bento-hero-title mt-1" style={{ color: 'var(--text-primary)' }}>Ngân hàng câu hỏi</h1>
+          <p className="text-sm mt-2" style={{ color: 'var(--text-muted)' }}>{total} câu hỏi</p>
         </div>
-        <button onClick={openCreateForm} className="btn-primary">
+        <button onClick={openCreateForm} className="btn-primary px-5 py-2.5">
           + Thêm câu hỏi
         </button>
       </div>

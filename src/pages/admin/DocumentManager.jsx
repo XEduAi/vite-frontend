@@ -206,12 +206,13 @@ const DocumentManager = () => {
   return (
     <AdminLayout>
       {/* Header */}
-      <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="mb-8 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl md:text-3xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+          <div className="bento-label" style={{ color: 'var(--amber-warm)' }}>Nội dung</div>
+          <h1 className="bento-hero-title mt-1" style={{ color: 'var(--text-primary)' }}>
             Kho Tài Liệu
           </h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
+          <p className="text-sm mt-2" style={{ color: 'var(--text-secondary)' }}>
             Quản lý tài liệu, đề thi và bài giảng
           </p>
         </div>
