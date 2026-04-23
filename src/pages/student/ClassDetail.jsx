@@ -236,10 +236,11 @@ const ClassDetail = () => {
         </div>
       )}
 
-      <div className="card p-6 md:p-8 mb-5 fade-in">
-        <h1 className="font-display text-2xl md:text-3xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>{cls.name}</h1>
+      <div className="bento-tile bento-tile-hero noise p-6 md:p-8 mb-5 fade-in">
+        <div className="bento-label" style={{ color: 'var(--amber-warm)' }}>Lớp học</div>
+        <h1 className="bento-hero-title mt-2" style={{ color: 'var(--text-primary)' }}>{cls.name}</h1>
         {cls.description && (
-          <p className="text-sm mt-3 leading-relaxed max-w-2xl" style={{ color: 'var(--text-secondary)' }}>{cls.description}</p>
+          <p className="text-sm md:text-base mt-3 leading-relaxed max-w-2xl" style={{ color: 'var(--text-secondary)' }}>{cls.description}</p>
         )}
 
         {/* Schedule */}
@@ -271,7 +272,7 @@ const ClassDetail = () => {
       </div>
 
       {/* Media section */}
-      <div className="card overflow-hidden fade-in" style={{ animationDelay: '0.1s' }}>
+      <div className="bento-tile bento-tile-surface overflow-hidden fade-in" style={{ animationDelay: '0.1s' }}>
         {/* Section header with Lessons shortcut */}
         <div className="flex items-center justify-between px-5 pt-4 pb-2">
           <span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>Tài nguyên lớp học</span>
@@ -301,7 +302,7 @@ const ClassDetail = () => {
                     style={
                       activeTab === tab.key
                         ? { background: 'var(--amber-soft)', color: 'var(--amber-warm)' }
-                        : { background: '#f1f5f9', color: 'var(--text-muted)' }
+                        : { background: 'var(--ink-soft)', color: 'var(--text-muted)' }
                     }
                   >
                     {mediaCounts[tab.key]}
@@ -316,7 +317,7 @@ const ClassDetail = () => {
         <div className="p-5">
           {filteredMedia.length === 0 ? (
             <div className="py-16 text-center fade-in">
-              <div className="w-16 h-16 mx-auto rounded-2xl flex items-center justify-center mb-4" style={{ background: '#f1f5f9' }}>
+              <div className="w-16 h-16 mx-auto rounded-2xl flex items-center justify-center mb-4" style={{ background: 'var(--ink-soft)' }}>
                 <svg viewBox="0 0 24 24" fill="none" className="w-7 h-7" style={{ color: 'var(--text-muted)' }}>
                   <path d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>

@@ -22,28 +22,28 @@ const GamificationOverlay = ({ data, onClose }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center pb-10 pointer-events-none px-4">
-      <div className="pointer-events-auto rounded-2xl shadow-2xl p-5 max-w-sm w-full fade-in-up"
-        style={{ background: 'linear-gradient(135deg, #0a1628, #1e3a5f)', border: '1px solid rgba(245,158,11,0.3)' }}>
-        <div className="flex items-center justify-between mb-3">
+      <div className="pointer-events-auto bento-tile bento-tile-ink dot-pattern shadow-2xl p-5 max-w-sm w-full fade-in-up"
+        style={{ border: '1px solid var(--amber)' }}>
+        <div className="flex items-center justify-between mb-3 relative">
           <span className="text-sm font-bold text-white">🎉 Kết quả nhận được</span>
           <button onClick={onClose} className="text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>✕</button>
         </div>
-        <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-3 flex-wrap relative">
           {data.xpEarned > 0 && (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-bold"
-              style={{ background: 'rgba(245,158,11,0.2)', color: '#fbbf24' }}>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-bold tabular-nums"
+              style={{ background: 'var(--amber-soft)', color: 'var(--amber-glow)' }}>
               +{data.xpEarned} XP
             </div>
           )}
           {data.streakCount > 0 && (
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-bold"
-              style={{ background: 'rgba(239,68,68,0.2)', color: '#fca5a5' }}>
+              style={{ background: 'var(--terracotta-soft)', color: 'var(--terracotta-glow)' }}>
               🔥 {data.streakCount} ngày liên tiếp
             </div>
           )}
           {data.levelUp && (
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-bold"
-              style={{ background: 'rgba(139,92,246,0.2)', color: '#c4b5fd' }}>
+              style={{ background: 'var(--olive-soft)', color: 'var(--olive-glow)' }}>
               ⬆ Lên cấp mới!
             </div>
           )}

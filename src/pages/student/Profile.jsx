@@ -99,29 +99,26 @@ const Profile = () => {
   return (
     <StudentLayout>
     <div className="max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6" style={{ color: 'var(--text-primary)' }}>
-        Tài khoản của tôi
-      </h1>
+      <div className="mb-6">
+        <div className="bento-label" style={{ color: 'var(--amber-warm)' }}>Tài khoản</div>
+        <h1 className="bento-hero-title mt-2" style={{ color: 'var(--text-primary)' }}>
+          Hồ sơ của tôi
+        </h1>
+      </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 mb-6">
+      <div className="flex gap-1 p-1 rounded-xl mb-6 card" style={{ padding: 4 }}>
         <button
           onClick={() => setActiveTab('profile')}
-          className="px-4 py-2 rounded-lg font-medium transition-all"
-          style={{
-            background: activeTab === 'profile' ? 'var(--amber-warm)' : 'var(--bg-secondary)',
-            color: activeTab === 'profile' ? 'white' : 'var(--text-secondary)'
-          }}
+          className={`tab-pill flex-1 ${activeTab === 'profile' ? 'active' : ''}`}
+          style={activeTab !== 'profile' ? { color: 'var(--text-secondary)' } : {}}
         >
           Thông tin cá nhân
         </button>
         <button
           onClick={() => setActiveTab('password')}
-          className="px-4 py-2 rounded-lg font-medium transition-all"
-          style={{
-            background: activeTab === 'password' ? 'var(--amber-warm)' : 'var(--bg-secondary)',
-            color: activeTab === 'password' ? 'white' : 'var(--text-secondary)'
-          }}
+          className={`tab-pill flex-1 ${activeTab === 'password' ? 'active' : ''}`}
+          style={activeTab !== 'password' ? { color: 'var(--text-secondary)' } : {}}
         >
           Đổi mật khẩu
         </button>
@@ -129,7 +126,7 @@ const Profile = () => {
 
       {/* Profile Tab */}
       {activeTab === 'profile' && (
-        <div className="card p-6">
+        <div className="bento-tile bento-tile-surface p-6">
           <div className="flex items-center gap-4 mb-6 pb-6" style={{ borderBottom: '1px solid var(--border)' }}>
             <div
               className="w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold"
@@ -138,22 +135,23 @@ const Profile = () => {
               {user?.fullName?.charAt(0)?.toUpperCase() || 'U'}
             </div>
             <div>
-              <div className="font-semibold text-lg" style={{ color: 'var(--text-primary)' }}>
+              <div className="font-display font-semibold text-lg" style={{ color: 'var(--text-primary)' }}>
                 {user?.fullName}
               </div>
               <div className="text-sm" style={{ color: 'var(--text-muted)' }}>
                 @{user?.username}
               </div>
-              <div className="text-xs px-2 py-0.5 rounded mt-1 inline-block" style={{ background: 'var(--green-light)', color: 'var(--green)' }}>
-                Học viên {user?.grade}
+              <div className="text-xs px-2 py-0.5 rounded-md mt-1 inline-block font-semibold"
+                   style={{ background: 'var(--olive-soft)', color: 'var(--olive)' }}>
+                Học viên lớp {user?.grade}
               </div>
             </div>
           </div>
 
           {profileMsg && (
-            <div className="mb-4 p-3 rounded-lg text-sm" style={{ 
-              background: profileMsg.includes('thành công') ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)',
-              color: profileMsg.includes('thành công') ? 'var(--green)' : '#ef4444'
+            <div className="mb-4 p-3 rounded-lg text-sm" style={{
+              background: profileMsg.includes('thành công') ? 'var(--olive-soft)' : 'var(--terracotta-soft)',
+              color: profileMsg.includes('thành công') ? 'var(--olive)' : 'var(--terracotta)'
             }}>
               {profileMsg}
             </div>
@@ -231,25 +229,22 @@ const Profile = () => {
 
       {/* Password Tab */}
       {activeTab === 'password' && (
-        <div className="card p-6">
-          <h2 className="font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>
+        <div className="bento-tile bento-tile-surface p-6">
+          <div className="bento-label mb-1">Bảo mật</div>
+          <h2 className="font-display font-bold text-lg mb-4" style={{ color: 'var(--text-primary)' }}>
             Đổi mật khẩu
           </h2>
 
           {passwordMsg && (
-            <div className="mb-4 p-3 rounded-lg text-sm" style={{ 
-              background: 'rgba(34,197,94,0.1)',
-              color: 'var(--green)'
-            }}>
+            <div className="mb-4 p-3 rounded-lg text-sm"
+                 style={{ background: 'var(--olive-soft)', color: 'var(--olive)' }}>
               {passwordMsg}
             </div>
           )}
 
           {passwordError && (
-            <div className="mb-4 p-3 rounded-lg text-sm" style={{ 
-              background: 'rgba(239,68,68,0.1)',
-              color: '#ef4444'
-            }}>
+            <div className="mb-4 p-3 rounded-lg text-sm"
+                 style={{ background: 'var(--terracotta-soft)', color: 'var(--terracotta)' }}>
               {passwordError}
             </div>
           )}

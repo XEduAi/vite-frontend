@@ -14,9 +14,9 @@ const formatVND = (v) => {
 
 const statusLabel = { unpaid: 'Chưa đóng', partial: 'Đóng 1 phần', paid: 'Đã đóng' };
 const statusColor = {
-  unpaid: { bg: 'var(--danger-light)', color: 'var(--danger)' },
-  partial: { bg: '#fef3c7', color: '#d97706' },
-  paid: { bg: 'var(--success-light)', color: 'var(--success)' }
+  unpaid: { bg: 'var(--terracotta-soft)', color: 'var(--terracotta)' },
+  partial: { bg: 'var(--amber-soft)', color: 'var(--amber-warm)' },
+  paid: { bg: 'var(--olive-soft)', color: 'var(--olive)' }
 };
 const statusIcon = {
   unpaid: '⏳',
@@ -103,31 +103,32 @@ const MyTuition = () => {
       <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="mb-6 fade-in">
-          <h1 className="font-display text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+          <div className="bento-label" style={{ color: 'var(--amber-warm)' }}>Học phí</div>
+          <h1 className="bento-hero-title mt-2" style={{ color: 'var(--text-primary)' }}>
             Học phí của tôi
           </h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
-            Theo dõi tình trạng đóng học phí theo từng học kỳ
+          <p className="text-sm md:text-base mt-2" style={{ color: 'var(--text-secondary)' }}>
+            Theo dõi tình trạng đóng học phí theo từng học kỳ.
           </p>
         </div>
 
-        {/* Summary cards */}
+        {/* Summary cards — bento tile row */}
         <div className="grid grid-cols-3 gap-3 mb-6 stagger-children">
-          <div className="card p-4 text-center">
-            <div className="text-xs font-medium mb-1" style={{ color: 'var(--text-muted)' }}>Tổng học phí</div>
-            <div className="font-display font-bold text-lg" style={{ color: 'var(--text-primary)' }}>
+          <div className="bento-tile bento-tile-surface p-4 text-center">
+            <div className="bento-label mb-2">Tổng học phí</div>
+            <div className="bento-display text-lg" style={{ color: 'var(--text-primary)' }}>
               {formatVND(stats.totalAmount)}
             </div>
           </div>
-          <div className="card p-4 text-center">
-            <div className="text-xs font-medium mb-1" style={{ color: 'var(--text-muted)' }}>Đã đóng</div>
-            <div className="font-display font-bold text-lg" style={{ color: 'var(--success)' }}>
+          <div className="bento-tile bento-tile-surface p-4 text-center">
+            <div className="bento-label mb-2">Đã đóng</div>
+            <div className="bento-display text-lg" style={{ color: 'var(--olive)' }}>
               {formatVND(stats.totalPaid)}
             </div>
           </div>
-          <div className="card p-4 text-center">
-            <div className="text-xs font-medium mb-1" style={{ color: 'var(--text-muted)' }}>Còn nợ</div>
-            <div className="font-display font-bold text-lg" style={{ color: stats.totalUnpaid > 0 ? 'var(--danger)' : 'var(--success)' }}>
+          <div className="bento-tile bento-tile-surface p-4 text-center">
+            <div className="bento-label mb-2">Còn nợ</div>
+            <div className="bento-display text-lg" style={{ color: stats.totalUnpaid > 0 ? 'var(--terracotta)' : 'var(--olive)' }}>
               {formatVND(stats.totalUnpaid)}
             </div>
           </div>
@@ -135,37 +136,33 @@ const MyTuition = () => {
 
         {/* Pending payments */}
         {pendingPayments.length > 0 && (
-          <div className="card p-4 mb-6 fade-in-up">
-            <div className="text-xs font-semibold mb-3" style={{ color: 'var(--text-muted)' }}>
-              Yêu cầu thanh toán đang chờ duyệt ({pendingPayments.length})
+          <div className="bento-tile bento-tile-surface p-4 mb-6 fade-in-up">
+            <div className="bento-label mb-3">
+              Chờ duyệt ({pendingPayments.length})
             </div>
             <div className="space-y-2">
-              {pendingPayments.map((pp) => (
-                <div key={pp._id} className="flex items-center justify-between px-3 py-2 rounded-lg text-xs" style={{
-                  background: pp.status === 'approved' ? 'rgba(16,185,129,0.04)' :
-                           pp.status === 'rejected' ? 'rgba(239,68,68,0.04)' :
-                           'rgba(245,158,11,0.04)'
-                }}>
-                  <div className="flex-1">
-                    <span className="font-medium" style={{ color: 'var(--text-primary)' }}>
-                      {formatVND(pp.amount)}
-                    </span>
-                    <span className="ml-2" style={{ color: 'var(--text-muted)' }}>
-                      — {pp.tuitionFee?.semester}
+              {pendingPayments.map((pp) => {
+                const isApproved = pp.status === 'approved';
+                const isRejected = pp.status === 'rejected';
+                const rowBg = isApproved ? 'var(--olive-soft)' : isRejected ? 'var(--terracotta-soft)' : 'var(--amber-soft)';
+                const chipColor = isApproved ? 'var(--olive)' : isRejected ? 'var(--terracotta)' : 'var(--amber-warm)';
+                return (
+                  <div key={pp._id} className="flex items-center justify-between px-3 py-2 rounded-lg text-xs"
+                       style={{ background: rowBg }}>
+                    <div className="flex-1">
+                      <span className="font-semibold tabular-nums" style={{ color: 'var(--text-primary)' }}>
+                        {formatVND(pp.amount)}
+                      </span>
+                      <span className="ml-2" style={{ color: 'var(--text-muted)' }}>
+                        — {pp.tuitionFee?.semester}
+                      </span>
+                    </div>
+                    <span className="px-2 py-0.5 rounded-md font-semibold" style={{ color: chipColor }}>
+                      {isApproved ? 'Đã duyệt' : isRejected ? 'Đã từ chối' : 'Chờ duyệt'}
                     </span>
                   </div>
-                  <span className="px-2 py-0.5 rounded-full font-semibold" style={{
-                    background: pp.status === 'approved' ? 'var(--success-light)' :
-                             pp.status === 'rejected' ? 'var(--danger-light)' :
-                             'var(--amber-soft)',
-                    color: pp.status === 'approved' ? 'var(--success)' :
-                           pp.status === 'rejected' ? 'var(--danger)' :
-                           'var(--amber-warm)'
-                  }}>
-                    {pp.status === 'approved' ? 'Đã duyệt' : pp.status === 'rejected' ? 'Đã từ chối' : 'Chờ duyệt'}
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -179,7 +176,7 @@ const MyTuition = () => {
 
         {/* Fee list */}
         {fees.length === 0 ? (
-          <div className="card p-12 text-center fade-in-up">
+          <div className="bento-tile bento-tile-hero noise p-12 text-center fade-in-up">
             <div className="w-16 h-16 mx-auto rounded-2xl flex items-center justify-center mb-4" style={{ background: 'var(--amber-soft)' }}>
               <svg viewBox="0 0 24 24" fill="none" className="w-7 h-7" style={{ color: 'var(--amber)' }}>
                 <path d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -191,7 +188,7 @@ const MyTuition = () => {
         ) : (
           <div className="space-y-3 stagger-children">
             {fees.map((fee) => (
-              <div key={fee._id} className="card overflow-hidden">
+              <div key={fee._id} className="bento-tile bento-tile-surface overflow-hidden">
                 <button
                   onClick={() => setExpandedFee(expandedFee === fee._id ? null : fee._id)}
                   className="w-full p-4 flex items-center gap-4 text-left transition-colors hover:bg-black/[0.01]"
@@ -224,11 +221,11 @@ const MyTuition = () => {
 
                   {/* Amount */}
                   <div className="text-right flex-shrink-0">
-                    <div className="font-display font-bold text-sm" style={{ color: 'var(--text-primary)' }}>
+                    <div className="font-display font-bold text-sm tabular-nums" style={{ color: 'var(--text-primary)' }}>
                       {formatVND(fee.finalAmount)}
                     </div>
                     {fee.status !== 'paid' && fee.finalAmount - fee.paidAmount > 0 && (
-                      <div className="text-xs" style={{ color: 'var(--danger)' }}>
+                      <div className="text-xs font-semibold" style={{ color: 'var(--terracotta)' }}>
                         Nợ: {formatVND(fee.finalAmount - fee.paidAmount)}
                       </div>
                     )}
@@ -257,17 +254,17 @@ const MyTuition = () => {
                       {fee.discount > 0 && (
                         <div>
                           <div className="text-xs" style={{ color: 'var(--text-muted)' }}>Giảm giá</div>
-                          <div className="font-medium" style={{ color: 'var(--success)' }}>-{formatVND(fee.discount)}</div>
+                          <div className="font-medium" style={{ color: 'var(--olive)' }}>-{formatVND(fee.discount)}</div>
                         </div>
                       )}
                       <div>
                         <div className="text-xs" style={{ color: 'var(--text-muted)' }}>Đã thanh toán</div>
-                        <div className="font-medium" style={{ color: 'var(--success)' }}>{formatVND(fee.paidAmount)}</div>
+                        <div className="font-medium" style={{ color: 'var(--olive)' }}>{formatVND(fee.paidAmount)}</div>
                       </div>
                       {fee.dueDate && (
                         <div>
                           <div className="text-xs" style={{ color: 'var(--text-muted)' }}>Hạn đóng</div>
-                          <div className="font-medium" style={{ color: new Date(fee.dueDate) < new Date() && fee.status !== 'paid' ? 'var(--danger)' : 'var(--text-primary)' }}>
+                          <div className="font-medium" style={{ color: new Date(fee.dueDate) < new Date() && fee.status !== 'paid' ? 'var(--terracotta)' : 'var(--text-primary)' }}>
                             {new Date(fee.dueDate).toLocaleDateString('vi-VN')}
                             {new Date(fee.dueDate) < new Date() && fee.status !== 'paid' && ' (Quá hạn)'}
                           </div>
@@ -281,9 +278,9 @@ const MyTuition = () => {
                         <div className="text-xs font-semibold mb-2" style={{ color: 'var(--text-muted)' }}>Lịch sử thanh toán</div>
                         <div className="space-y-1.5">
                           {fee.payments.map((p, i) => (
-                            <div key={i} className="flex items-center justify-between px-3 py-2 rounded-lg text-xs" style={{ background: 'rgba(16,185,129,0.04)' }}>
+                            <div key={i} className="flex items-center justify-between px-3 py-2 rounded-lg text-xs" style={{ background: 'var(--olive-soft)' }}>
                               <div>
-                                <span className="font-medium" style={{ color: 'var(--success)' }}>+{formatVND(p.amount)}</span>
+                                <span className="font-medium" style={{ color: 'var(--olive)' }}>+{formatVND(p.amount)}</span>
                                 <span className="ml-2" style={{ color: 'var(--text-muted)' }}>
                                   {p.method === 'cash' ? 'Tiền mặt' : p.method === 'transfer' ? 'CK' : 'Khác'}
                                 </span>
@@ -301,11 +298,7 @@ const MyTuition = () => {
                     {/* Pay button */}
                     {fee.status !== 'paid' && fee.finalAmount - fee.paidAmount > 0 && (
                       <div className="mt-3">
-                        <button
-                          onClick={() => handleShowQR(fee)}
-                          className="w-full py-2.5 rounded-lg text-sm font-medium transition-colors"
-                          style={{ background: 'var(--amber)', color: 'white' }}
-                        >
+                        <button onClick={() => handleShowQR(fee)} className="btn-primary w-full py-2.5">
                           💳 Thanh toán qua QR Code
                         </button>
                       </div>
@@ -372,18 +365,10 @@ const MyTuition = () => {
               </div>
             </div>
             <div className="flex gap-2">
-              <button
-                onClick={() => setShowQRModal(null)}
-                className="flex-1 py-2.5 rounded-lg text-sm font-medium transition-colors"
-                style={{ background: 'var(--border-light)', color: 'var(--text-secondary)' }}
-              >
+              <button onClick={() => setShowQRModal(null)} className="btn-secondary flex-1 py-2.5">
                 Đóng
               </button>
-              <button
-                onClick={() => setShowConfirmModal(true)}
-                className="flex-1 py-2.5 rounded-lg text-sm font-medium transition-colors"
-                style={{ background: 'var(--amber)', color: 'white' }}
-              >
+              <button onClick={() => setShowConfirmModal(true)} className="btn-primary flex-1 py-2.5">
                 Xác nhận đã thanh toán
               </button>
             </div>
@@ -395,7 +380,7 @@ const MyTuition = () => {
       {showConfirmModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="fixed inset-0 modal-overlay" onClick={() => setShowConfirmModal(false)} />
-          <div className="card p-6 w-full max-w-md relative z-10 fade-in-up">
+          <div className="bento-tile bento-tile-surface p-6 w-full max-w-md relative z-10 fade-in-up">
             <h3 className="font-display font-bold text-lg mb-2" style={{ color: 'var(--text-primary)' }}>
               Xác nhận thanh toán
             </h3>
@@ -403,18 +388,14 @@ const MyTuition = () => {
               Bạn đã chuyển {formatVND(Number(paymentAmount))} qua Vietcombank?
             </p>
             <div className="flex gap-2">
-              <button
-                onClick={() => setShowConfirmModal(false)}
-                className="flex-1 py-2.5 rounded-lg text-sm font-medium transition-colors"
-                style={{ background: 'var(--border-light)', color: 'var(--text-secondary)' }}
-              >
+              <button onClick={() => setShowConfirmModal(false)} className="btn-secondary flex-1 py-2.5">
                 Chưa
               </button>
               <button
                 onClick={handleConfirmPayment}
                 disabled={submitPendingPaymentMutation.isPending}
-                className="flex-1 py-2.5 rounded-lg text-sm font-medium transition-colors"
-                style={{ background: 'var(--success)', color: 'white' }}
+                className="flex-1 py-2.5 rounded-lg text-sm font-bold text-white transition-colors"
+                style={{ background: 'linear-gradient(135deg, var(--olive-glow), var(--olive))' }}
               >
                 {submitPendingPaymentMutation.isPending ? 'Đang gửi...' : 'Đã chuyển'}
               </button>

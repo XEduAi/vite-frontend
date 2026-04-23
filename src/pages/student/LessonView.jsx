@@ -109,24 +109,30 @@ const LessonView = () => {
           <Link to={`/student/class/${classId}`} className="text-sm" style={{ color: 'var(--text-muted)' }}>
             ← {className}
           </Link>
-          <h1 className="font-display text-2xl font-bold mt-1" style={{ color: 'var(--text-primary)' }}>
+          <div className="bento-label mt-1" style={{ color: 'var(--amber-warm)' }}>Nội dung</div>
+          <h1 className="bento-hero-title mt-2" style={{ color: 'var(--text-primary)' }}>
             📚 Bài học
           </h1>
 
           {/* Overall progress bar */}
           {!loading && totalItems > 0 && (
-            <div className="mt-3 card rounded-xl px-4 py-3">
+            <div className="mt-3 bento-tile bento-tile-surface rounded-xl px-4 py-3">
               <div className="flex justify-between text-xs mb-1.5">
                 <span className="font-semibold" style={{ color: 'var(--text-secondary)' }}>
                   Tiến độ tổng thể
                 </span>
-                <span className="font-bold" style={{ color: overallPct === 100 ? '#059669' : 'var(--amber-warm)' }}>
+                <span className="font-bold tabular-nums" style={{ color: overallPct === 100 ? 'var(--olive)' : 'var(--amber-warm)' }}>
                   {overallPct}% ({completedItems}/{totalItems})
                 </span>
               </div>
               <div className="h-2 rounded-full overflow-hidden" style={{ background: 'var(--border)' }}>
                 <div className="h-full rounded-full transition-all duration-500"
-                  style={{ width: `${overallPct}%`, background: overallPct === 100 ? 'linear-gradient(90deg,#10b981,#059669)' : 'linear-gradient(90deg,#f59e0b,#d97706)' }} />
+                  style={{
+                    width: `${overallPct}%`,
+                    background: overallPct === 100
+                      ? 'linear-gradient(90deg, var(--olive-glow), var(--olive))'
+                      : 'var(--grad-amber)',
+                  }} />
               </div>
             </div>
           )}
@@ -161,8 +167,8 @@ const LessonView = () => {
               <div
                 key={lesson._id}
                 id={`lesson-${lesson._id}`}
-                className="card rounded-2xl overflow-hidden fade-in-up"
-                style={lesson._id === citedLessonId ? { boxShadow: '0 0 0 2px rgba(245,158,11,0.25)' } : undefined}
+                className="bento-tile bento-tile-surface overflow-hidden fade-in-up"
+                style={lesson._id === citedLessonId ? { boxShadow: '0 0 0 2px var(--amber-soft)' } : undefined}
               >
                 {/* Lesson header */}
                 <button
@@ -171,7 +177,11 @@ const LessonView = () => {
                 >
                   {/* Order badge */}
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold text-white shrink-0"
-                    style={{ background: pct === 100 ? 'linear-gradient(135deg,#10b981,#059669)' : 'linear-gradient(135deg,#f59e0b,#d97706)' }}>
+                    style={{
+                      background: pct === 100
+                        ? 'linear-gradient(135deg, var(--olive-glow), var(--olive))'
+                        : 'var(--grad-amber)',
+                    }}>
                     {pct === 100 ? '✓' : lesson.order}
                   </div>
 
@@ -184,10 +194,10 @@ const LessonView = () => {
                       {/* Mini progress bar */}
                       <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--border)' }}>
                         <div className="h-full rounded-full transition-all"
-                          style={{ width: `${pct}%`, background: pct === 100 ? '#10b981' : '#f59e0b' }} />
+                          style={{ width: `${pct}%`, background: pct === 100 ? 'var(--olive)' : 'var(--amber)' }} />
                       </div>
-                      <span className="text-[11px] font-semibold shrink-0"
-                        style={{ color: pct === 100 ? '#059669' : 'var(--text-muted)' }}>
+                      <span className="text-[11px] font-semibold shrink-0 tabular-nums"
+                        style={{ color: pct === 100 ? 'var(--olive)' : 'var(--text-muted)' }}>
                         {completed.length}/{lessonItems.length}
                       </span>
                     </div>
@@ -228,7 +238,7 @@ const LessonView = () => {
                             style={{
                               borderColor: 'var(--border-light)',
                               background: isDone
-                                ? 'rgba(16,185,129,0.04)'
+                                ? 'var(--olive-soft)'
                                 : lesson._id === citedLessonId && idx === citedItemIndex
                                   ? 'var(--amber-soft)'
                                   : 'transparent'
@@ -240,7 +250,7 @@ const LessonView = () => {
                             {/* Info */}
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium truncate"
-                                style={{ color: isDone ? '#059669' : 'var(--text-primary)', textDecoration: isDone ? 'line-through' : 'none', opacity: isDone ? 0.8 : 1 }}>
+                                style={{ color: isDone ? 'var(--olive)' : 'var(--text-primary)', textDecoration: isDone ? 'line-through' : 'none', opacity: isDone ? 0.8 : 1 }}>
                                 {item.title}
                               </p>
                               {item.duration && (
@@ -258,7 +268,7 @@ const LessonView = () => {
                                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                                 </svg>
                               ) : isDone ? (
-                                <svg viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5" style={{ color: '#059669' }}>
+                                <svg viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5" style={{ color: 'var(--olive)' }}>
                                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" />
                                 </svg>
                               ) : (
