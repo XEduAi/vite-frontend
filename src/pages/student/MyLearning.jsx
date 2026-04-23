@@ -103,65 +103,38 @@ const MyLearning = () => {
   const recommendedNextAction = dashboard?.recommendedNextAction || null;
   const masteryHighlights = dashboard?.masteryHighlights || null;
 
+  const firstName = fullName.split(' ').pop();
+  const masteryScore = masteryHighlights?.overallScore ?? 0;
+  const masteryColor = masteryScore >= 80 ? 'var(--olive)' :
+                       masteryScore >= 50 ? 'var(--amber-warm)' :
+                       'var(--terracotta)';
+  const avgScore = dashboard?.weeklyStats?.avgScore ?? 0;
+  const avgColor = avgScore >= 80 ? 'var(--olive)' :
+                   avgScore >= 50 ? 'var(--amber-warm)' :
+                   'var(--terracotta)';
+
   return (
     <StudentLayout>
-      {/* Page header */}
-      <div className="mb-6">
-        <div className="flex items-center gap-2 mb-1">
-          <span className="text-sm font-medium" style={{ color: 'var(--amber-warm)' }}>
-            {getGreeting()}
-          </span>
-        </div>
-        <h1 className="font-display text-2xl md:text-3xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
-          {fullName.split(' ').pop()} oi, học gì hôm nay?
-        </h1>
-        <p className="text-sm mt-2" style={{ color: 'var(--text-secondary)' }}>
-          {loading ? 'Đang tải...' : `Bạn đang theo học ${classes.length} lớp`}
-        </p>
-      </div>
-
-      {/* === GAMIFICATION BAR === */}
-      {gamification && (gamification.level > 1 || gamification.xp > 0 || gamification.streak > 0) && (
-        <Link to="/student/achievements"
-          className="flex items-center gap-3 rounded-2xl px-4 py-2.5 mb-5 fade-in-up card-interactive"
-          style={{ background: 'linear-gradient(135deg, #0a1628, #1e3a5f)', border: '1px solid rgba(245,158,11,0.25)' }}>
-          <span className="text-sm font-bold px-2 py-0.5 rounded-lg"
-            style={{ background: 'rgba(245,158,11,0.2)', color: '#fbbf24' }}>
-            ⭐ Cấp {gamification.level}
-          </span>
-          {gamification.streak > 0 && (
-            <span className="text-sm font-semibold" style={{ color: '#fca5a5' }}>
-              🔥 {gamification.streak} ngày liên tiếp
-            </span>
-          )}
-          <span className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.7)' }}>
-            {gamification.xp} XP
-          </span>
-          <span className="ml-auto text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>Xem thành tích →</span>
-        </Link>
-      )}
-
-      {/* === IMPORTANT ANNOUNCEMENTS BANNER === */}
+      {/* ═══ ANNOUNCEMENTS (pinned above bento) ═══ */}
       {hasAnnouncements && (
-        <div className="mb-6 space-y-3 fade-in-up">
+        <div className="mb-5 space-y-2.5 fade-in-up">
           {importantAnnouncements.map(a => (
             <div
               key={a._id}
-              className="rounded-2xl p-4 flex items-start gap-3 border"
+              className="rounded-2xl p-3.5 flex items-start gap-3"
               style={{
-                background: 'linear-gradient(135deg, #fef3c7, #fffbeb)',
-                borderColor: '#fbbf24',
-                borderLeftWidth: 4
+                background: 'var(--terracotta-soft)',
+                borderLeft: '3px solid var(--terracotta)',
               }}
             >
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
-                style={{ background: '#f59e0b', color: '#fff' }}>
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
+                style={{ background: 'var(--terracotta)', color: '#fff' }}>
                 <IconMegaphone />
               </div>
               <div className="flex-1 min-w-0">
-                <h4 className="text-sm font-bold" style={{ color: '#92400e' }}>{a.title}</h4>
-                <p className="text-sm mt-1 line-clamp-2" style={{ color: '#78350f' }}>{a.content}</p>
-                <span className="text-xs mt-1.5 inline-block" style={{ color: '#a16207' }}>
+                <h4 className="text-sm font-bold" style={{ color: 'var(--terracotta)' }}>{a.title}</h4>
+                <p className="text-sm mt-0.5 line-clamp-2" style={{ color: 'var(--text-primary)' }}>{a.content}</p>
+                <span className="text-[11px] mt-1 inline-block" style={{ color: 'var(--text-muted)' }}>
                   {timeAgo(a.createdAt)}
                 </span>
               </div>
@@ -170,246 +143,266 @@ const MyLearning = () => {
         </div>
       )}
 
-      {recommendedNextAction && (
-        <div className="mb-6 fade-in-up">
-          <Link
-            to={recommendedNextAction.href || '/student/performance'}
-            className="block rounded-2xl p-5 transition-all hover:shadow-lg"
-            style={{
-              background: 'linear-gradient(135deg, #fff7ed, #fffbeb)',
-              border: '1px solid rgba(245,158,11,0.18)',
-            }}
-          >
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div>
-                <div className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: 'var(--amber-warm)' }}>
-                  Bước tiếp theo được đề xuất
-                </div>
-                <div className="font-display text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
-                  {recommendedNextAction.title}
-                </div>
-                <p className="text-sm mt-1.5" style={{ color: 'var(--text-secondary)' }}>
-                  {recommendedNextAction.description}
-                </p>
-              </div>
-              <div className="flex items-center gap-2 text-sm font-semibold" style={{ color: 'var(--amber-warm)' }}>
-                Tiếp tục <IconArrow />
-              </div>
-            </div>
-          </Link>
+      {/* ═══ BENTO GRID ═══ */}
+      <div className="grid grid-cols-12 gap-3 md:gap-4 mb-10 stagger-children">
+
+        {/* ── HERO TILE ── */}
+        <div className="col-span-12 md:col-span-8 bento-tile bento-tile-hero noise">
+          <div className="bento-label mb-3" style={{ color: 'var(--amber-warm)' }}>
+            {getGreeting()}
+          </div>
+          <h1 className="bento-hero-title" style={{ color: 'var(--text-primary)' }}>
+            {recommendedNextAction ? recommendedNextAction.title : `${firstName} ơi, học gì hôm nay?`}
+          </h1>
+          <p className="text-sm md:text-base mt-3 max-w-lg" style={{ color: 'var(--text-secondary)' }}>
+            {recommendedNextAction
+              ? recommendedNextAction.description
+              : `Bạn đang theo học ${classes.length} lớp. Chọn một việc bên phải để tiếp tục.`}
+          </p>
+          {recommendedNextAction && (
+            <Link
+              to={recommendedNextAction.href || '/student/performance'}
+              className="inline-flex items-center gap-2 mt-5 px-4 py-2 rounded-xl text-sm font-semibold transition-transform hover:translate-x-0.5"
+              style={{ background: 'var(--grad-amber)', color: 'white', boxShadow: 'var(--shadow-amber)' }}
+            >
+              Bắt đầu ngay <IconArrow />
+            </Link>
+          )}
         </div>
-      )}
 
-      {/* === DASHBOARD WIDGETS === */}
-      {!dashLoading && dashboard && (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-8 stagger-children">
-
-          {/* Today's Tasks */}
-          <div className="card rounded-2xl overflow-hidden">
-            <div className="px-5 py-3.5 border-b flex items-center gap-2" style={{ borderColor: 'var(--border-light)' }}>
-              <div className="w-7 h-7 rounded-lg flex items-center justify-center"
-                style={{ background: 'var(--amber-soft)', color: 'var(--amber-warm)' }}>
-                <IconClock />
-              </div>
-              <h3 className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>Bài tập sắp tới</h3>
+        {/* ── GAMIFICATION TILE ── */}
+        <Link
+          to="/student/achievements"
+          className="col-span-12 md:col-span-4 bento-tile bento-tile-ink p-5 md:p-6 flex flex-col justify-between min-h-[160px] dot-pattern relative overflow-hidden"
+        >
+          <div>
+            <div className="bento-label" style={{ color: 'rgba(255,255,255,0.4)' }}>
+              Hồ sơ học tập
             </div>
-            <div className="p-4">
-              {dashboard.upcomingQuizzes.length === 0 ? (
-                <p className="text-sm text-center py-4" style={{ color: 'var(--text-muted)' }}>
-                  🎉 Không có bài nào đang chờ!
-                </p>
-              ) : (
-                <div className="space-y-2.5">
-                  {dashboard.upcomingQuizzes.slice(0, 4).map(q => (
-                    <div key={q._id} className="flex items-center gap-3 group">
-                      <div
-                        className="w-2 h-2 rounded-full shrink-0"
-                        style={{
-                          background: q.attemptStatus === 'submitted' ? 'var(--success)' :
-                            q.attemptStatus === 'in_progress' ? 'var(--amber-warm)' : 'var(--border)'
-                        }}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate" style={{
-                          color: 'var(--text-primary)',
-                          textDecoration: q.attemptStatus === 'submitted' ? 'line-through' : 'none',
-                          opacity: q.attemptStatus === 'submitted' ? 0.5 : 1
-                        }}>
-                          {q.title}
-                        </p>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          {q.classNames?.length > 0 && (
-                            <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
-                              {q.classNames[0]}
-                            </span>
-                          )}
-                          {q.endTime && (
-                            <span className="text-[11px]" style={{ color: 'var(--amber-warm)' }}>
-                              · Hạn {new Date(q.endTime).toLocaleDateString('vi-VN')}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      {q.attemptStatus !== 'submitted' && (
-                        <Link
-                          to="/student/quizzes"
-                          className="text-[11px] font-semibold px-2.5 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
-                          style={{ background: 'var(--amber-soft)', color: 'var(--amber-warm)' }}
-                        >
-                          Làm bài
-                        </Link>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
+            <div className="flex items-baseline gap-2 mt-2">
+              <span className="bento-metric" style={{ color: 'var(--amber-glow)' }}>
+                {gamification?.level ?? 1}
+              </span>
+              <span className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                cấp
+              </span>
             </div>
           </div>
-
-          {/* This Week */}
-          <div className="card rounded-2xl overflow-hidden">
-            <div className="px-5 py-3.5 border-b flex items-center gap-2" style={{ borderColor: 'var(--border-light)' }}>
-              <div className="w-7 h-7 rounded-lg flex items-center justify-center"
-                style={{ background: '#dbeafe', color: '#2563eb' }}>
+          <div className="flex items-end justify-between gap-2 mt-3">
+            <div>
+              <div className="text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>XP tích lũy</div>
+              <div className="font-display font-bold text-lg tabular-nums" style={{ color: 'white' }}>
+                {(gamification?.xp ?? 0).toLocaleString('vi-VN')}
+              </div>
+            </div>
+            {gamification?.streak > 0 && (
+              <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg"
+                   style={{ background: 'var(--terracotta-soft)', color: 'var(--terracotta-glow)' }}>
                 <IconFire />
+                <span className="font-semibold text-sm tabular-nums">{gamification.streak}</span>
               </div>
-              <h3 className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>Tuần này</h3>
+            )}
+          </div>
+        </Link>
+
+        {/* ── UPCOMING TILE ── */}
+        <div className="col-span-12 md:col-span-6 bento-tile bento-tile-surface p-5 md:p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <div className="bento-label">Hạn sắp tới</div>
+              <h3 className="font-display font-bold text-lg mt-0.5" style={{ color: 'var(--text-primary)' }}>
+                Bài tập cần hoàn thành
+              </h3>
             </div>
-            <div className="p-5">
-              <div className="grid grid-cols-3 gap-3 text-center">
-                <div>
-                  <div className="font-display text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-                    {dashboard.weeklyStats.quizzesCompleted}
-                  </div>
-                  <div className="text-[11px] font-medium mt-0.5" style={{ color: 'var(--text-muted)' }}>
-                    Bài hoàn thành
-                  </div>
-                </div>
-                <div>
-                  <div className="font-display text-2xl font-bold" style={{ color: dashboard.weeklyStats.avgScore >= 80 ? '#059669' : dashboard.weeklyStats.avgScore >= 50 ? '#d97706' : '#ef4444' }}>
-                    {dashboard.weeklyStats.avgScore}%
-                  </div>
-                  <div className="text-[11px] font-medium mt-0.5" style={{ color: 'var(--text-muted)' }}>
-                    Điểm TB
-                  </div>
-                </div>
-                <div>
-                  <div className="font-display text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-                    {dashboard.weeklyStats.questionsAnswered}
-                  </div>
-                  <div className="text-[11px] font-medium mt-0.5" style={{ color: 'var(--text-muted)' }}>
-                    Câu trả lời
-                  </div>
-                </div>
-              </div>
-              {dashboard.weeklyStats.quizzesCompleted === 0 && (
-                <p className="text-xs text-center mt-4 py-2 rounded-lg" style={{ background: 'var(--cream-warm)', color: 'var(--text-muted)' }}>
-                  Bắt đầu làm bài để xem thống kê!
-                </p>
-              )}
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center"
+                 style={{ background: 'var(--amber-soft)', color: 'var(--amber-warm)' }}>
+              <IconClock />
             </div>
           </div>
-
-          {/* Recent Activity */}
-          <div className="card rounded-2xl overflow-hidden">
-            <div className="px-5 py-3.5 border-b flex items-center gap-2" style={{ borderColor: 'var(--border-light)' }}>
-              <div className="w-7 h-7 rounded-lg flex items-center justify-center"
-                style={{ background: '#d1fae5', color: '#059669' }}>
-                <IconTarget />
-              </div>
-              <h3 className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>Hoạt động gần đây</h3>
+          {dashLoading ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map(i => <div key={i} className="skeleton h-10 w-full" />)}
             </div>
-            <div className="p-4">
-              {dashboard.recentActivity.length === 0 ? (
-                <p className="text-sm text-center py-4" style={{ color: 'var(--text-muted)' }}>
-                  Chưa có hoạt động nào
-                </p>
-              ) : (
-                <div className="space-y-3">
-                  {dashboard.recentActivity.map(a => (
-                    <div key={a._id} className="flex items-center gap-3">
-                      <div
-                        className="w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold shrink-0"
-                        style={{
-                          background: a.percentage >= 80 ? '#d1fae5' : a.percentage >= 50 ? '#fef3c7' : '#fee2e2',
-                          color: a.percentage >= 80 ? '#059669' : a.percentage >= 50 ? '#d97706' : '#ef4444'
-                        }}
-                      >
-                        {a.percentage}%
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>
-                          {a.quizTitle}
-                        </p>
-                        <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
-                          {a.score}/{a.totalQuestions} câu đúng · {timeAgo(a.submittedAt)}
-                        </p>
-                      </div>
-                      <Link
-                        to={`/student/quiz-result/${a._id}`}
-                        className="text-[11px] font-semibold shrink-0"
-                        style={{ color: 'var(--amber-warm)' }}
-                      >
-                        Xem
-                      </Link>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Mastery snapshot */}
-          <div className="card rounded-2xl overflow-hidden">
-            <div className="px-5 py-3.5 border-b flex items-center gap-2" style={{ borderColor: 'var(--border-light)' }}>
-              <div className="w-7 h-7 rounded-lg flex items-center justify-center"
-                style={{ background: '#ede9fe', color: '#8b5cf6' }}>
-                <IconTarget />
-              </div>
-              <h3 className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>Mastery hiện tại</h3>
-            </div>
-            <div className="p-5">
-              <div className="font-display text-3xl font-bold" style={{ color: 'var(--text-primary)' }}>
-                {masteryHighlights?.overallScore || 0}%
-              </div>
-              <div className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
-                Mức nắm vững tổng quát
-              </div>
-              {masteryHighlights?.weakTopics?.length > 0 && (
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {masteryHighlights.weakTopics.slice(0, 3).map((topic) => (
-                    <span
-                      key={topic.topic}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold"
-                      style={{ background: 'var(--danger-light)', color: 'var(--danger)' }}
+          ) : dashboard?.upcomingQuizzes?.length === 0 ? (
+            <p className="text-sm py-6 text-center" style={{ color: 'var(--text-muted)' }}>
+              🎉 Không có bài nào đang chờ
+            </p>
+          ) : (
+            <div className="space-y-1">
+              {dashboard?.upcomingQuizzes?.slice(0, 4).map(q => (
+                <div key={q._id} className="flex items-center gap-3 py-2 group">
+                  <span
+                    className="w-1.5 h-1.5 rounded-full shrink-0"
+                    style={{
+                      background: q.attemptStatus === 'submitted' ? 'var(--olive)' :
+                                  q.attemptStatus === 'in_progress' ? 'var(--amber-warm)' :
+                                  'var(--border)',
+                    }}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate" style={{
+                      color: 'var(--text-primary)',
+                      opacity: q.attemptStatus === 'submitted' ? 0.5 : 1,
+                      textDecoration: q.attemptStatus === 'submitted' ? 'line-through' : 'none',
+                    }}>
+                      {q.title}
+                    </p>
+                    {q.endTime && (
+                      <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
+                        Hạn {new Date(q.endTime).toLocaleDateString('vi-VN')}
+                      </span>
+                    )}
+                  </div>
+                  {q.attemptStatus !== 'submitted' && (
+                    <Link
+                      to="/student/quizzes"
+                      className="text-[11px] font-semibold px-2.5 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
+                      style={{ background: 'var(--amber-soft)', color: 'var(--amber-warm)' }}
                     >
-                      {topic.topic} · {topic.masteryScore}%
-                    </span>
-                  ))}
+                      Làm bài
+                    </Link>
+                  )}
                 </div>
-              )}
-              {(masteryHighlights?.overdueFlashcards || 0) > 0 && (
-                <div className="mt-4 text-xs font-medium" style={{ color: 'var(--amber-warm)' }}>
-                  {masteryHighlights.overdueFlashcards} flashcard đang đến hạn ôn lại
-                </div>
-              )}
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* ── MASTERY TILE ── */}
+        <div className="col-span-12 md:col-span-6 bento-tile bento-tile-surface p-5 md:p-6">
+          <div className="flex items-start justify-between mb-3">
+            <div>
+              <div className="bento-label">Mức nắm vững</div>
+              <h3 className="font-display font-bold text-lg mt-0.5" style={{ color: 'var(--text-primary)' }}>
+                Tổng quát
+              </h3>
+            </div>
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center"
+                 style={{ background: 'var(--olive-soft)', color: 'var(--olive)' }}>
+              <IconTarget />
+            </div>
+          </div>
+          <div className="flex items-baseline gap-2 mt-2">
+            <span className="bento-metric" style={{ color: masteryColor }}>
+              {masteryScore}
+            </span>
+            <span className="text-lg font-bold" style={{ color: masteryColor, opacity: 0.5 }}>%</span>
+          </div>
+          <div className="rule-line my-4" />
+          {masteryHighlights?.weakTopics?.length > 0 ? (
+            <div>
+              <div className="text-[11px] mb-2" style={{ color: 'var(--text-muted)' }}>
+                Cần luyện thêm
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {masteryHighlights.weakTopics.slice(0, 3).map((topic) => (
+                  <span
+                    key={topic.topic}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold"
+                    style={{ background: 'var(--terracotta-soft)', color: 'var(--terracotta)' }}
+                  >
+                    {topic.topic} · {topic.masteryScore}%
+                  </span>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+              Hoàn thành vài bài kiểm tra để hệ thống đánh giá năng lực.
+            </p>
+          )}
+          {(masteryHighlights?.overdueFlashcards ?? 0) > 0 && (
+            <div className="mt-3 text-xs font-medium flex items-center gap-1.5" style={{ color: 'var(--amber-warm)' }}>
+              <span className="w-1 h-1 rounded-full" style={{ background: 'var(--amber-warm)' }} />
+              {masteryHighlights.overdueFlashcards} flashcard đang đến hạn ôn lại
+            </div>
+          )}
+        </div>
+
+        {/* ── WEEK STATS TILE ── */}
+        <div className="col-span-12 md:col-span-4 bento-tile bento-tile-warm p-5 md:p-6">
+          <div className="bento-label mb-4">Tuần này</div>
+          <div className="space-y-3">
+            <div className="flex items-baseline justify-between">
+              <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>Bài hoàn thành</span>
+              <span className="bento-display text-2xl" style={{ color: 'var(--text-primary)' }}>
+                {dashboard?.weeklyStats?.quizzesCompleted ?? 0}
+              </span>
+            </div>
+            <div className="rule-line" />
+            <div className="flex items-baseline justify-between">
+              <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>Điểm trung bình</span>
+              <span className="bento-display text-2xl" style={{ color: avgColor }}>
+                {avgScore}%
+              </span>
+            </div>
+            <div className="rule-line" />
+            <div className="flex items-baseline justify-between">
+              <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>Câu trả lời</span>
+              <span className="bento-display text-2xl" style={{ color: 'var(--text-primary)' }}>
+                {dashboard?.weeklyStats?.questionsAnswered ?? 0}
+              </span>
             </div>
           </div>
         </div>
-      )}
 
-      {/* Dashboard loading skeleton */}
-      {dashLoading && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          {[1, 2, 3].map(i => (
-            <div key={i} className="card rounded-2xl p-5 space-y-3">
-              <div className="skeleton h-4 w-1/3" />
-              <div className="skeleton h-10 w-full" />
-              <div className="skeleton h-3 w-2/3" />
+        {/* ── RECENT ACTIVITY TILE ── */}
+        <div className="col-span-12 md:col-span-8 bento-tile bento-tile-surface p-5 md:p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <div className="bento-label">Hoạt động gần đây</div>
+              <h3 className="font-display font-bold text-lg mt-0.5" style={{ color: 'var(--text-primary)' }}>
+                Bài kiểm tra đã làm
+              </h3>
             </div>
-          ))}
+            <Link to="/student/performance" className="text-xs font-semibold" style={{ color: 'var(--amber-warm)' }}>
+              Xem tất cả →
+            </Link>
+          </div>
+          {dashLoading ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map(i => <div key={i} className="skeleton h-12 w-full" />)}
+            </div>
+          ) : dashboard?.recentActivity?.length === 0 ? (
+            <p className="text-sm py-6 text-center" style={{ color: 'var(--text-muted)' }}>
+              Chưa có hoạt động nào
+            </p>
+          ) : (
+            <div className="space-y-1">
+              {dashboard?.recentActivity?.slice(0, 4).map(a => {
+                const scoreColor = a.percentage >= 80 ? 'var(--olive)' :
+                                   a.percentage >= 50 ? 'var(--amber-warm)' :
+                                   'var(--terracotta)';
+                const scoreBg = a.percentage >= 80 ? 'var(--olive-soft)' :
+                                a.percentage >= 50 ? 'var(--amber-soft)' :
+                                'var(--terracotta-soft)';
+                return (
+                  <Link
+                    key={a._id}
+                    to={`/student/quiz-result/${a._id}`}
+                    className="flex items-center gap-3 py-2.5 px-2 -mx-2 rounded-lg transition-colors hover:bg-[var(--ink-soft)]"
+                  >
+                    <div
+                      className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 tabular-nums"
+                      style={{ background: scoreBg, color: scoreColor, fontWeight: 700 }}
+                    >
+                      {a.percentage}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>
+                        {a.quizTitle}
+                      </p>
+                      <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
+                        {a.score}/{a.totalQuestions} câu đúng · {timeAgo(a.submittedAt)}
+                      </p>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
       {/* Loading */}
       {loading && (
