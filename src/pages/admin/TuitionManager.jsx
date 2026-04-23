@@ -25,7 +25,7 @@ const formatVND = (v) => {
 const statusLabel = { unpaid: 'Chưa đóng', partial: 'Đóng 1 phần', paid: 'Đã đóng' };
 const statusColor = {
   unpaid: { bg: 'var(--danger-light)', color: 'var(--danger)' },
-  partial: { bg: '#fef3c7', color: '#d97706' },
+  partial: { bg: 'var(--amber-soft)', color: 'var(--amber-warm)' },
   paid: { bg: 'var(--success-light)', color: 'var(--success)' },
 };
 

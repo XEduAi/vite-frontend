@@ -149,7 +149,12 @@ const LessonManager = () => {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>{lesson.title}</span>
-                  <span className={`text-[11px] px-2 py-0.5 rounded-full font-semibold ${lesson.isPublished ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                  <span
+                    className="text-[11px] px-2 py-0.5 rounded-full font-semibold"
+                    style={lesson.isPublished
+                      ? { background: 'var(--olive-soft)', color: 'var(--olive)' }
+                      : { background: 'var(--border-light)', color: 'var(--text-muted)' }}
+                  >
                     {lesson.isPublished ? 'Đã đăng' : 'Nháp'}
                   </span>
                 </div>
@@ -173,7 +178,7 @@ const LessonManager = () => {
                 </button>
                 <button onClick={() => handleDelete(lesson._id)}
                   className="text-xs px-2.5 py-1.5 rounded-lg"
-                  style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444' }}>
+                  style={{ background: 'var(--terracotta-soft)', color: 'var(--terracotta)' }}>
                   Xóa
                 </button>
               </div>
@@ -222,9 +227,9 @@ const LessonManager = () => {
                     <input type="checkbox" className="sr-only" checked={form.isPublished}
                       onChange={e => setForm(f => ({ ...f, isPublished: e.target.checked }))} />
                     <div className="w-10 h-5 rounded-full transition-colors"
-                      style={{ background: form.isPublished ? '#10b981' : 'var(--border)' }} />
-                    <div className="absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform"
-                      style={{ transform: form.isPublished ? 'translateX(20px)' : 'translateX(0)' }} />
+                      style={{ background: form.isPublished ? 'var(--olive)' : 'var(--border)' }} />
+                    <div className="absolute top-0.5 left-0.5 w-4 h-4 rounded-full shadow transition-transform"
+                      style={{ background: '#ffffff', transform: form.isPublished ? 'translateX(20px)' : 'translateX(0)' }} />
                   </div>
                   <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
                     {form.isPublished ? 'Đã đăng (học viên thấy)' : 'Nháp (chỉ admin)'}
@@ -253,7 +258,7 @@ const LessonManager = () => {
                         <button onClick={() => removeItem(idx)}
                           disabled={form.items.length <= 1}
                           className="text-xs shrink-0 p-1.5 rounded-lg"
-                          style={{ color: '#ef4444', background: 'rgba(239,68,68,0.08)' }}>✕</button>
+                          style={{ color: 'var(--terracotta)', background: 'var(--terracotta-soft)' }}>✕</button>
                       </div>
                       <div className="flex gap-2 ml-7">
                         <select value={item.type} onChange={e => setItemField(idx, 'type', e.target.value)}

@@ -132,7 +132,7 @@ const DocumentAnalytics = () => {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8 stagger-children">
         <div className="card p-5 text-center">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg mx-auto mb-2"
-            style={{ background: '#d1fae5', color: '#10b981' }}>💰</div>
+            style={{ background: 'var(--olive-soft)', color: 'var(--olive)' }}>💰</div>
           <div className="font-display text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
             {(data.totalRevenue || 0).toLocaleString('vi-VN')}đ
           </div>
@@ -148,7 +148,7 @@ const DocumentAnalytics = () => {
         </div>
         <div className="card p-5 text-center">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg mx-auto mb-2"
-            style={{ background: '#dbeafe', color: '#3b82f6' }}>⬇️</div>
+            style={{ background: 'var(--amber-soft)', color: 'var(--amber-warm)' }}>⬇️</div>
           <div className="font-display text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
             {data.totalDownloads || 0}
           </div>
@@ -156,7 +156,7 @@ const DocumentAnalytics = () => {
         </div>
         <div className="card p-5 text-center">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg mx-auto mb-2"
-            style={{ background: '#ede9fe', color: '#8b5cf6' }}>🛒</div>
+            style={{ background: 'var(--olive-soft)', color: 'var(--olive)' }}>🛒</div>
           <div className="font-display text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
             {data.totalPurchases || 0}
           </div>
@@ -387,7 +387,7 @@ const DocumentAnalytics = () => {
                       </span>
                     </td>
                     <td className="px-5 py-3.5">
-                      <span className="font-semibold" style={{ color: '#10b981' }}>
+                      <span className="font-semibold" style={{ color: 'var(--olive)' }}>
                         {(purchase.amount || purchase.price || 0).toLocaleString('vi-VN')}đ
                       </span>
                     </td>

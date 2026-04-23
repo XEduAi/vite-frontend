@@ -767,8 +767,8 @@ const StudentManager = () => {
               <div
                 className="mb-4 p-3 rounded-xl text-sm"
                 style={{
-                  background: importResult.failed > 0 ? 'rgba(239,68,68,0.1)' : 'rgba(34,197,94,0.1)',
-                  color: importResult.failed > 0 ? '#ef4444' : 'var(--success)',
+                  background: importResult.failed > 0 ? 'var(--terracotta-soft)' : 'var(--olive-soft)',
+                  color: importResult.failed > 0 ? 'var(--terracotta)' : 'var(--olive)',
                 }}
               >
                 <p>Thành công: {importResult.success}</p>

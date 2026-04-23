@@ -196,8 +196,8 @@ const DocumentManager = () => {
     const stars = [];
     const r = Math.round((rating || 0) * 2) / 2;
     for (let i = 1; i <= 5; i++) {
-      if (i <= r) stars.push(<span key={i} style={{ color: '#f59e0b' }}>★</span>);
-      else if (i - 0.5 === r) stars.push(<span key={i} style={{ color: '#f59e0b' }}>★</span>);
+      if (i <= r) stars.push(<span key={i} style={{ color: 'var(--amber-warm)' }}>★</span>);
+      else if (i - 0.5 === r) stars.push(<span key={i} style={{ color: 'var(--amber-warm)' }}>★</span>);
       else stars.push(<span key={i} style={{ color: 'var(--text-muted)' }}>☆</span>);
     }
     return <span className="text-sm">{stars}</span>;
@@ -285,7 +285,7 @@ const DocumentManager = () => {
           </div>
           <div className="card p-5 flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl flex items-center justify-center text-xl"
-              style={{ background: '#dbeafe', color: '#3b82f6' }}>⬇️</div>
+              style={{ background: 'var(--amber-soft)', color: 'var(--amber-warm)' }}>⬇️</div>
             <div>
               <div className="font-display text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
                 {analytics.totalDownloads || 0}
@@ -295,7 +295,7 @@ const DocumentManager = () => {
           </div>
           <div className="card p-5 flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl flex items-center justify-center text-xl"
-              style={{ background: '#d1fae5', color: '#10b981' }}>💰</div>
+              style={{ background: 'var(--olive-soft)', color: 'var(--olive)' }}>💰</div>
             <div>
               <div className="font-display text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
                 {(analytics.totalRevenue || 0).toLocaleString('vi-VN')}đ
@@ -391,7 +391,7 @@ const DocumentManager = () => {
                       </span>
                     </td>
                     <td className="px-5 py-3.5">
-                      <span className="font-semibold text-sm" style={{ color: doc.price > 0 ? 'var(--text-primary)' : '#10b981' }}>
+                      <span className="font-semibold text-sm" style={{ color: doc.price > 0 ? 'var(--text-primary)' : 'var(--olive)' }}>
                         {doc.price > 0 ? `${doc.price.toLocaleString('vi-VN')}đ` : 'Miễn phí'}
                       </span>
                     </td>
@@ -412,7 +412,7 @@ const DocumentManager = () => {
                       <button
                         onClick={() => handleTogglePublished(doc)}
                         className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
-                        style={{ background: doc.isPublished ? '#10b981' : '#d1d5db' }}
+                        style={{ background: doc.isPublished ? 'var(--olive)' : 'var(--border)' }}
                       >
                         <span
                           className="inline-block h-4 w-4 rounded-full bg-white transition-transform shadow-sm"
@@ -492,9 +492,9 @@ const DocumentManager = () => {
 
       {/* === CREATE/EDIT MODAL === */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center pt-8 px-4" style={{ background: 'rgba(0,0,0,0.5)' }}>
-          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[88vh] overflow-y-auto shadow-2xl"
-            style={{ background: 'var(--cream)' }}>
+        <div className="fixed inset-0 z-50 flex items-start justify-center pt-8 px-4 modal-overlay">
+          <div className="rounded-2xl w-full max-w-2xl max-h-[88vh] overflow-y-auto shadow-2xl"
+            style={{ background: 'var(--cream)', border: '1px solid var(--border)' }}>
             <div className="sticky top-0 px-6 py-4 border-b flex items-center justify-between z-10"
               style={{ borderColor: 'var(--border-light)', background: 'var(--cream)' }}>
               <h2 className="font-display text-lg font-bold" style={{ color: 'var(--text-primary)' }}>

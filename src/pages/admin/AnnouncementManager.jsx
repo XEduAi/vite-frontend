@@ -147,9 +147,9 @@ const AnnouncementManager = () => {
                   className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-lg mt-0.5"
                   style={{
                     background: announcement.priority === 'important'
-                      ? 'linear-gradient(135deg, #fef3c7, #fde68a)'
+                      ? 'var(--amber-soft)'
                       : 'var(--cream-warm)',
-                    color: announcement.priority === 'important' ? '#d97706' : 'var(--text-muted)',
+                    color: announcement.priority === 'important' ? 'var(--amber-warm)' : 'var(--text-muted)',
                   }}
                 >
                   {announcement.priority === 'important' ? '⚡' : '📢'}
@@ -260,9 +260,9 @@ const AnnouncementManager = () => {
                     onClick={() => setForm({ ...form, priority: 'normal' })}
                     className="flex-1 py-2.5 rounded-xl text-sm font-medium border-2 transition-all"
                     style={{
-                      borderColor: form.priority === 'normal' ? '#2563eb' : 'var(--border)',
-                      background: form.priority === 'normal' ? '#dbeafe' : 'transparent',
-                      color: form.priority === 'normal' ? '#2563eb' : 'var(--text-secondary)',
+                      borderColor: form.priority === 'normal' ? 'var(--olive)' : 'var(--border)',
+                      background: form.priority === 'normal' ? 'var(--olive-soft)' : 'transparent',
+                      color: form.priority === 'normal' ? 'var(--olive)' : 'var(--text-secondary)',
                     }}
                   >
                     📢 Bình thường
@@ -272,9 +272,9 @@ const AnnouncementManager = () => {
                     onClick={() => setForm({ ...form, priority: 'important' })}
                     className="flex-1 py-2.5 rounded-xl text-sm font-medium border-2 transition-all"
                     style={{
-                      borderColor: form.priority === 'important' ? '#d97706' : 'var(--border)',
-                      background: form.priority === 'important' ? '#fef3c7' : 'transparent',
-                      color: form.priority === 'important' ? '#d97706' : 'var(--text-secondary)',
+                      borderColor: form.priority === 'important' ? 'var(--amber-warm)' : 'var(--border)',
+                      background: form.priority === 'important' ? 'var(--amber-soft)' : 'transparent',
+                      color: form.priority === 'important' ? 'var(--amber-warm)' : 'var(--text-secondary)',
                     }}
                   >
                     ⚡ Quan trọng
